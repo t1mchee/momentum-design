@@ -9,7 +9,7 @@
 # on release | quarterly | once), mode (backtest and live | live only | backtest only), feedback, hidden.
 
 meta:
-  title: Momentum reversal-risk system, v2 draft 5
+  title: Momentum reversal-risk system, v2 draft 6
   version: v2-draft-6
   updated: "2026-09-06"
   note: >

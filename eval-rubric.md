@@ -148,3 +148,20 @@ three_changes_that_would_raise_the_total_most: [ , , ]
   which case 5.
 - A page with horizon, VaR in bp, drivers with quotes, hedge instrument and cost, and a beta mapping, but
   without a dated resolution, scores C6 = 4.
+
+## 6. Writing standard, from the draft-6 LLM-pattern report
+
+Every draft is checked against these ten rules before it is scored. A rule broken in a rule or synthesis
+counts against C7.
+
+1. Give the page, the record and the rule no verbs of speech or thought. Write "with a note on the page",
+   not "the page states it".
+2. One meaning per word. "Carry" belongs to the conferred/carried pair and nowhere else.
+3. No label-colon fragments; write the label into the sentence.
+4. Do not announce a count and then list; list.
+5. A definition goes in the legend or in its own sentence, never in a relative clause mid-sentence.
+6. No aphorisms; state the mechanism in the order it happens.
+7. Baselines and models are given information or use it; they do not know it.
+8. Say what has not run once, in a full sentence, not as a tag.
+9. Keep one fact per sentence, but supply the connective when one fact causes another.
+10. Do not narrate the document's own history inside a rule; the change log holds it.

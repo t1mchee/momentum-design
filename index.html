@@ -48,10 +48,10 @@
   .chip.kind-human{background:var(--human);color:#fff}
   .chip.kind-output{background:var(--output);color:#fff}
   .chip.kind-data{background:#6b6b68;color:#fff}
-  .chip.la-none{background:#dcefe3;color:#1f5c3a}
-  .chip.la-data{background:#dde8f3;color:#24476b}
+  .chip.la-clean{background:#dcefe3;color:#1f5c3a}
+  .chip.la-as-of{background:#dde8f3;color:#24476b}
   .chip.la-model{background:#f6dfc8;color:#7a3f0a}
-  .chip.la-model-unmitigable{background:#f3cdcd;color:#8a1c1c}
+  .chip.la-live-only{background:#f3cdcd;color:#8a1c1c}
   .chip.la-human{background:#efe4c9;color:#6b5322}
   .chip.ac-public{background:#dcefe3;color:#1f5c3a}
   .chip.ac-mixed{background:#f3e7c2;color:#6b5322}
@@ -153,7 +153,7 @@ function laneName(id){const l=(spec.lanes||[]).find(l=>l.id===id);return l?l.nam
 function cardHTML(n){
   const nopen=(n.open||[]).length;
   const kindLabel={data:'DATA IN',deterministic:'',model:'LLM',human:'HUMAN',output:'OUTPUT'}[n.kind||'deterministic']||'';
-  const laText={none:'clean',data:'as-of',model:'model','model-unmitigable':'live only',human:'human'}[n.lookahead];
+  const laText=n.lookahead;
   const laHide=(n.kind==='human'&&n.lookahead==='human')||(n.kind==='model'&&n.lookahead==='model')||n.status==='retired';
   const la=(n.lookahead&&!laHide)?`<span class="chip la-${esc(n.lookahead)}" title="${esc(n.mitigation||'')}">${esc(laText)}</span>`:'';
   const ac=n.access?`<span class="chip ac-${esc(n.access)}">${esc(n.access)}</span>`:'';
@@ -221,7 +221,7 @@ function focus(id){
   paths.forEach(p=>{const on=p.dataset.from===id||p.dataset.to===id; p.classList.toggle('on',on); p.setAttribute('marker-end',on?'url(#ahd)':'url(#ah)'); if(on){nb.add(p.dataset.from);nb.add(p.dataset.to);} document.getElementById('lab'+p.dataset.i).classList.toggle('show',false);});
   cards.forEach(c=>{c.classList.toggle('dim',!nb.has(c.dataset.id)); c.classList.toggle('sel',c.dataset.id===sel);});
 }
-function legendHTML(){ const L=(spec&&spec.meta&&spec.meta.legend)||null; const P=(spec&&spec.meta&&spec.meta.proof_of_concept)||null; let h=''; if(L) h+='<div class="k" style="margin-top:14px">Legend</div><ul>'+Object.entries(L).map(([k,v])=>'<li><b>'+esc(k)+'</b>: '+esc(String(v))+'</li>').join('')+'</ul>'; if(P) h+='<div class="k" style="margin-top:14px">Proof of concept</div><div>'+esc(P.hours||'')+'</div><div style="margin-top:4px"><b>Runs today:</b> '+esc((P.path||[]).join(', '))+'</div><div style="margin-top:4px"><b>Produces:</b> '+esc(P.produces||'')+'</div><div style="margin-top:4px"><b>Deferred:</b> '+esc((P.deferred||[]).join(', '))+'</div>'; return h; }
+function legendHTML(){ const L=(spec&&spec.meta&&spec.meta.legend)||null; const P=(spec&&spec.meta&&spec.meta.proof_of_concept)||null; const Q=(spec&&spec.meta&&spec.meta.problem)||null; let h=''; if(Q) h+='<div class="k" style="margin-top:14px">Problem</div><ul>'+Object.entries(Q).map(([k,v])=>'<li><b>'+esc(k)+'</b>: '+esc(String(v))+'</li>').join('')+'</ul>'; if(L) h+='<div class="k" style="margin-top:14px">Legend</div><ul>'+Object.entries(L).map(([k,v])=>'<li><b>'+esc(k)+'</b>: '+esc(String(v))+'</li>').join('')+'</ul>'; if(P){ const notes=P.path_notes||{}; const pathTxt=(P.path||[]).map(id=>notes[id]?esc(id)+' <span style="color:var(--muted)">('+esc(notes[id])+')</span>':esc(id)).join(', '); h+='<div class="k" style="margin-top:14px">Proof of concept</div><div>'+esc(P.hours||'')+'</div>'+(P.status?'<div style="margin-top:4px"><b>Status:</b> '+esc(P.status)+'</div>':'')+'<div style="margin-top:4px"><b>Path:</b> '+pathTxt+'</div><div style="margin-top:4px"><b>Produces:</b> '+esc(P.produces||'')+'</div><div style="margin-top:4px"><b>Deferred:</b> '+esc((P.deferred||[]).join(', '))+'</div>'+(P.described_only?'<div style="margin-top:4px"><b>Described only:</b> '+esc(P.described_only.join(', '))+'</div>':'')+'<div style="margin-top:4px"><b>Retired:</b> '+esc(spec.nodes.filter(n=>n.status==="retired").map(n=>n.id).join(', '))+'</div>'; } return h; }
 function list(a){return (a&&a.length)?'<ul>'+a.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'<span style="color:var(--muted)">none</span>';}
 function showPanel(n){
   const ins=(spec.edges||[]).filter(e=>e.to===n.id&&!e.hidden), outs=(spec.edges||[]).filter(e=>e.from===n.id&&!e.hidden);

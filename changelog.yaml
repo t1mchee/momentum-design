@@ -3,10 +3,33 @@
 # summary, changes (what), reasoning (why), status (done | current | planned).
 
 entries:
+  - version: v2-draft-7
+    date: "2026-09-06"
+    file: versions/v2-draft-7.yaml
+    status: current
+    summary: Applies the draft-7 fix list in full. The four joints where a cold reader lost the thread are closed, every consumed quantity has a producer, the proof-of-concept path runs end to end as listed, and the text is rewritten under ten writing rules.
+    changes:
+      - "One theme per component: the cluster step picks the list entry or residual cluster with the largest excess weight over placebo, and only if that excess beats what random portfolios reach; otherwise the component has no theme above placebo."
+      - "The ablation runs on two complete text series, keyword and language model, each carried through extraction, assignment, naming and propagation. Text enters the tail model as the loss share by leg. Step 0 holds everything price and calendar; step 3 is the full model."
+      - "Book effect is split into two signs: whether the book loses if the risk materialises (leg times company sign) and whether the risk is aligned with a reversal of the component (company times loading sign). Only aligned quotes count toward a theme. The loss share is price-only."
+      - "The proof-of-concept path closes: news, the keyword news extractor, the initial worry list, the embedding space, text gathering, retrieval-only propagation, theme statistics and the register join it. Every node has one of four statuses (path, deferred, described only, retired), and the block says that nothing in v2 has run."
+      - "The random node outputs portfolios only; each statistic is computed on them by the node that computes it for the book. Extraction runs once over the whole universe, the model reading the component set's documents directly and a distilled classifier labelling the rest, in backtest and production alike."
+      - "The bear state has a producer (the reference series). The four page items that had none (agreement line, expected shortfall, the change since the last page, coverage by layer) have producers and edges. The vulnerable-name lists are withheld from the page until their event study runs."
+      - "One vocabulary for look-ahead labels (clean, as-of, model, live-only, human) in the spec, the legend and both viewers. The legend gains kind, lane, access, direction and edge fields. A problem block states exposure, event, horizon, user and decision at the top."
+      - "Forty-three contradictions between nodes resolved, among them: the market series uses the raw slope; the named component replaces the first component wherever naming may have moved; the positioning score is defined for names outside the book; earnings dates are projected from the prior year so the window is known in advance; the analogue search states what it uses before 2014; pages are scored against the unconditional quantile."
+      - "Forty-four terms defined or numbers supplied, among them WML, DV01, pinball loss, the calendar baseline's resampling, era, news weight, the second reader, the case-flag scale, the 0-3 propagation rubric, the overlap's unit and the 20% it must beat, the encoder schedule and the BM25 setup."
+      - "Writing pass: no verbs of speech or thought for pages and rules; carry reserved for the conferred/carried pair; no label-colon fragments; the three sentences a PM would stop at rewritten; the ten rules appended to the rubric as the standard for later drafts."
+    reasoning: >
+      The draft-6 skeptic could follow the spine but lost the thread at four joints, and traced the
+      proof-of-concept path to show it could not run as listed. The LLM-pattern report found the vocabulary
+      tells gone and a third-generation residue left: personification, one word in five senses, and label
+      fragments. Both were right, and the fixes are surgical: no component was added or removed except the
+      statuses and edges needed to make every consumed quantity traceable to a producer.
+
   - version: v2-draft-6
     date: "2026-09-06"
     file: versions/v2-draft-6.yaml
-    status: current
+    status: done
     summary: The AI-use fix from the two rubric evaluations, plus the agreed writing items; validation steps marked on the canvas.
     changes:
       - "A keyword extractor runs beside the language model in both extraction steps (filings and news), scored on the same hand labels, and its statements are kept as a second series."

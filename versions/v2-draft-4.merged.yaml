@@ -88,9 +88,8 @@ nodes:
   status: settled
   inputs: []
   outputs:
-  - risk-factor and outlook text per name
-  - dated; intra-quarter event text per name
-  - dated
+  - risk-factor and outlook text per name, dated
+  - intra-quarter event text per name, dated
   rule: 'Three layers, each feed labelled. Context layer: the latest 10-K accepted before the formation date plus
     the latest 10-Q''s Part II Item 1A where newer, Item 1A and the MD&A overview cut by regex (PUBLIC, EDGAR).
     Event stream: 8-K Items 2.02, 7.01 and 8.01 with exhibits (PUBLIC, EDGAR), earnings-call transcripts (PUBLIC
@@ -100,7 +99,8 @@ nodes:
 
     '
   checks:
-  - coverage per name printed by leg and by layer; string-match gate
+  - coverage per name printed by leg and by layer
+  - string-match gate
   on_failure: name marked unread on that layer
   open: []
   memo: §2
@@ -127,7 +127,8 @@ nodes:
 
     '
   checks:
-  - lag printed; overlap history
+  - lag printed
+  - overlap history
   on_failure: score absent; time-bomb lines suppressed and the page says so
   open: []
   memo: §2, §7
@@ -170,8 +171,8 @@ nodes:
   access: mixed
   inputs: []
   outputs:
-  - headlines and articles
-  - timestamped; fast-lane items
+  - headlines and articles, timestamped
+  - fast-lane items
   rule: 'Slow lane: a rolling twelve-month archive rebuilt weekly into the context space. Feeds: GDELT (PUBLIC),
     Fed, Treasury and BLS release pages (PUBLIC), SEC press-release 8-K exhibits (PUBLIC), Bloomberg and Reuters
     headlines (LICENSED, not available to us now). Fast lane: the last five sessions'' items scanned daily for new
@@ -179,7 +180,8 @@ nodes:
 
     '
   checks:
-  - source list versioned; as-of rebuild for backtests
+  - source list versioned
+  - as-of rebuild for backtests
   on_failure: last space used, flagged stale
   open: []
   memo: §2
@@ -193,7 +195,8 @@ nodes:
   access: mixed
   inputs: []
   outputs:
-  - implied event move per component name; sector ETF implied move
+  - implied event move per component name
+  - sector ETF implied move
   rule: The comparator for the catalyst claim is the component set's event-implied move, each name's implied earnings
     move (LICENSED for history, OptionMetrics; PUBLIC delayed for the live date) weighted by loading. The relevant
     sector ETF's implied move around the same date (PUBLIC delayed) is printed beside it as the price of the hedge.
@@ -375,7 +378,8 @@ nodes:
     shrinkage because N is about 600 against T of 126. Sectors are not residualised, since sector is often the vehicle
     of the theme.
   checks:
-  - condition number printed; the same matrix built on random books gives the placebo eigenvalues
+  - condition number printed
+  - the same matrix built on random books gives the placebo eigenvalues
   on_failure: decomposition not run this period
   open: []
   memo: §3 step 1
@@ -390,10 +394,9 @@ nodes:
   - shrunk covariance matrix over the book's names
   - position weights
   outputs:
-  - components above the bulk edge; per component the book's variance share
-  - its placebo percentile
-  - the component set with signs
-  - and the case flag
+  - components above the bulk edge
+  - per component the book's variance share, its placebo percentile, the component set with signs, and the case
+    flag
   rule: 'Eigen-decomposition; components kept while their eigenvalue clears the Marchenko-Pastur bulk edge, at most
     three. For component k the headline is the book''s variance share, λ_k (w''v_k)² / (w''Σw), not the name-level
     variance explained, with its percentile against the same statistic on cap- and sector-matched random books.
@@ -405,7 +408,9 @@ nodes:
 
     '
   checks:
-  - placebo percentile; stability of the set across adjacent months; per-leg diagnostic
+  - placebo percentile
+  - stability of the set across adjacent months
+  - per-leg diagnostic
   on_failure: theme naming not run
   open: []
   memo: §3 step 1
@@ -448,7 +453,8 @@ nodes:
     paraphrase for embedding, with the date. In the backtest the LLM labels a sample once and a small classifier
     on the date-constrained encoder does the rest.
   checks:
-  - quote gate; monthly audit sample
+  - quote gate
+  - monthly audit sample
   on_failure: last space used
   open: []
   memo: §3 step 3
@@ -469,7 +475,8 @@ nodes:
     from the 'other' residue. The PM edits it whenever something bites; every edit is logged as a labelled event.
     Under the crescendo view the top entry by mass is the theme most of the time.
   checks:
-  - every edit logged; quarterly 'other' review
+  - every edit logged
+  - quarterly 'other' review
   on_failure: last version used
   open: []
   memo: §3, §10
@@ -501,7 +508,10 @@ nodes:
 
     '
   checks:
-  - mass per entry; residual share; with-and-without-anchors comparison; BM25 twin agreement
+  - mass per entry
+  - residual share
+  - with-and-without-anchors comparison
+  - BM25 twin agreement
   on_failure: cluster on company quotes alone, flagged
   open: []
   memo: §3 step 3
@@ -513,13 +523,10 @@ nodes:
   lookahead: none
   mitigation: dated documents
   inputs:
-  - components above the bulk edge; per component the book's variance share
-  - its placebo percentile
-  - the component set with signs
-  - and the case flag
-  - risk-factor and outlook text per name
-  - dated; intra-quarter event text per name
-  - dated
+  - components above the bulk edge
+  - per component the book's variance share, its placebo percentile, the component set with signs, and the case
+    flag, risk-factor and outlook text per name, dated
+  - intra-quarter event text per name, dated
   outputs:
   - text per component name with loading weight and sign
   rule: All context-layer and event-stream passages for every name in a theme-case component set. Loading enters
@@ -552,8 +559,8 @@ nodes:
 
     '
   checks:
-  - quote gate; hand-labelled sample by leg
-  - era and cutoff side
+  - quote gate
+  - hand-labelled sample by leg, era and cutoff side
   on_failure: record dropped and counted
   open: []
   memo: §3 step 2
@@ -584,7 +591,9 @@ nodes:
 
     '
   checks:
-  - placebo mass; residual share; stability month to month
+  - placebo mass
+  - residual share
+  - stability month to month
   on_failure: previous assignment used
   open: []
   memo: §3 step 2
@@ -604,13 +613,15 @@ nodes:
   - news clusters
   - and a threshold
   outputs:
-  - theme name per component with its supporting quotes; the nearest news cluster and its headline count
+  - theme name per component with its supporting quotes
+  - the nearest news cluster and its headline count
   rule: For a taxonomy entry the name is the entry. For a residual cluster an LLM reads the 20 quotes nearest its
     centre and names it; the c-TF-IDF label prints beside it as the twin. Cross-compare with news by printing the
     nearest news cluster's name and headline count; a theme with no news mass is flagged company-specific. Calibrated
     on sector-matched random name sets.
   checks:
-  - placebo calibration on sector-matched sets; twin printed
+  - placebo calibration on sector-matched sets
+  - twin printed
   on_failure: twin label printed alone
   open: []
   memo: §3 step 2
@@ -623,12 +634,9 @@ nodes:
   mitigation: retrieval with the dated encoder is the historical instrument; LLM rerank only on post-cutoff months;
     retrieval-only as the twin
   inputs:
-  - theme name per component with its supporting quotes; the nearest news cluster and its headline count
-  - risk-factor and outlook text per name
-  - dated; intra-quarter event text per name
-  - dated
-  - positioning score per name
-  - with its lag
+  - theme name per component with its supporting quotes
+  - the nearest news cluster and its headline count, risk-factor and outlook text per name, dated
+  - intra-quarter event text per name, dated, positioning score per name, with its lag
   outputs:
   - theme signature per name outside the component set
   - with quote and score
@@ -640,7 +648,9 @@ nodes:
 
     '
   checks:
-  - quote gate; placebo with a plausible-but-wrong theme; retrieval-only twin
+  - quote gate
+  - placebo with a plausible-but-wrong theme
+  - retrieval-only twin
   on_failure: name marked unscanned
   open: []
   memo: §3 step 4
@@ -652,20 +662,14 @@ nodes:
   lookahead: none
   mitigation: inherits its inputs' labels
   inputs:
-  - components above the bulk edge; per component the book's variance share
-  - its placebo percentile
-  - the component set with signs
-  - and the case flag
-  - mass per taxonomy entry and residual cluster
-  - loading-weighted
-  - by leg and by loss direction
-  - with its sector-matched placebo
-  - theme signature per name outside the component set
-  - with quote and score
+  - components above the bulk edge
+  - per component the book's variance share, its placebo percentile, the component set with signs, and the case
+    flag, mass per taxonomy entry and residual cluster, loading-weighted, by leg and by loss direction, with its
+    sector-matched placebo, theme signature per name outside the component set, with quote and score
   outputs:
-  - book variance share on the theme with its placebo percentile; share of book weight by leg carrying the theme
-    in the loss direction
-  - with its placebo; agreement line
+  - book variance share on the theme with its placebo percentile
+  - share of book weight by leg carrying the theme in the loss direction, with its placebo
+  - agreement line
   rule: 'Replaces the product formula. Two placebo-referenced numbers per theme: (1) the book''s variance share
     on the component with its percentile against random books; (2) the share of the book''s weight, by leg, that
     carries the theme in the loss direction, component set plus signature carriers, with the sector-matched placebo
@@ -675,8 +679,8 @@ nodes:
 
     '
   checks:
-  - both placebos; a filing-season check
-  - February against August
+  - both placebos
+  - a filing-season check, February against August
   on_failure: n/a
   open: []
   memo: §3 step 5, §6
@@ -688,17 +692,14 @@ nodes:
   lookahead: data
   mitigation: positioning as-of release
   inputs:
-  - positioning score per name
-  - with its lag
-  - theme signature per name outside the component set
-  - with quote and score
-  - components above the bulk edge; per component the book's variance share
-  - its placebo percentile
-  - the component set with signs
-  - and the case flag
+  - positioning score per name, with its lag, theme signature per name outside the component set, with quote and
+    score, components above the bulk edge
+  - per component the book's variance share, its placebo percentile, the component set with signs, and the case
+    flag
   outputs:
-  - overlap of the heavily positioned set with the theme set
-  - by leg; the non-overlap; history
+  - overlap of the heavily positioned set with the theme set, by leg
+  - the non-overlap
+  - history
   rule: Theme set (component set plus signature carriers) against the top positioning quintile of the book, by leg.
     Overlap and non-overlap both reported with their history, which measures the claim that hedge funds are mostly
     positioned on one theme rather than asserting it. Absorbs the former Route 3 reading.
@@ -715,11 +716,13 @@ nodes:
   lookahead: none
   mitigation: returns and positioning as-of
   inputs:
-  - overlap of the heavily positioned set with the theme set
-  - by leg; the non-overlap; history
-  - daily returns per name
+  - overlap of the heavily positioned set with the theme set, by leg
+  - the non-overlap
+  - history, daily returns per name
   outputs:
-  - pre-catalyst list; contagion list; both by leg
+  - pre-catalyst list
+  - contagion list
+  - both by leg
   rule: 'Two lines. Pre-catalyst: signature carriers that have rallied with the component (trailing 20-day return
     beyond one sigma of their own trailing year, same direction as the component) and sit in the top positioning
     quintile, the names with the most to give back. Contagion, read after an unwind starts: signature carriers still
@@ -813,20 +816,16 @@ nodes:
   kind: deterministic
   status: settled
   inputs:
-  - book returns
-  - book variance share on the theme with its placebo percentile; share of book weight by leg carrying the theme
-    in the loss direction
-  - with its placebo; agreement line
-  - overlap of the heavily positioned set with the theme set
-  - by leg; the non-overlap; history
-  - approved catalysts
-  - added catalysts
-  - baseline vol forecast
-  - event-density baseline
-  - the crash inventory
-  - 195 episodes
+  - book returns, book variance share on the theme with its placebo percentile
+  - share of book weight by leg carrying the theme in the loss direction, with its placebo
+  - agreement line, overlap of the heavily positioned set with the theme set, by leg
+  - the non-overlap
+  - history, approved catalysts, added catalysts, baseline vol forecast, event-density baseline, the crash inventory,
+    195 episodes
   outputs:
-  - 10-day 5% VaR and ES; the catalyst-window conditional VaR; the ablation ladder
+  - 10-day 5% VaR and ES
+  - the catalyst-window conditional VaR
+  - the ablation ladder
   rule: 'One tail model. Linear quantile regression of the book''s ten-day forward return at the 5% quantile on
     trailing volatility, the Daniel-Moskowitz bear-state terms, the comomentum state from the case flag, and the
     new features: the book''s variance share on the theme, the loss-direction signature share by leg, the positioning
@@ -839,7 +838,10 @@ nodes:
 
     '
   checks:
-  - breach rate on held-out years; state-conditional breach rates; ablation ladder; ES no milder than VaR
+  - breach rate on held-out years
+  - state-conditional breach rates
+  - ablation ladder
+  - ES no milder than VaR
   on_failure: unconditional quantile alone
   open: []
   memo: §3, §5, §6
@@ -870,10 +872,8 @@ nodes:
   lookahead: model-unmitigable
   mitigation: none possible; excluded from every backtest; scheduled macro catalysts come from calendars deterministically
   inputs:
-  - theme name per component with its supporting quotes; the nearest news cluster and its headline count
-  - fast-lane items
-  - intra-quarter event text per name
-  - dated
+  - theme name per component with its supporting quotes
+  - the nearest news cluster and its headline count, fast-lane items, intra-quarter event text per name, dated
   outputs:
   - proposed catalysts per theme
   - dated
@@ -884,7 +884,9 @@ nodes:
     the fast news lane and event text, each with a date, a source quote and a type. A 2025 model reading 2019 news
     would propose what mattered, so this node runs live only and is absent from the backtest.
   checks:
-  - date and quote required; type recorded; PM approval
+  - date and quote required
+  - type recorded
+  - PM approval
   on_failure: calendar catalysts only
   open: []
   memo: §3, §8
@@ -915,17 +917,12 @@ nodes:
   kind: deterministic
   status: settled
   inputs:
-  - book variance share on the theme with its placebo percentile; share of book weight by leg carrying the theme
-    in the loss direction
-  - with its placebo; agreement line
-  - overlap of the heavily positioned set with the theme set
-  - by leg; the non-overlap; history
-  - per series
-  - the exposure in hedgeable units
-  - its cross-sectional percentile against random books
-  - and its time-series percentile against the book's own history
-  - the crash inventory
-  - 195 episodes
+  - book variance share on the theme with its placebo percentile
+  - share of book weight by leg carrying the theme in the loss direction, with its placebo
+  - agreement line, overlap of the heavily positioned set with the theme set, by leg
+  - the non-overlap
+  - history, per series, the exposure in hedgeable units, its cross-sectional percentile against random books, and
+    its time-series percentile against the book's own history, the crash inventory, 195 episodes
   outputs:
   - five nearest past states with what followed
   - quiet outcomes included
@@ -966,18 +963,16 @@ nodes:
   kind: deterministic
   status: settled
   inputs:
-  - approved catalysts
-  - added catalysts
-  - 10-day 5% VaR and ES; the catalyst-window conditional VaR; the ablation ladder
-  - book variance share on the theme with its placebo percentile; share of book weight by leg carrying the theme
-    in the loss direction
-  - with its placebo; agreement line
-  - per series
-  - the exposure in hedgeable units
-  - its cross-sectional percentile against random books
-  - and its time-series percentile against the book's own history
+  - approved catalysts, added catalysts, 10-day 5% VaR and ES
+  - the catalyst-window conditional VaR
+  - the ablation ladder, book variance share on the theme with its placebo percentile
+  - share of book weight by leg carrying the theme in the loss direction, with its placebo
+  - agreement line, per series, the exposure in hedgeable units, its cross-sectional percentile against random books,
+    and its time-series percentile against the book's own history
   outputs:
-  - calendar page; threshold page; weekly summary
+  - calendar page
+  - threshold page
+  - weekly summary
   rule: 'Two triggers. Calendar: a page five sessions before each approved catalyst, carrying the catalyst-window
     VaR and the bump. Threshold: a page when the ten-day VaR, the book''s variance share on its first component,
     or a conferred exposure crosses the 95th time-series percentile of its own history, at most two expected false
@@ -1046,7 +1041,8 @@ nodes:
 
     '
   checks:
-  - numeral gate; every quote string-matched
+  - numeral gate
+  - every quote string-matched
   on_failure: template with a banner
   open: []
   memo: §6
@@ -1058,8 +1054,9 @@ nodes:
   kind: deterministic
   status: settled
   inputs:
-  - calendar page; threshold page; weekly summary
-  - book returns
+  - calendar page
+  - threshold page
+  - weekly summary, book returns
   outputs:
   - hit-and-miss log
   rule: 'Every page now has a date: calendar pages resolve at the catalyst, threshold pages at the ten-day horizon.
@@ -1079,7 +1076,9 @@ nodes:
   kind: human
   status: settled
   inputs:
-  - calendar page; threshold page; weekly summary
+  - calendar page
+  - threshold page
+  - weekly summary
   outputs:
   - acknowledged page
   - or shipped unacknowledged
@@ -1248,14 +1247,13 @@ nodes:
   lookahead: none
   mitigation: component-set earnings dates from the filing calendar
   inputs:
-  - 10-day 5% VaR and ES; the catalyst-window conditional VaR; the ablation ladder
-  - baseline vol forecast
-  - event-density baseline
-  - implied event move per component name; sector ETF implied move
-  - book returns
+  - 10-day 5% VaR and ES
+  - the catalyst-window conditional VaR
+  - the ablation ladder, baseline vol forecast, event-density baseline, implied event move per component name
+  - sector ETF implied move, book returns
   outputs:
-  - breach rates and pinball loss per ablation rung
-  - per catalyst type; the bump against the implied comparator where it exists
+  - breach rates and pinball loss per ablation rung, per catalyst type
+  - the bump against the implied comparator where it exists
   rule: One observation per formation month (the month's catalyst window), errors clustered by month, effective
     sample stated, power statement registered first. The tail model's rungs are scored on breach rate and pinball
     loss against GARCH and the event-density baseline; the catalyst-window VaR is compared with the component set's
@@ -1273,8 +1271,9 @@ nodes:
   lookahead: none
   mitigation: positioning as-of; flagged lists frozen before the outcome window
   inputs:
-  - pre-catalyst list; contagion list; both by leg
-  - daily returns per name
+  - pre-catalyst list
+  - contagion list
+  - both by leg, daily returns per name
   outputs:
   - flagged against sector-matched unflagged
   - per unwind
@@ -1295,12 +1294,12 @@ nodes:
   lookahead: human
   mitigation: no history until a PM edits the taxonomy; production measurement
   inputs:
-  - book variance share on the theme with its placebo percentile; share of book weight by leg carrying the theme
-    in the loss direction
-  - with its placebo; agreement line
-  - PM edits
+  - book variance share on the theme with its placebo percentile
+  - share of book weight by leg carrying the theme in the loss direction, with its placebo
+  - agreement line, PM edits
   outputs:
-  - share of PM-promoted entries the system had surfaced first; share of system residual themes later adopted
+  - share of PM-promoted entries the system had surfaced first
+  - share of system residual themes later adopted
   rule: Quarterly. The number that says whether discovery adds anything beyond the list and whether PM input can
     decrease.
   checks:
@@ -1434,8 +1433,7 @@ edges:
   when: at rebalance
 - from: sort
   to: covariance
-  carries: the book's names
-  both legs: null
+  carries: the book's names, both legs
   when: at rebalance
 - from: covariance
   to: pca
@@ -1479,8 +1477,7 @@ edges:
   when: on change
 - from: embedspace
   to: cluster
-  carries: anchors
-  threshold: null
+  carries: anchors, threshold
   when: weekly
 - from: pca
   to: pc1text
@@ -1489,8 +1486,7 @@ edges:
 - from: filings
   to: pc1text
   carries: context and event text
-  when: at rebalance
-  weekly for events: null
+  when: at rebalance, weekly for events
 - from: pc1text
   to: riskextract
   carries: text with loading and sign
@@ -1570,13 +1566,11 @@ edges:
 - from: news
   to: catagent
   carries: fast-lane items
-  when: daily
-  live only: null
+  when: daily, live only
 - from: filings
   to: catagent
   carries: event text
-  when: daily
-  live only: null
+  when: daily, live only
 - from: catagent
   to: catapprove
   carries: proposed catalysts
@@ -1651,9 +1645,7 @@ edges:
   when: daily
 - from: severity
   to: composer
-  carries: VaR
-  ES: null
-  catalyst-window VaR: null
+  carries: VaR, ES, catalyst-window VaR
   when: daily
 - from: options
   to: composer

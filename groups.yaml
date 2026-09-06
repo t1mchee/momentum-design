@@ -71,8 +71,11 @@ groups:
       language model does three separate jobs: it extracts risk statements from filings, it names a cluster
       that matches no list entry, and it scores candidate names for the theme. Each of its outputs must quote
       its source verbatim, and each runs beside a comparator, a method that does the same job without a
-      language model and is printed beside it. This step is the one most exposed to look-ahead, so its
-      look-ahead labels are the most detailed in the design.
+      language model and is printed beside it: a keyword extractor beside the extraction, a keyword label
+      beside the name, and retrieval alone beside the ranking. The tail model's ablation swaps the model's
+      extraction for the keyword extractor's, which is the test of whether the language model adds anything a
+      rule would not. This step is the one most exposed to look-ahead, so its look-ahead labels are the most
+      detailed in the design.
     children:
       - id: g_decompose
         name: Decompose the book
@@ -191,7 +194,8 @@ groups:
     synthesis: >
       Every test is registered before it runs, with the pass threshold and the sentence the memo will carry in
       each outcome written down in advance. The tail model is scored on breach rate and pinball loss against two
-      baselines; not yet run in v2. The lists of vulnerable names are tested in an event study over five recorded
+      baselines, and one of its ablation steps swaps the language model's extraction for a keyword rule, which
+      is the test of whether the model adds anything; not yet run in v2. The lists of vulnerable names are tested in an event study over five recorded
       unwinds; not yet run. Extraction error is measured on hand-labelled records, split into those dated before
       and after the model's training cutoff; the gap between the two error rates bounds how much the model may
       be recalling rather than reading; not yet run. The theme pipeline is compared with the PM's own worry

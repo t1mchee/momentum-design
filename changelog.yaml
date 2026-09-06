@@ -3,10 +3,29 @@
 # summary, changes (what), reasoning (why), status (done | current | planned).
 
 entries:
+  - version: v2-draft-6
+    date: "2026-09-06"
+    file: versions/v2-draft-6.yaml
+    status: current
+    summary: The AI-use fix from the two rubric evaluations, plus the agreed writing items; validation steps marked on the canvas.
+    changes:
+      - "A keyword extractor runs beside the language model in both extraction steps (filings and news), scored on the same hand labels, and its statements are kept as a second series."
+      - "The tail model's ablation gains step 2a (keyword carriers) and step 2b (model carriers); if 2b does not beat 2a by the registered margin, the memo says the model adds nothing to identification and the keyword extractor takes its place."
+      - "The known-theme assumption's failure case is stated in the header, with the 77-of-86 finding as its measure."
+      - "Definitions added to the legend: comparator, seal, design tier, validation. The catalyst example is made self-contained."
+      - "A direction of bias written for the covariance caveat, the 13F lag, the missing options history, the live-date encoder and headline-only news."
+      - "Margins proposed and frozen for the tail-model scoring (breach rate 3 to 7 per cent; pinball loss 5 per cent below the event-density baseline; step 2b 2 per cent below 2a) and for the event study (200bp over matched names, same sign in four of five unwinds)."
+      - "A proof-of-concept path in the header: the components that run on public, as-of data today, what they produce, and what is deferred."
+      - "Validation components carry validation: true and render with their own shape, a notched purple card, in both viewers; the legend panel shows the proof-of-concept path."
+    reasoning: >
+      Both rubric evaluators capped AI use at 2 because the extraction steps had no deterministic comparator,
+      and both said the design could not show that a language model beats a keyword rule. The other items are
+      the ones both listed as raising the total most and are writing rather than new components.
+
   - version: v2-draft-5
     date: "2026-09-06"
     file: versions/v2-draft-5.yaml
-    status: current
+    status: done
     summary: The fix list applied in full. Standalone spec; every number and definition supplied; coinages replaced; rules in plain sentences.
     changes:
       - "A. Mechanical: the eight edges from retired nodes removed; six series everywhere; inputs that nothing produced now have a producer; duplicate edges merged; the seal contradiction resolved by labelling every v2 test design tier; the contagion-list test timed after the unwind starts; lane names lose their step numbers."

@@ -3,10 +3,26 @@
 # summary, changes (what), reasoning (why), status (done | current | planned).
 
 entries:
+  - version: v2-draft-5
+    date: "2026-09-06"
+    file: versions/v2-draft-5.yaml
+    status: current
+    summary: The fix list applied in full. Standalone spec; every number and definition supplied; coinages replaced; rules in plain sentences.
+    changes:
+      - "A. Mechanical: the eight edges from retired nodes removed; six series everywhere; inputs that nothing produced now have a producer; duplicate edges merged; the seal contradiction resolved by labelling every v2 test design tier; the contagion-list test timed after the unwind starts; lane names lose their step numbers."
+      - "B. Definitions and numbers: the driving series (highest time-series percentile that month); the bp-loss mechanism (weights, loadings and carrier betas times minus two component sigma over ten days); historical catalyst dates from 8-K filing dates and macro calendars, supplied by the market-data node; one positioning quintile, within each leg; the case-flag rule (leg means opposite in sign and above 0.1); a 24-month minimum history for percentiles; the joint family trigger for pages; a ten-day catalyst window starting five sessions before; price-only carriers defined; R-squared cutoff 0.5; residual clusters formed by HDBSCAN; cluster size 25 and 50 nearest statements; the encoder described as a masked LM with a date cutoff, pooled and fine-tuned; a Jaccard stability check; comomentum and 13F crowding per name defined; a 126-day sensitivity window with the unspecified comparison dropped; hedgeable units defined; series units stated; dollar-neutral legs; the reversal record defined and housed with the French file; the aptness rule; the page-scoring base rate; the response-log base rate; blind prompts described."
+      - "C. Vocabulary: twin, canary, anchor, signature, lane, line, reading, headline, fire, bump, rung, time bombs, mass, crescendo view, instrument, machinery, banner, standing state, bites, vehicle, flatten, fingerprinted, gap, engine check and object are gone; conferred, carried, quote gate, case flag, context layer, event stream, catalyst window, hit, miss, silence, placebo, embargo and supersession stay, each defined at first use."
+      - "D. A legend in the spec's meta for status, origin, look-ahead, row and the quote gate, rendered in both viewers; the known-theme assumption stated once and used instead of 'crescendo view'."
+      - "E and F. Every synthesis and every rule rewritten in plain sentences with a named agent; edges carry when and mode separately."
+      - "Structure: the spec no longer extends the v1 baseline; carried-over components are marked origin v1."
+    reasoning: >
+      Tim accepted every proposal in fixes-for-draft5.md. The parsimony cuts are not applied; the design is
+      written so that they can be applied later without reopening these fixes.
+
   - version: v2-draft-4
     date: "2026-09-06"
     file: versions/v2-draft-4.yaml
-    status: current
+    status: done
     summary: The thirteen decisions applied; every node carries a look-ahead label; data feeds labelled by access.
     changes:
       - "D1 one tail model: the vol model is retired and its regressors, a catalyst-window indicator, GARCH and an event-density baseline enter the severity quantile regression; lower-tail target; ablation ladder reported every run."

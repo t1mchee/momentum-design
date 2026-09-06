@@ -1,6 +1,6 @@
-# Hierarchy for the levels view. Groups nest: a group's children are node ids from the merged spec, or other
-# groups. `synthesis` is the one-paragraph articulation of what the grouped step does, written for the reader.
-# `brief` names the required element(s) of the brief the group answers. Order is reading order.
+# Hierarchy for the levels view. Groups nest: a group's children are node ids from the spec, or other groups.
+# `synthesis` is a one-paragraph statement of what the step does, written for the reader of the memo.
+# `brief` names the required element of the brief the group answers. Order is reading order.
 
 groups:
   - id: g_inputs
@@ -8,67 +8,113 @@ groups:
     short: Inputs
     brief: "Element 2, data design: market, text and positioning; timestamping and point-in-time availability."
     synthesis: >
-      The three kinds of information the brief asks for, each keyed to the moment it became public: prices and a
-      point-in-time universe; company filings and news; positioning. Every feed is labelled public, licensed or
-      desk-only, so the reader can see which parts of the design run today on public data and which need a
-      purchase.
+      The brief asks for three kinds of information: prices and a point-in-time universe, company filings and
+      news, and positioning. Each record is dated at the moment it became public. Every feed is labelled public,
+      licensed or desk-only, so the reader can see which parts of the design run today on public data and which
+      need a purchase. Every component in the design also carries a look-ahead label: clean means it uses only
+      values public on the date; as-of means the values exist but must be taken at their release date; model
+      means a model trained after the date reads text from inside it, with the mitigation stated; live only
+      means no mitigation exists and the component is excluded from every backtest; human means a person's
+      input that a backtest must run without.
     children:
       - id: g_market
-        name: Market data
+        name: Market data and calendars
         short: Market
-        synthesis: Prices with corporate actions, the index constituents as they stood on each date, six macro reference series with first-print vintages, the French factor file for thresholds, and options-implied event moves as the market's own price of a catalyst.
+        synthesis: >
+          Market data covers daily prices adjusted for corporate actions; the index constituents as they stood
+          on each date; six macro reference series, with first-print vintages where a series is revised; the
+          French factor file, used for a long history and to set the reversal thresholds; the earnings and
+          macro calendars, which supply the catalyst dates the backtest uses; and options-implied event moves,
+          which give the price the options market charges for a given catalyst.
         children: [prices, refseries, french, options]
       - id: g_text
         name: Text, in layers
         short: Text
-        synthesis: Company text in a context layer (10-K and 10-Q risk factors) and an event stream (8-Ks, transcripts), and news in a slow lane that builds the context space and a fast lane that feeds the catalyst agent.
+        synthesis: >
+          Company text comes in two layers: a context layer (the risk-factor sections of 10-Ks and 10-Qs) and
+          an event stream (8-Ks and earnings-call transcripts). News is processed twice: a slow process over a
+          rolling twelve-month archive builds the embedding space in which themes are placed, and a fast process
+          over the last five sessions supplies the catalyst proposer.
         children: [filings, news]
       - id: g_positioning_data
-        name: Positioning data
+        name: Positioning feeds and score
         short: Positioning
-        synthesis: A score per name from within-leg co-movement and 13F crowding, with short interest as the loser-leg reading and the maximum input lag printed on the day it is used.
+        synthesis: >
+          Each name gets a positioning score from two inputs, within-leg co-movement and 13F crowding. Short
+          interest is reported separately as the measure for the loser leg. Whenever the page prints the score
+          it also prints the longest reporting lag among the score's inputs.
         children: [posdata]
 
   - id: g_book
-    name: 2. The book, and the bets the ranking rule conferred on it
+    name: 2. The book and the exposures the ranking rule gave it
     short: The book
-    brief: "Element 1, problem definition: the exposure monitored is the 12-1 book; what it holds is a public record of the bet the market has assembled."
+    brief: "Element 1, problem definition: the exposure monitored is the 12-1 book, whose holdings are a public record of what the market has been paying for."
     synthesis: >
-      Rebuild the 12-1 momentum book monthly, then measure which macro bets the ranking rule conferred on it, in
-      hedgeable units, against random portfolios of the same size and sector mix. A reading then means "the sort
-      did this", not "any book would". The driving-series line is the one exposure a desk trades against.
+      Rebuild the 12-1 momentum book monthly. Then measure which macro exposures the ranking rule gave the
+      book, in hedgeable units, and compare each against random portfolios of the same size and sector mix. An
+      exposure is conferred when the ranking window selected it and carried when the book still holds it over
+      the holding period. The comparison separates what the sort did from what any book of that size would
+      show. The driving series is the one of the six on which the book's exposure is most unusual against its
+      own history that month; the exposure to it is the one a desk would actually hedge.
     children: [sort, random, controls, sensitivities, zscore, route2]
 
   - id: g_theme
-    name: 3. Naming the shared bet, and where it has spread
+    name: 3. Naming the shared bet and where it has spread
     short: The theme
-    brief: "Element 3, system design: where text, retrieval and LLMs add value over conventional methods, and which parts are deterministic."
+    brief: "Element 3, system design: where text, retrieval and language models add value over conventional methods, and which parts are deterministic."
     synthesis: >
-      Find the one thing the book's names move on together, name it from what the companies themselves wrote,
-      anchored in a context space built from news and the PM's own worry list, and then find where else in the
-      book and the universe that theme has spread. Decomposition and clustering are deterministic; the LLM
-      extracts, names and propagates, behind a verbatim-quote gate and a retrieval twin. This is the stage where
-      AI does work covariance cannot, and the stage the look-ahead labels guard most closely.
+      First find the single factor on which the book's names move together. Then name that factor from the
+      companies' own filings, by placing their risk statements in an embedding space built from news and from a
+      list of worries the PM maintains. Finally, search the rest of the book and the crowded names for other
+      companies whose filings carry the same theme; a name carries the theme when its filings contain a risk
+      statement assigned to it, with the quote. The decomposition and the clustering are deterministic. The
+      language model does three separate jobs: it extracts risk statements from filings, it names a cluster
+      that matches no list entry, and it scores candidate names for the theme. Each of its outputs must quote
+      its source verbatim, and each runs beside a comparator, a method that does the same job without a
+      language model and is printed beside it. This step is the one most exposed to look-ahead, so its
+      look-ahead labels are the most detailed in the design.
     children:
       - id: g_decompose
         name: Decompose the book
         short: Decompose
-        synthesis: A shrunk covariance of the book's names, its leading components above the noise edge, the share of the book's variance each carries against random books, a flag for when the component is the momentum factor itself, and a regression on the six series that says whether arithmetic already named it.
+        synthesis: >
+          Compute a shrunk covariance matrix over the book's names and take its leading components, keeping
+          only those whose eigenvalue exceeds the random-matrix noise threshold. For each component, report the
+          share of the book's variance it explains, compared with the same statistic on random books. Flag any
+          component whose loadings have opposite signs across the two legs, since that component is the momentum
+          factor itself rather than a theme. Regress each component's return on the six reference series: a
+          high R-squared means the component is already explained by a named macro series and the text step
+          will only confirm it.
         children: [covariance, pca, bridge]
       - id: g_context
-        name: Build the context space
+        name: Build the embedding space
         short: Context
-        synthesis: A date-constrained embedding space in which "vaccine timing" and "travel resumption" are neighbours, built from news risk statements and anchored on a registered taxonomy of about thirty external conditions that the PM edits.
+        synthesis: >
+          An embedding space built from news risk statements with an encoder trained only on text published
+          before each date, so that phrases such as "vaccine timing" and "travel resumption" sit close together.
+          Reference points in the space are fixed from a registered list of about thirty external conditions,
+          which the PM edits.
         children: [newsagent, taxonomy, embedspace, pmworries]
       - id: g_name
         name: Name the component from its filings
         short: Name
-        synthesis: Read what the component's companies say would hurt them, as verbatim quotes with a sign, assign them in the context space against a sector-matched placebo, and name the cluster with the deterministic label printed beside the model's.
+        synthesis: >
+          From each component company's filings, extract the risks the company says would hurt it, as verbatim
+          quotes, each marked with whether the company gains or loses if the risk materialises. Assign the
+          quotes to the nearest list entry in the embedding space and compare the resulting weight with the same
+          procedure run on sector-matched random companies. Then name the cluster; the model's name is printed
+          beside a deterministic keyword label so the reader can check one against the other.
         children: [pc1text, riskextract, cluster, namecluster]
       - id: g_propagate
-        name: Propagate, and the two theme numbers
+        name: Search other names, and the two theme statistics
         short: Propagate
-        synthesis: Scan the rest of the book and the crowded quintile for the theme's signature, retrieval first and LLM rerank second, then print two placebo-referenced numbers, the book's variance share on the theme and the share of book weight carrying it in the loss direction, converted to bp.
+        synthesis: >
+          Search the rest of the book and the top positioning quintile for names whose filings carry the same
+          theme: retrieval by embedding first, then a language-model ranking of the candidates. Then print two
+          statistics, each beside its random-book comparison: the share of the book's variance explained by the
+          theme component, and the share of book weight held in names that would lose if the theme reverses.
+          The second is also expressed as a loss in basis points if the component returns minus two standard
+          deviations over ten days.
         children: [propagate, themescore]
 
   - id: g_crowding
@@ -76,9 +122,10 @@ groups:
     short: Crowding
     brief: "Element 3, positioning and crowding information integrated with the text reading."
     synthesis: >
-      Cross the theme with positioning. Where the crowded quintile and the theme carriers overlap is the consensus
-      bet; the non-overlap is where the design looks for names that would pay in an unwind, before the catalyst
-      and after it starts, each list registered for an event study before it is printed.
+      Compare the theme with positioning. Names that are both heavily positioned and carry the theme are the
+      consensus bet, and the two lists of vulnerable names are drawn from them: names that have rallied with the
+      component before the catalyst, and names that have not yet moved after an unwind has started. Each list is
+      registered for an event study before it appears on any page.
     children: [poscluster, timebombs]
 
   - id: g_tail
@@ -86,59 +133,79 @@ groups:
     short: Tail and catalysts
     brief: "Element 6, horizon and severity; element 3, statistical modelling against conventional baselines."
     synthesis: >
-      One conditional tail model: the 5% quantile of the book's ten-day return with the theme share, the
-      positioning overlap and the next approved catalyst inside it, scored against GARCH and a calendar-aware
-      event-density baseline on an ablation ladder that says what the text added. Catalysts are proposed live by
-      a model from news and approved by the PM; scheduled ones come from calendars. Analogues give the historical
+      There is one conditional tail model. It is a regression for the 5% quantile of the book's ten-day
+      return, with the theme share, the positioning overlap and the timing of the next catalyst as regressors.
+      The output in a PM's units is a ten-day 5% VaR and expected shortfall in basis points of book, and how much
+      worse both become inside a catalyst window. It is scored against a GARCH model and against a baseline that
+      knows the earnings calendar, and a sequence of ablations reports how much the text features add over the
+      price-only features. Scheduled catalysts come from calendars; company-specific and off-universe
+      catalysts are proposed live by a model from news and approved by the PM. Analogues give the historical
       context without a model.
     children:
       - id: g_severity
         name: The tail model
         short: Tail model
-        synthesis: A quantile regression fitted only on data up to each formation date, reporting VaR, ES, the catalyst-window VaR and the ablation ladder every run.
+        synthesis: >
+          A quantile regression, refitted at each formation date on data up to that date only. Every run
+          reports the VaR, the expected shortfall, the VaR conditional on being inside a catalyst window, and
+          the ablation sequence.
         children: [severity, garch, eventbaseline]
       - id: g_catalysts
         name: Catalysts
         short: Catalysts
-        synthesis: Scheduled catalysts from calendars deterministically; company and off-universe catalysts proposed by a model with a date and a quote, live only, and approved by the PM.
+        synthesis: >
+          Scheduled catalysts (FOMC, CPI, payrolls, index rebalances, the component names' earnings) are taken
+          from calendars with no model. Company-specific and off-universe catalysts are proposed by a language
+          model, each with a date and a source quote, and approved by the PM. That model runs only on live data
+          and is excluded from the backtest.
         children: [catagent, catapprove]
       - id: g_analogue
         name: Analogues
         short: Analogues
-        synthesis: The five nearest past states with what followed, quiet outcomes included, under a one-year embargo.
+        synthesis: >
+          The five past dates whose state was nearest to today's, with what the book did over the following ten
+          days, including the dates on which nothing happened. Dates within one year of today are excluded, and
+          a deterministic rule says whether each analogue is apt.
         children: [analogue]
 
   - id: g_output
-    name: 6. What the PM sees, and does
+    name: 6. What the PM sees and does
     short: Output
     brief: "Element 6, the example output; element 3, which parts require human review; element 7, the daily process."
     synthesis: >
-      A page fires five sessions before an approved catalyst or when the book's own readings cross their history.
-      It carries the theme and its share, the bp loss if it reverses and in which direction, the VaR beside the
-      market's price of the hedge, the time-bomb lists, the catalysts, and what changed. Prose is composed over
-      fixed fields with every numeral gated. The PM acknowledges, edits the taxonomy, approves catalysts, and the
-      responses are logged, which is the only measure of whether a page changed a decision.
-    children: [eventrule, composer, thepage, falsifiers, signoff, responselog]
+      A page is produced five sessions before an approved catalyst, or whenever one of the book's own statistics
+      crosses the 95th percentile of its own history. The page reports the theme and its variance share; the
+      loss in basis points if the theme reverses, and the direction of that loss; the VaR beside the
+      market-implied cost of hedging it; the two lists of vulnerable names; the catalysts; and what changed since
+      the last page. A language model writes the prose over fixed fields, and a check rejects the page if any
+      number in the prose fails to match the field it came from. The PM acknowledges the page, edits the worry
+      list and approves catalysts. Whether the PM looked at, ignored or acted on each page is logged; that log
+      is the only measure the design has of whether a page changed a decision, and it is a production item,
+      since it needs the PM's positions.
+    children: [eventrule, composer, thepage, signoff, responselog]
 
   - id: g_validation
     name: 7. How we know it works
     short: Validation
     brief: "Element 5, validation plan and evidence: baselines, ablations, leakage controls, registered tests."
     synthesis: >
-      Every test is registered before it runs with both outcome sentences written first. The tail model is
-      scored on breach rate and pinball loss against two baselines; the time-bomb lists face an event study on
-      five recorded unwinds; extraction error is measured on hand labels split at the model's training cutoff,
-      which bounds look-ahead; and the theme machinery is scored against the PM's own list, the number that says
-      whether the AI adds anything a trader would not have typed.
+      Every test is registered before it runs, with the pass threshold and the sentence the memo will carry in
+      each outcome written down in advance. The tail model is scored on breach rate and pinball loss against two
+      baselines; not yet run in v2. The lists of vulnerable names are tested in an event study over five recorded
+      unwinds; not yet run. Extraction error is measured on hand-labelled records, split into those dated before
+      and after the model's training cutoff; the gap between the two error rates bounds how much the model may
+      be recalling rather than reading; not yet run. The theme pipeline is compared with the PM's own worry
+      list, which shows whether it surfaces anything a trader would not have typed himself; a production
+      measurement. From v1, the severity breach test on held-out years has run: 2 breaches in 42 forecasts.
     children: [register, labels, volvalidation, bombtest, themevalidation]
 
   - id: g_retired
     name: Retired from the first design
     short: Retired
-    brief: "Kept for the record; each carries the reason it went."
+    brief: "Kept for the record, each with the reason it was replaced."
     synthesis: >
-      Components of the first design that the redesign replaced or refuted: the three-route taxonomy and its
-      detectors, the separate vol model, the labeller, the three-role analogue panel, and the referee roles that
-      belong in the memo's AI-use section.
+      Components of the first design that the redesign replaced or refuted, each kept with the reason: the
+      three-route taxonomy and its detectors, the separate vol model, the labeller, the three-role analogue
+      panel, and the referee roles, which now belong in the memo's section on AI use.
     hidden: true
     children: [route1, route3, classify, volmodel, labeller, panel, referees]

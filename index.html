@@ -107,7 +107,8 @@ const NODE_W=200;
 const SPEC=new URLSearchParams(location.search).get('spec')||'spec.yaml';
 let spec=null, lastText='', sel=null, view={x:20,y:20,k:1}, rankdir='TB', layoutCache=null;
 const world=document.getElementById('world'), stage=document.getElementById('stage'), svg=document.getElementById('edges');
-const SOFT=/unrun|refuted|never done|registered|join/i;
+const SOFT=/unrun|refuted|never done|registered|join|live only|backtest only/i;
+const softEdge=(e)=>SOFT.test((e.when||'')+' '+(e.mode||''));
 
 async function loadSpec(path){
   const r=await fetch(path+'?t='+Date.now(),{cache:'no-store'}); const t=await r.text(); return {text:t, doc:jsyaml.load(t)};
@@ -140,7 +141,7 @@ function renderHistory(){
   const cur=(spec&&spec.meta&&spec.meta.version)||'';
   const ent=(changelog.entries||[]).map(e=>`<div class="ce${e.version===cur?' cur':''}"><div class="cv"><a href="?spec=${esc(e.file)}">${esc(e.version)}</a> <span class="cd">${esc(e.date)}${e.commit?' · '+esc(e.commit):''}${e.status==='current'?' · current':''}</span></div><div class="cs">${esc(e.summary)}</div><div class="k">What changed</div>${list(e.changes)}<div class="k">Why</div><div class="cr">${esc(e.reasoning)}</div></div>`).join('');
   const pl=(changelog.planned||[]).length?`<div class="k" style="margin-top:18px">Planned</div>${list(changelog.planned)}`:'';
-  document.getElementById('hbody').innerHTML=`<h2>History</h2><div class="cd">Click a version to load that snapshot. The live spec is spec.yaml.</div>${ent}${pl}`;
+  document.getElementById('hbody').innerHTML=`<h2>History</h2><div class="cd">Click a version to load that snapshot. The live spec is spec.yaml.</div>${legendHTML()}${ent}${pl}`;
 }
 function toggleHistory(){document.getElementById('history').classList.toggle('open');}
 function esc(s){return String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
@@ -177,7 +178,7 @@ function render(){
   const hasIn=new Set(edges.filter(e=>!e.hidden&&!e.feedback).map(e=>e.to));
   g.setNode('__root',{width:1,height:1});
   nodes.forEach(n=>{ if(n.status==='retired'){ if(byIdN.thepage) g.setEdge('thepage',n.id,{weight:1,minlen:1},'sink_'+n.id); } else if(!hasIn.has(n.id)) g.setEdge('__root',n.id,{weight:30,minlen:1},'root_'+n.id); });
-  edges.forEach((e,i)=>{ if(els[e.from]&&els[e.to]&&!e.feedback) g.setEdge(e.from,e.to,{weight:e.hidden?1:(SOFT.test(e.when||'')?1:3), minlen:1},'e'+i); });
+  edges.forEach((e,i)=>{ if(els[e.from]&&els[e.to]&&!e.feedback) g.setEdge(e.from,e.to,{weight:e.hidden?1:(softEdge(e)?1:3), minlen:1},'e'+i); });
   dagre.layout(g);
   const gw=g.graph().width, gh=g.graph().height;
   nodes.forEach(n=>{const p=g.node(n.id); els[n.id].style.left=(p.x-p.width/2)+'px'; els[n.id].style.top=(p.y-p.height/2)+'px';});
@@ -189,10 +190,10 @@ function render(){
     if(e.feedback){ const a=g.node(e.from), b=g.node(e.to); const x0=a.x-a.width/2, y0=a.y, x1=b.x-b.width/2, y1=b.y; const bulge=Math.max(60,Math.abs(y1-y0)/4); pts=[{x:x0,y:y0},{x:x0-bulge,y:y0},{x:x1-bulge,y:y1},{x:x1,y:y1}]; }
     else { const ge=g.edge(e.from,e.to,'e'+i); if(!ge) return; pts=ge.points; }
     const d=e.feedback?`M${pts[0].x},${pts[0].y} C${pts[1].x},${pts[1].y} ${pts[2].x},${pts[2].y} ${pts[3].x},${pts[3].y}`:smooth(pts);
-    const p=document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d',d); const retiredEdge=(byIdN[e.from]&&byIdN[e.from].status==='retired')||(byIdN[e.to]&&byIdN[e.to].status==='retired'); p.setAttribute('class','e'+((e.feedback||SOFT.test(e.when||''))?' soft':'')+(retiredEdge?' retired':'')); p.setAttribute('marker-end','url(#ah)'); p.dataset.from=e.from; p.dataset.to=e.to; p.dataset.i=i; svg.appendChild(p);
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d',d); const retiredEdge=(byIdN[e.from]&&byIdN[e.from].status==='retired')||(byIdN[e.to]&&byIdN[e.to].status==='retired'); p.setAttribute('class','e'+((e.feedback||softEdge(e))?' soft':'')+(retiredEdge?' retired':'')); p.setAttribute('marker-end','url(#ah)'); p.dataset.from=e.from; p.dataset.to=e.to; p.dataset.i=i; svg.appendChild(p);
     const h=document.createElementNS('http://www.w3.org/2000/svg','path'); h.setAttribute('d',d); h.setAttribute('class','hit'); svg.appendChild(h);
     const mid=e.feedback?{x:(pts[1].x+pts[2].x)/2,y:(pts[1].y+pts[2].y)/2}:pts[Math.floor(pts.length/2)];
-    const lab=document.createElement('div'); lab.className='elabel'; lab.id='lab'+i; lab.textContent=[e.carries,e.when].filter(Boolean).join(' · '); lab.style.left=mid.x+'px'; lab.style.top=mid.y+'px'; world.appendChild(lab);
+    const lab=document.createElement('div'); lab.className='elabel'; lab.id='lab'+i; lab.textContent=[e.carries,e.when,e.mode].filter(Boolean).join(' · '); lab.style.left=mid.x+'px'; lab.style.top=mid.y+'px'; world.appendChild(lab);
     h.onmouseenter=()=>{lab.classList.add('show');p.classList.add('on');svg.classList.add('focus');};
     h.onmouseleave=()=>{if(!lab.classList.contains('pin')) lab.classList.remove('show'); if(!sel){p.classList.remove('on');svg.classList.remove('focus');}else focus();};
     h.onclick=(ev)=>{ev.stopPropagation(); const was=lab.classList.contains('pin'); world.querySelectorAll('.elabel.pin').forEach(l=>l.classList.remove('pin','show')); if(!was){lab.classList.add('pin','show');}};
@@ -216,12 +217,13 @@ function focus(id){
   paths.forEach(p=>{const on=p.dataset.from===id||p.dataset.to===id; p.classList.toggle('on',on); p.setAttribute('marker-end',on?'url(#ahd)':'url(#ah)'); if(on){nb.add(p.dataset.from);nb.add(p.dataset.to);} document.getElementById('lab'+p.dataset.i).classList.toggle('show',false);});
   cards.forEach(c=>{c.classList.toggle('dim',!nb.has(c.dataset.id)); c.classList.toggle('sel',c.dataset.id===sel);});
 }
+function legendHTML(){ const L=(spec&&spec.meta&&spec.meta.legend)||null; if(!L) return ''; return '<div class="k" style="margin-top:14px">Legend</div><ul>'+Object.entries(L).map(([k,v])=>'<li><b>'+esc(k)+'</b>: '+esc(String(v))+'</li>').join('')+'</ul>'; }
 function list(a){return (a&&a.length)?'<ul>'+a.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'<span style="color:var(--muted)">none</span>';}
 function showPanel(n){
   const ins=(spec.edges||[]).filter(e=>e.to===n.id&&!e.hidden), outs=(spec.edges||[]).filter(e=>e.from===n.id&&!e.hidden);
   const byId=Object.fromEntries(spec.nodes.map(x=>[x.id,x]));
-  const io=(arr,dir)=>arr.length?'<ul class="io">'+arr.map(e=>`<li><b>${esc((byId[dir==='in'?e.from:e.to]||{}).name||'')}</b>: ${esc(e.carries||'')}${e.when?' <span style="color:var(--muted)">('+esc(e.when)+')</span>':''}</li>`).join('')+'</ul>':'<span style="color:var(--muted)">none</span>';
-  document.getElementById('pbody').innerHTML=`<h2>${esc(n.name)}</h2><div class="kd">${esc(n.kind||'')} · ${esc(n.status||'')} · ${esc(laneName(n.lane))}${n.role?' · role '+esc(n.role):''}${n.row?' · row '+esc(n.row):''}${n.memo?' · memo '+esc(n.memo):''}</div>
+  const io=(arr,dir)=>arr.length?'<ul class="io">'+arr.map(e=>`<li><b>${esc((byId[dir==='in'?e.from:e.to]||{}).name||'')}</b>: ${esc(e.carries||'')}${(e.when||e.mode)?' <span style="color:var(--muted)">('+esc([e.when,e.mode].filter(Boolean).join(', '))+')</span>':''}</li>`).join('')+'</ul>':'<span style="color:var(--muted)">none</span>';
+  document.getElementById('pbody').innerHTML=`<h2>${esc(n.name)}</h2><div class="kd">${esc(n.kind||'')} · ${esc(n.status||'')}${n.origin?' · '+esc(n.origin):''} · ${esc(laneName(n.lane))}${n.role?' · role '+esc(n.role):''}${n.row?' · row '+esc(n.row):''}${n.memo?' · memo '+esc(n.memo):''}</div>
   ${n.lookahead?`<div class="k">Look-ahead</div><div><span class="chip la-${esc(n.lookahead)}">${esc(n.lookahead)}</span> ${esc(n.mitigation||'')}</div>`:''}
   ${n.access?`<div class="k">Access</div><div><span class="chip ac-${esc(n.access)}">${esc(n.access)}</span> feeds labelled PUBLIC / LICENSED / DESK-ONLY in the rule</div>`:''}
   ${n.v1?`<div class="k">Replaces (v1)</div><div>${esc(n.v1)}</div>`:''}

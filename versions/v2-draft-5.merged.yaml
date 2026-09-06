@@ -1,3 +1,4 @@
+# Snapshot of spec.yaml at v2-draft-5 (standalone; identical to the merged form).
 # System design v2, draft 5. Standalone (no base file). Applies docs/design/fixes-for-draft5.md in full:
 # dangling references removed, every number and definition supplied, coinages replaced by plain words,
 # rules rewritten with a finite verb and a named agent. Retired components stay, with no edges.

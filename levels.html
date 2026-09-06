@@ -96,7 +96,8 @@ const SPEC=new URLSearchParams(location.search).get('spec')||'spec.yaml';
 const NODE_W=200, GROUP_W=270;
 let spec=null, groups=null, lastKey='', sel=null, view={x:20,y:20,k:1}, expanded=new Set(), showRetired=false, layoutCache=null;
 const world=document.getElementById('world'), stage=document.getElementById('stage'), svg=document.getElementById('edges');
-const SOFT=/unrun|refuted|never done|registered|join|live only/i;
+const SOFT=/unrun|refuted|never done|registered|join|live only|backtest only/i;
+const softEdge=(e)=>SOFT.test((e.when||'')+' '+(e.mode||''));
 
 async function loadText(path){const r=await fetch(path+'?t='+Date.now(),{cache:'no-store'});return r.text();}
 function mergeSpec(over, base){
@@ -178,7 +179,7 @@ function render(){
   clusters.forEach(gid=>{ const p=parentOf[gid]; if(p&&expanded.has(p)&&clusters.includes(p)) g.setParent('cl_'+gid,'cl_'+p); });
   // aggregate edges
   const agg={};
-  spec.edges.forEach(e=>{ if(e.hidden) return; if(isHidden(e.from)||isHidden(e.to)) return; const a=rep(e.from), b=rep(e.to); if(a===b) return; if(!visible.has(a)||!visible.has(b)) return; const k=a+'>'+b; (agg[k]??={from:a,to:b,items:[],feedback:!!e.feedback,soft:SOFT.test(e.when||'')}).items.push(e); if(!e.feedback) agg[k].feedback=false; });
+  spec.edges.forEach(e=>{ if(e.hidden) return; if(isHidden(e.from)||isHidden(e.to)) return; const a=rep(e.from), b=rep(e.to); if(a===b) return; if(!visible.has(a)||!visible.has(b)) return; const k=a+'>'+b; (agg[k]??={from:a,to:b,items:[],feedback:!!e.feedback,soft:softEdge(e)}).items.push(e); if(!e.feedback) agg[k].feedback=false; });
   Object.values(agg).forEach((ae,i)=>{ if(!ae.feedback) g.setEdge(ae.from,ae.to,{weight:Math.min(6,ae.items.length),minlen:1},'e'+i); ae.i=i; });
   // reading-order constraints: consecutive visible siblings (groups.yaml order) are chained with invisible edges
   const chain=(siblings)=>{ const vis=siblings.filter(id=>visible.has(id)); for(let i=1;i<vis.length;i++){ g.setEdge(vis[i-1],vis[i],{weight:60,minlen:1},'chain_'+vis[i]); } };
@@ -204,7 +205,7 @@ function render(){
     const p=document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d',d); p.setAttribute('class','e'+((ae.feedback||ae.soft)?' soft':'')+(ae.items.length>1?' agg':'')); p.setAttribute('marker-end','url(#ah)'); p.dataset.from=ae.from; p.dataset.to=ae.to; p.dataset.i=ae.i; svg.appendChild(p);
     const h=document.createElementNS('http://www.w3.org/2000/svg','path'); h.setAttribute('d',d); h.setAttribute('class','hit'); svg.appendChild(h);
     const mid=ae.feedback?{x:(pts[1].x+pts[2].x)/2,y:(pts[1].y+pts[2].y)/2}:pts[Math.floor(pts.length/2)];
-    const lab=document.createElement('div'); lab.className='elabel'; lab.id='lab'+ae.i; lab.innerHTML=ae.items.slice(0,6).map(e=>`${esc(byId[e.from]?byId[e.from].name:e.from)} → ${esc(byId[e.to]?byId[e.to].name:e.to)}: ${esc(e.carries||'')}${e.when?' <span style="color:#6b7280">('+esc(e.when)+')</span>':''}`).join('<br>')+(ae.items.length>6?`<br>… ${ae.items.length-6} more`:''); lab.style.left=mid.x+'px'; lab.style.top=mid.y+'px'; world.appendChild(lab);
+    const lab=document.createElement('div'); lab.className='elabel'; lab.id='lab'+ae.i; lab.innerHTML=ae.items.slice(0,6).map(e=>`${esc(byId[e.from]?byId[e.from].name:e.from)} → ${esc(byId[e.to]?byId[e.to].name:e.to)}: ${esc(e.carries||'')}${(e.when||e.mode)?' <span style="color:#6b7280">('+esc([e.when,e.mode].filter(Boolean).join(', '))+')</span>':''}`).join('<br>')+(ae.items.length>6?`<br>… ${ae.items.length-6} more`:''); lab.style.left=mid.x+'px'; lab.style.top=mid.y+'px'; world.appendChild(lab);
     h.onmouseenter=()=>{lab.classList.add('show');p.classList.add('on');svg.classList.add('focus');};
     h.onmouseleave=()=>{if(!lab.classList.contains('pin')) lab.classList.remove('show'); if(!sel){p.classList.remove('on');svg.classList.remove('focus');}else focus();};
     h.onclick=(ev)=>{ev.stopPropagation(); const was=lab.classList.contains('pin'); world.querySelectorAll('.elabel.pin').forEach(l=>l.classList.remove('pin','show')); if(!was){lab.classList.add('pin','show');}};
@@ -219,13 +220,14 @@ function focus(id){ id=id||sel; const paths=svg.querySelectorAll('path.e'), labs
   const nb=new Set([id]); svg.classList.add('focus');
   paths.forEach(p=>{const on=p.dataset.from===id||p.dataset.to===id; p.classList.toggle('on',on); p.setAttribute('marker-end',on?'url(#ahd)':'url(#ah)'); if(on){nb.add(p.dataset.from);nb.add(p.dataset.to);} const l=document.getElementById('lab'+p.dataset.i); if(l) l.classList.toggle('show',false);});
   cards.forEach(c=>{c.classList.toggle('dim',!nb.has(c.dataset.id)); c.classList.toggle('sel',c.dataset.id===sel);}); }
+function legendHTML(){ const L=(spec&&spec.meta&&spec.meta.legend)||null; if(!L) return ''; return '<div class="k" style="margin-top:14px">Legend</div><ul>'+Object.entries(L).map(([k,v])=>'<li><b>'+esc(k)+'</b>: '+esc(String(v))+'</li>').join('')+'</ul>'; }
 function list(a){return (a&&a.length)?'<ul>'+a.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'<span style="color:var(--muted)">none</span>';}
 function showPanel(n){
   const byId=Object.fromEntries(spec.nodes.map(x=>[x.id,x]));
   const ins=spec.edges.filter(e=>e.to===n.id&&!e.hidden), outs=spec.edges.filter(e=>e.from===n.id&&!e.hidden);
-  const io=(arr,dir)=>arr.length?'<ul>'+arr.map(e=>`<li><b>${esc((byId[dir==='in'?e.from:e.to]||{}).name||'')}</b>: ${esc(e.carries||'')}${e.when?' <span style="color:var(--muted)">('+esc(e.when)+')</span>':''}</li>`).join('')+'</ul>':'<span style="color:var(--muted)">none</span>';
+  const io=(arr,dir)=>arr.length?'<ul>'+arr.map(e=>`<li><b>${esc((byId[dir==='in'?e.from:e.to]||{}).name||'')}</b>: ${esc(e.carries||'')}${(e.when||e.mode)?' <span style="color:var(--muted)">('+esc([e.when,e.mode].filter(Boolean).join(', '))+')</span>':''}</li>`).join('')+'</ul>':'<span style="color:var(--muted)">none</span>';
   const path=ancestors(n.id).map(g=>gById[g].short||gById[g].name).join(' › ');
-  document.getElementById('pbody').innerHTML=`<h2>${esc(n.name)}</h2><div class="kd">${esc(path)} · ${esc(n.kind||'')} · ${esc(n.status||'')}${n.memo?' · memo '+esc(n.memo):''}</div>
+  document.getElementById('pbody').innerHTML=`<h2>${esc(n.name)}</h2><div class="kd">${esc(path)} · ${esc(n.kind||'')} · ${esc(n.status||'')}${n.origin?' · '+esc(n.origin):''}${n.memo?' · memo '+esc(n.memo):''}</div>
   ${n.lookahead?`<div class="k">Look-ahead</div><div><span class="chip la-${esc(n.lookahead)}">${esc(n.lookahead)}</span> ${esc(n.mitigation||'')}</div>`:''}
   ${n.access?`<div class="k">Access</div><div><span class="chip ac-${esc(n.access)}">${esc(n.access)}</span> feeds labelled in the rule</div>`:''}
   <div class="k">Rule</div><div class="rule">${esc(n.rule)}</div>
@@ -244,7 +246,7 @@ function showGroupPanel(grp){
   document.getElementById('panel').classList.add('open');
 }
 function closePanel(){document.getElementById('panel').classList.remove('open');sel=null;focus();}
-function renderStory(){ if(!groups) return; document.getElementById('sbody').innerHTML=`<h2>How the system meets the brief</h2><div class="gb">Read top to bottom. Click a step to open it on the canvas.</div>`+(groups.groups||[]).filter(g=>!g.hidden).map(g=>`<div class="g" onclick="openGroup('${g.id}')"><div class="gn">${esc(g.name)}</div><div class="gb">${esc(g.brief||'')}</div><div class="gs">${esc(g.synthesis||'')}</div></div>`).join(''); }
+function renderStory(){ if(!groups) return; document.getElementById('sbody').innerHTML=`<h2>How the system meets the brief</h2><div class="gb">Read top to bottom. Click a step to open it on the canvas.</div>`+legendHTML()+(groups.groups||[]).filter(g=>!g.hidden).map(g=>`<div class="g" onclick="openGroup('${g.id}')"><div class="gn">${esc(g.name)}</div><div class="gb">${esc(g.brief||'')}</div><div class="gs">${esc(g.synthesis||'')}</div></div>`).join(''); }
 function openGroup(id){ expanded.add(id); render(); }
 function toggleStory(){document.getElementById('story').classList.toggle('open');}
 function collapseAll(){expanded.clear(); render(); fit();}

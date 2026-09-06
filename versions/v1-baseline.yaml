@@ -716,62 +716,62 @@ nodes:
     row: "06, 23"
 
 edges:
-  - {from: prices, to: sort, carries: returns and universe, when: monthly rebuild, daily measurement}
-  - {from: prices, to: random, carries: universe, leg sizes and cap profile, when: daily}
-  - {from: prices, to: controls, carries: returns and universe, when: monthly}
-  - {from: refseries, to: sensitivities, carries: eight daily series, when: daily}
-  - {from: sort, to: sensitivities, carries: two legs, when: daily}
-  - {from: sort, to: filings, carries: loser-leg names, when: monthly}
-  - {from: random, to: zscore, carries: N random books, when: daily}
-  - {from: sensitivities, to: zscore, carries: spread per series, when: daily}
-  - {from: controls, to: zscore, carries: same-rule and stale books, when: monthly}
-  - {from: zscore, to: labeller, carries: highest-z series and grouping, when: at rebalance}
-  - {from: zscore, to: route2, carries: z per series, both nulls, when: daily}
-  - {from: filings, to: filter, carries: 8-K documents, when: on document arrival}
-  - {from: filter, to: extractor, carries: documents worth reading, when: on document arrival}
-  - {from: filter, to: datereader, carries: same documents, when: registered, unrun}
-  - {from: filter, to: catextract, carries: same documents, when: on document arrival}
-  - {from: extractor, to: quotegate, carries: record with spans, when: per document}
-  - {from: quotegate, to: mapper, carries: stored records, when: per document}
-  - {from: vocab, to: mapper, carries: frozen vocabulary, when: monthly}
-  - {from: quotegate, to: vocab, carries: last month's records, when: at rebalance}
-  - {from: mapper, to: condmeasures, carries: condition per record, abstentions, when: per document}
-  - {from: condmeasures, to: route1, carries: stated-condition rate, modal share, coverage, when: daily}
-  - {from: posdata, to: comovement, carries: implied correlation, when: daily}
-  - {from: sort, to: comovement, carries: two legs, when: daily}
-  - {from: posdata, to: flows, carries: short interest, volume, ETF shares, holdings, when: at release}
-  - {from: comovement, to: route3, carries: co-movement and gap, when: at rebalance}
-  - {from: flows, to: route3, carries: overlap and flows, when: at rebalance}
-  - {from: flows, to: route1, carries: short interest by leg, when: at release}
-  - {from: french, to: severity, carries: event thresholds, when: frozen}
-  - {from: sort, to: severity, carries: reconstructed book returns, when: daily}
-  - {from: route1, to: severity, carries: severity state, when: daily}
-  - {from: route2, to: severity, carries: severity state, when: daily}
-  - {from: classify, to: route1, carries: two objects share the name Route 1, when: refuted, feedback: true}
-  - {from: catextract, to: calendar, carries: dated statements, when: on document arrival}
-  - {from: caldata, to: calendar, carries: scheduled events, when: weekly}
-  - {from: mapper, to: calendar, carries: condition per record, when: weekly}
-  - {from: zscore, to: analogue, carries: state vector, when: at rebalance}
-  - {from: condmeasures, to: analogue, carries: condition rate as of date, when: at rebalance}
-  - {from: analogue, to: panel, carries: neighbour rows, when: at rebalance}
-  - {from: zscore, to: eventrule, carries: statistics, when: daily}
-  - {from: route1, to: eventrule, carries: route states, when: daily}
-  - {from: route3, to: eventrule, carries: route states, when: at rebalance}
-  - {from: eventrule, to: composer, carries: fire or quiet, when: daily}
-  - {from: severity, to: composer, carries: VaR, ES, when: daily}
-  - {from: labeller, to: composer, carries: caption, when: at rebalance}
-  - {from: calendar, to: composer, carries: days to catalyst, when: daily arithmetic}
-  - {from: panel, to: composer, carries: apt or not, when: at rebalance}
-  - {from: composer, to: thepage, carries: composed page or template, when: on a rule firing, weekly otherwise}
-  - {from: thepage, to: signoff, carries: page, when: on event}
-  - {from: signoff, to: responselog, carries: signed page, when: on event}
-  - {from: thepage, to: falsifiers, carries: falsifiers, when: on event}
-  - {from: signoff, to: labels, carries: monthly labelled sample, when: monthly, never done}
-  - {from: signoff, to: vocab, carries: names for categories, when: at rebalance, feedback: true}
-  - {from: labels, to: extractor, carries: error rate, when: row 08, unrun, feedback: true}
-  - {from: condmeasures, to: evidence, carries: rates on episode and control dates, when: per test}
-  - {from: register, to: evidence, carries: threshold and both sentences, when: before each run}
-  - {from: referees, to: register, carries: flaws in a results-stripped design, when: before freeze}
+  - {from: prices, to: sort, carries: "returns and universe", when: "monthly rebuild, daily measurement"}
+  - {from: prices, to: random, carries: "universe, leg sizes and cap profile", when: "daily"}
+  - {from: prices, to: controls, carries: "returns and universe", when: "monthly"}
+  - {from: refseries, to: sensitivities, carries: "eight daily series", when: "daily"}
+  - {from: sort, to: sensitivities, carries: "two legs", when: "daily"}
+  - {from: sort, to: filings, carries: "loser-leg names", when: "monthly"}
+  - {from: random, to: zscore, carries: "N random books", when: "daily"}
+  - {from: sensitivities, to: zscore, carries: "spread per series", when: "daily"}
+  - {from: controls, to: zscore, carries: "same-rule and stale books", when: "monthly"}
+  - {from: zscore, to: labeller, carries: "highest-z series and grouping", when: "at rebalance"}
+  - {from: zscore, to: route2, carries: "z per series, both nulls", when: "daily"}
+  - {from: filings, to: filter, carries: "8-K documents", when: "on document arrival"}
+  - {from: filter, to: extractor, carries: "documents worth reading", when: "on document arrival"}
+  - {from: filter, to: datereader, carries: "same documents", when: "registered, unrun"}
+  - {from: filter, to: catextract, carries: "same documents", when: "on document arrival"}
+  - {from: extractor, to: quotegate, carries: "record with spans", when: "per document"}
+  - {from: quotegate, to: mapper, carries: "stored records", when: "per document"}
+  - {from: vocab, to: mapper, carries: "frozen vocabulary", when: "monthly"}
+  - {from: quotegate, to: vocab, carries: "last month's records", when: "at rebalance"}
+  - {from: mapper, to: condmeasures, carries: "condition per record, abstentions", when: "per document"}
+  - {from: condmeasures, to: route1, carries: "stated-condition rate, modal share, coverage", when: "daily"}
+  - {from: posdata, to: comovement, carries: "implied correlation", when: "daily"}
+  - {from: sort, to: comovement, carries: "two legs", when: "daily"}
+  - {from: posdata, to: flows, carries: "short interest, volume, ETF shares, holdings", when: "at release"}
+  - {from: comovement, to: route3, carries: "co-movement and gap", when: "at rebalance"}
+  - {from: flows, to: route3, carries: "overlap and flows", when: "at rebalance"}
+  - {from: flows, to: route1, carries: "short interest by leg", when: "at release"}
+  - {from: french, to: severity, carries: "event thresholds", when: "frozen"}
+  - {from: sort, to: severity, carries: "reconstructed book returns", when: "daily"}
+  - {from: route1, to: severity, carries: "severity state", when: "daily"}
+  - {from: route2, to: severity, carries: "severity state", when: "daily"}
+  - {from: classify, to: route1, carries: "two objects share the name Route 1", when: "refuted", feedback: true}
+  - {from: catextract, to: calendar, carries: "dated statements", when: "on document arrival"}
+  - {from: caldata, to: calendar, carries: "scheduled events", when: "weekly"}
+  - {from: mapper, to: calendar, carries: "condition per record", when: "weekly"}
+  - {from: zscore, to: analogue, carries: "state vector", when: "at rebalance"}
+  - {from: condmeasures, to: analogue, carries: "condition rate as of date", when: "at rebalance"}
+  - {from: analogue, to: panel, carries: "neighbour rows", when: "at rebalance"}
+  - {from: zscore, to: eventrule, carries: "statistics", when: "daily"}
+  - {from: route1, to: eventrule, carries: "route states", when: "daily"}
+  - {from: route3, to: eventrule, carries: "route states", when: "at rebalance"}
+  - {from: eventrule, to: composer, carries: "fire or quiet", when: "daily"}
+  - {from: severity, to: composer, carries: "VaR, ES", when: "daily"}
+  - {from: labeller, to: composer, carries: "caption", when: "at rebalance"}
+  - {from: calendar, to: composer, carries: "days to catalyst", when: "daily arithmetic"}
+  - {from: panel, to: composer, carries: "apt or not", when: "at rebalance"}
+  - {from: composer, to: thepage, carries: "composed page or template", when: "on a rule firing, weekly otherwise"}
+  - {from: thepage, to: signoff, carries: "page", when: "on event"}
+  - {from: signoff, to: responselog, carries: "signed page", when: "on event"}
+  - {from: thepage, to: falsifiers, carries: "falsifiers", when: "on event"}
+  - {from: signoff, to: labels, carries: "monthly labelled sample", when: "monthly, never done"}
+  - {from: signoff, to: vocab, carries: "names for categories", when: "at rebalance", feedback: true}
+  - {from: labels, to: extractor, carries: "error rate", when: "row 08, unrun", feedback: true}
+  - {from: condmeasures, to: evidence, carries: "rates on episode and control dates", when: "per test"}
+  - {from: register, to: evidence, carries: "threshold and both sentences", when: "before each run"}
+  - {from: referees, to: register, carries: "flaws in a results-stripped design", when: "before freeze"}
   # layout-only constraints (not drawn): keep the research process below the page
   - {from: thepage, to: referees, hidden: true}
   - {from: thepage, to: register, hidden: true}

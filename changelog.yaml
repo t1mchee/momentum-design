@@ -1,0 +1,97 @@
+# Design change log. Rendered in the viewer's History panel. Newest first.
+# Each entry: version, date, file (snapshot under versions/), commit (empirics repo, once committed),
+# summary, changes (what), reasoning (why), status (done | current | planned).
+
+entries:
+  - version: v2-draft-4
+    date: "2026-09-06"
+    file: versions/v2-draft-4.yaml
+    status: current
+    summary: The thirteen decisions applied; every node carries a look-ahead label; data feeds labelled by access.
+    changes:
+      - "D1 one tail model: the vol model is retired and its regressors, a catalyst-window indicator, GARCH and an event-density baseline enter the severity quantile regression; lower-tail target; ablation ladder reported every run."
+      - "D2 comparator: the component set's event-implied move, with the sector ETF's implied move printed as the hedge price; no book-level implied vol is claimed."
+      - "D3 PCA: the book's variance share with position weights, sign fixed relative to the book, loss-direction composition, placebo from random books, the same-sign versus opposite-sign case flag routing comomentum to the tail model, a bulk-edge cut with Ledoit-Wolf shrinkage, a per-leg diagnostic, and a bridging regression on the six series."
+      - "D4 look-ahead: a lookahead field on every node (none, data, model, model-unmitigable, human) with its mitigation; date-constrained encoder for the context space, clustering and retrieval; blind prompts and a cutoff split for extraction; the catalyst agent live-only and out of the backtest; the analogue panel retired."
+      - "D5 embedding mechanics: taxonomy entries as queries whose neighbours' centroid is the anchor; canonical paraphrases; threshold from within-cluster distances; supersession instead of decay; re-assignment at each rebuild; text mass against sector-matched random sets; a run without anchors."
+      - "D6 retirements kept on the canvas as retired with a reason: labeller, panel, referees, Route 1, Route 3, the classification rule (inventory kept), the vol model; the two cross-asset PCs dropped from the reference series; the product formula replaced by two placebo-referenced readings; PPI dropped from the labels."
+      - "D7 event rule: calendar-fired five sessions before an approved catalyst plus threshold-fired on time-series percentiles; cross-sectional percentiles print as context only; the standing-state form named for production."
+      - "D8 time bombs as two objects, pre-catalyst and contagion, by leg, each with a registered event study on the five in-sample unwinds before printing."
+      - "D9 positioning: comomentum and 13F crowding with equal weights, short interest as the loser-leg line, quintile over the book, maximum input lag printed; production feeds listed separately."
+      - "D10 the page: bp loss under minus two sigma with direction, VaR and catalyst-window VaR beside the implied comparator and the hedge price, one ten-day horizon, what changed, beta mapping to the reader's book; 'get out now' dropped."
+      - "D11 text: 10-K and 10-Q as the context layer, 8-Ks and transcripts as the event stream, GDELT and official release pages as the public news archive; every feed labelled PUBLIC, LICENSED or DESK-ONLY, including research, dealer colour, Bloomberg and per-name positioning as not available to us now."
+      - "D12 organising principle: PCA first, with an agreement line against the taxonomy's top entry."
+      - "D13 news in two lanes, slow context and a fast lane feeding the catalyst agent; up to three components behind the bulk edge."
+      - "My own call, flagged: printed numbers use value weights, equal-weighted readings in the appendix."
+    reasoning: >
+      Tim accepted every pick in decisions-for-draft4.md, adding that all production feeds should be in the
+      design with a clear public versus not-available label, and that the design need not be causal
+      end to end because the proof of concept will be scoped to the clean parts. The look-ahead labels
+      are the instrument for that scoping.
+
+  - version: v2-draft-3
+    date: "2026-09-06"
+    file: versions/v2-draft-3.yaml
+    status: done
+    summary: Full system restored. The call redesigned one part; everything not discussed stays as in v1.
+    changes:
+      - Spec now extends the v1 baseline and overlays only the parts the call changed, so the diff against v1 is the file itself.
+      - "Restored from v1, unchanged: eight reference series, random portfolios and same-rule sorts, sensitivities and z-scores, the labeller, Route 1 to 3 detectors, the classification rule, the severity quantile model, event rule, composer, falsifiers and hit-and-miss log, sign-off and response log, register, hand-labelled sample, referee roles."
+      - "Replaced by the call's design: the loser-leg text pipeline (filings, filter, extractor, quote gate, mapper, vocabulary, condition measures, date-constrained readers, catalyst extraction) becomes decomposition, news context, naming, propagation; positioning becomes overlap and time bombs; the calendar becomes catalyst proposal with PM review; the claim-6 evidence node becomes the theme and vol validations."
+      - Added the vol model beside severity rather than in place of it, with the join flagged.
+      - Five join points flagged as open where the new part meets the untouched part.
+    reasoning: >
+      Tim's instruction: what was discussed on the call is the loser-leg pipeline and its consequences; parts not
+      discussed remain as they were. Draft 2 had dropped the routes, severity, z-scores and register on my own
+      proposal, which was accepted in the moment but exceeded the call's scope. Restoring them keeps the design
+      honest about what has actually been decided, and the joins are where the next decisions sit.
+
+  - version: v2-draft-2
+    date: "2026-09-06"
+    file: versions/v2-draft-2.yaml
+    commit: 3db2ca749
+    status: done
+    summary: The fourteen open questions answered and folded in; demo-versus-production split removed.
+    changes:
+      - Decomposition on both legs, reported by leg; 126-day market-residual covariance; top three components; top-quartile absolute loadings.
+      - Embedding space built in two branches, unsupervised news clusters then PM terms as fixed centroids, with a distance threshold and residual clusters.
+      - Extraction prompt changed to up to three one-year risk factors with sign; quote gate and hand labels kept.
+      - Clustering with three-month half-life decay and one vote per company per theme per quarter.
+      - Propagation over the whole universe with a 0 to 3 relevance score, 2 as the threshold.
+      - Theme score formula, time-bomb definition, vol model target and regressors, GARCH(1,1) control, validation nodes.
+      - All "for the demo" qualifiers removed; sources are the intended ones.
+      - "Dropped (superseded in draft 3): routes, classifier, severity, z-scores, falsifiers, the proof-of-concept node."
+    reasoning: >
+      Tim asked for a proposed solution to each open question before implementing, then accepted them as written.
+      He also ruled that the spec is the hypothetical system with no demo split at this stage, which is now a
+      standing instruction.
+
+  - version: v2-draft-1
+    date: "2026-09-06"
+    file: versions/v2-draft-1.yaml
+    status: done
+    summary: Transcription of the advisor call, with every unclear point attached to its node as a question.
+    changes:
+      - Eleven lanes following the call's numbered sections, steps 1 to 5, positioning, catalysts and vol, output, human, validation.
+      - 29 nodes, 46 edges, 54 open questions, plus a placeholder node listing the v1 components with no decision.
+    reasoning: >
+      Tim sent the call notes and asked for them implemented in the sheet with questions on anything unclear.
+      The notes covered one part of the system; the placeholder node was the first flag that the rest was undecided.
+
+  - version: v1-baseline
+    date: "2026-09-06"
+    file: versions/v1-baseline.yaml
+    status: done
+    summary: The memo's existing design, transcribed node by node from commit f3a9c75.
+    changes:
+      - 40 nodes across nine lanes, 56 edges, 82 open questions carried over from the cold read and the ML review.
+    reasoning: >
+      Tim asked for the existing design populated first so the redesign could be laid against it.
+
+planned:
+  - "(done) A by-level view (levels.html) with a hierarchy in groups.yaml: seven numbered steps written as the story of how the brief is met, each opening into its sub-steps and components; the full view stays one click away."
+  - "(done in draft 4) Fold the three-reviewer panel on draft 3 (docs/reviews/panel-v2-draft-3-collated.md) into draft 4 once Tim rules on its twelve decisions: one tail model; book-level implied comparator; PCA as book variance share with sign composition and a placebo; look-ahead controls; embedding mechanics; retirements (routes 1 and 3, classify, labeller, panel, referees, two PCs, product formula, PPI); calendar plus threshold event rule; time bombs defined and tested; positioning composite named; page with bp loss, direction, hedge; 8-Ks and transcripts reinstated as the event stream; organising principle."
+  - Close the five join points in draft 3 (severity against the vol model; Route 1 reading the theme score; Route 3 against positioning overlap; z-scores beside PCA as exposure readings; the event rule's statistic set).
+  - Decide the memo's section structure under the merged design.
+  - Proof-of-concept scoping, deliberately after the design is settled.
+  - Rewrite the memo section by section from the spec.

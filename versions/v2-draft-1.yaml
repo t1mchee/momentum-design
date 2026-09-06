@@ -1,0 +1,528 @@
+# System design v2 — the redesign agreed with the advisor (2026-09-06). Snapshot of draft 1, reconstructed
+# from the working copy (this draft was never committed; the content is as written, before Tim's answers).
+# Node fields: id, name, lane, kind (data | deterministic | model | human | output),
+#   status (settled = agreed in the discussion | draft = agreed in outline, detail to fix | placeholder = my guess, not discussed),
+#   inputs, outputs, rule, checks, on_failure, open (unsettled questions), memo (section it will become), v1 (what it replaces).
+
+meta:
+  title: Momentum reversal-risk system, v2 redesign
+  version: v2-draft-1
+  updated: "2026-09-06"
+  note: >
+    Transcribed from the advisor discussion. Green = agreed; amber = agreed in outline with detail to fix;
+    dashed = my guess where the notes are silent. Red badges are the questions to close before the memo is rewritten.
+    Not yet decided: whether the v1 exposure reading (eight series against random portfolios), the three routes,
+    the severity quantile model and the event definitions survive alongside this, or are replaced by it.
+
+lanes:
+  - {id: data, name: Data in}
+  - {id: book, name: The book}
+  - {id: decomp, name: "Step 1: deterministic decomposition"}
+  - {id: context, name: "Step 3: news context (parallel)"}
+  - {id: naming, name: "Step 2: name PC1 with text"}
+  - {id: propagate, name: "Step 4: propagate the theme"}
+  - {id: positioning, name: "Positioning, integrated"}
+  - {id: catalysts, name: "Catalysts and the vol model"}
+  - {id: output, name: Output}
+  - {id: human, name: Human in the loop}
+  - {id: research, name: Validation and proof of concept}
+
+nodes:
+  - id: prices
+    name: Prices, returns, index membership
+    lane: data
+    kind: data
+    status: settled
+    inputs: []
+    outputs: [daily returns per name, point-in-time universe]
+    rule: As in v1. Point-in-time universe from archived ETF holdings at announcement date; free daily prices.
+    checks: [reconciled against the French factor file]
+    on_failure: hold the day's state
+    open: []
+    memo: "§2"
+    v1: prices
+
+  - id: filings
+    name: Company filings (10-K for the demo)
+    lane: data
+    kind: data
+    status: settled
+    inputs: []
+    outputs: [10-K text per name, acceptance timestamps]
+    rule: 10-Ks for the demo. In production add dealer colour and equity research reports (more lead time) plus news headlines; "throw in anything relevant." Replaces v1's 8-K-in-91-days source.
+    checks: [coverage per name printed]
+    on_failure: name marked unread
+    open:
+      - Which sections of the 10-K are read (Item 1A risk factors, MD&A, both, whole document)?
+      - Latest 10-K accepted before the formation date, or the 10-K plus subsequent 10-Qs? Staleness cutoff?
+      - Does the v1 verbatim-quote gate carry over? Assumed yes.
+    memo: "§2"
+    v1: filings
+
+  - id: news
+    name: News stream
+    lane: data
+    kind: data
+    status: draft
+    inputs: []
+    outputs: [headlines and articles over a long window]
+    rule: Bloomberg headlines "or anything else deemed relevant", run through a long window to slowly update the macro-theme embedding space. Also the source the catalyst agent reads.
+    checks: [timestamped at publication]
+    on_failure: embedding space not refreshed; last version used
+    open:
+      - Bloomberg is not public data. What is the free stand-in for the demo?
+      - Window length for the 'long window', and update cadence.
+    memo: "§2"
+    v1: none
+
+  - id: posdata
+    name: Positioning data
+    lane: data
+    kind: data
+    status: draft
+    inputs: []
+    outputs: [positioning per name or per theme]
+    rule: Goldman publishes periodic hedge-fund positioning data. For the memo, sourcing does not need to be solved; state it as coming from dealer colour, co-movement, and similar.
+    checks: []
+    on_failure: positioning dimension absent; time-bomb reading suppressed
+    open:
+      - For the demo, do the v1 public proxies stand in, or is positioning left as a stated production input?
+      - Unit. Per name, or per theme cluster?
+    memo: "§2, §7"
+    v1: posdata, comovement, flows
+
+  - id: analystchatter
+    name: Analyst chatter
+    lane: data
+    kind: data
+    status: draft
+    inputs: []
+    outputs: [analyst commentary]
+    rule: Read by the catalyst agent alongside news to propose catalysts.
+    checks: []
+    on_failure: catalysts proposed from news alone
+    open:
+      - Source for the demo.
+    memo: "§2"
+    v1: none
+
+  - id: options
+    name: Options-implied volatility
+    lane: data
+    kind: data
+    status: draft
+    inputs: []
+    outputs: [implied vol per name and around known event dates]
+    rule: The market's pricing of vol around catalysts. Not enough on its own, since implied vol already clusters around known earnings dates; it is the comparator the vol view is stated against.
+    checks: []
+    on_failure: vol view stated without the market comparator
+    open:
+      - Free source for the demo, or left illustrative?
+      - Per-name implied vol, or an index-level proxy for the factor?
+    memo: "§2, §3 vol model"
+    v1: none
+
+  - id: sort
+    name: 12-1 sort, the book
+    lane: book
+    kind: deterministic
+    status: settled
+    inputs: [daily returns per name, point-in-time universe]
+    outputs: [winner leg, loser leg, book returns]
+    rule: As in v1. Rank on trailing 12-month return skipping the latest month; top and bottom decile; rebuilt monthly.
+    checks: [leg sizes logged]
+    on_failure: previous book carried
+    open:
+      - Does the decomposition run on the whole book (both legs) or the loser leg only?
+    memo: "§1"
+    v1: sort
+
+  - id: covariance
+    name: Covariance of the book's names
+    lane: decomp
+    kind: deterministic
+    status: draft
+    inputs: [daily returns per name, winner leg, loser leg]
+    outputs: [covariance matrix over the book's names]
+    rule: Take the covariance matrix of the momentum book's names, risk-adjusted, so that text is later weighted by how much variance a theme explains.
+    checks: []
+    on_failure: decomposition not run this period
+    open:
+      - Return window for the covariance, daily or weekly returns.
+      - What 'risk-adjusted' means here.
+      - Caveat parked by the reviewer, unresolved. A covariance-only decomposition misses links between companies that were not historically correlated.
+    memo: "§3 step 1"
+    v1: replaces the eight-series exposure reading? (undecided)
+
+  - id: pca
+    name: PC1 and its loadings
+    lane: decomp
+    kind: deterministic
+    status: draft
+    inputs: [covariance matrix over the book's names]
+    outputs: [PC1 loadings per name, variance explained by PC1, the PC1 name set]
+    rule: First eigenvector of the covariance matrix. Names with loadings above a cutoff form the PC1 set. Variance explained is the weight the theme's text carries. Today PC1 is probably memory.
+    checks: [variance explained printed; stability of the PC1 set across adjacent months]
+    on_failure: theme naming not run this period
+    open:
+      - Loading cutoff, and whether by absolute value.
+      - PC1 only, or the top k components each carrying their own theme?
+      - Sign convention for PC1.
+    memo: "§3 step 1"
+
+  - id: newsagent
+    name: News quote extraction
+    lane: context
+    kind: model
+    status: settled
+    inputs: [headlines and articles over a long window]
+    outputs: [news quotes, dated]
+    rule: A separate agent extracts quotes from news. These form the embedding space used as the basis for clustering the company extractions. Run over a long window so the space updates slowly.
+    checks: [quotes dated at publication]
+    on_failure: last embedding space used
+    open:
+      - Extraction prompt.
+      - Which model.
+    memo: "§3 step 3"
+    v1: none
+
+  - id: embedspace
+    name: Macro-theme embedding space
+    lane: context
+    kind: deterministic
+    status: draft
+    inputs: [news quotes, dated, PM worry list, declared cluster phrases]
+    outputs: [embedding space with theme centres]
+    rule: Supplies the context v1 lacked. News quotes over a long window are embedded; the top macro stories emerge as dense regions; 10-K extractions are then clustered in this space. The PM's short list of top worries is supplied before the model runs and things cluster around those central terms; the PM can also declare a phrase as a cluster.
+    checks: [does anything in the 10-Ks cluster around the ~5 big stories]
+    on_failure: cluster on the 10-K extractions alone, flagged as context-free
+    open:
+      - The reviewer's 'finicky model' remark left the alternative to clustering around the central term unstated.
+      - Embedding model, and whether it needs a historical cutoff.
+      - How PM terms and news clusters are reconciled when they disagree.
+      - Weighting problem, unsolved, for new sentences entering a cluster.
+    memo: "§3 step 3"
+    v1: replaces vocabulary induction
+
+  - id: pc1text
+    name: Gather PC1 companies' text
+    lane: naming
+    kind: deterministic
+    status: draft
+    inputs: [the PC1 name set, PC1 loadings per name, 10-K text per name]
+    outputs: [text per PC1 name with its loading weight]
+    rule: Take all text from the PC1 companies, with attention or effort scaled by loading weight.
+    checks: [coverage of the PC1 set printed]
+    on_failure: theme named on partial coverage, flagged
+    open:
+      - What 'effort scaled by loading weight' means operationally.
+    memo: "§3 step 2"
+
+  - id: riskextract
+    name: Risk-factor extraction
+    lane: naming
+    kind: model
+    status: settled
+    inputs: [text per PC1 name with its loading weight]
+    outputs: [risk-factor quotes per name, verbatim]
+    rule: A plain LLM prompt on a light model, one document one call, along the lines of "extract potential risk factors or macro risks over a one-year horizon that would make the company draw down significantly." Returns verbatim quotes. Not BERT.
+    checks: [verbatim-quote gate (assumed); hand-labelled sample (assumed)]
+    on_failure: record dropped and counted
+    open:
+      - Which light model.
+      - Is the v1 quote gate and the hand-labelled error measurement kept?
+      - Does the 'narrow or single external condition' question from v1 survive?
+    memo: "§3 step 2"
+    v1: extractor
+
+  - id: cluster
+    name: Cluster quotes in the context space
+    lane: naming
+    kind: deterministic
+    status: draft
+    inputs: [risk-factor quotes per name, verbatim, embedding space with theme centres]
+    outputs: [clusters of quotes with loading-weighted mass]
+    rule: Each month, embed the extracted quotes and cluster them, including conditions from previous months, in the news-derived embedding space. Cluster mass is loading-weighted.
+    checks: [cluster stability month to month]
+    on_failure: previous clusters used
+    open:
+      - Clustering method and how the PM seed terms act.
+      - How many months of prior quotes are included, and with what decay.
+    memo: "§3 step 2"
+    v1: mapper and vocab
+
+  - id: namecluster
+    name: Name the cluster (theme)
+    lane: naming
+    kind: model
+    status: settled
+    inputs: [clusters of quotes with loading-weighted mass, news quotes, dated]
+    outputs: [theme name per cluster, with its K supporting quotes]
+    rule: An LLM reads the K nearest-neighbour quotes in a cluster and names what the cluster is about, the method Tim used on the Cambridge debate project. Cross-compare with news. The named PC1 cluster is the theme.
+    checks: [name calibrated on random name sets (assumed from v1)]
+    on_failure: cluster left unnamed; top quotes shown instead
+    open:
+      - K.
+      - What 'cross-compare with news' does mechanically.
+    memo: "§3 step 2"
+    v1: labeller, mapper
+
+  - id: propagate
+    name: Scan non-PC1 companies for the theme
+    lane: propagate
+    kind: model
+    status: settled
+    inputs: [theme name per cluster, with its K supporting quotes, 10-K text per name]
+    outputs: [theme signature per non-PC1 name, with quote]
+    rule: Once PC1's theme is named, send an agent across all the other companies to extract text relevant to that theme. Look for the signature of PC1 on stocks that would not normally be correlated with it.
+    checks: [verbatim-quote gate (assumed)]
+    on_failure: name marked unscanned
+    open:
+      - Scope of 'all the other companies'.
+      - How a signature is scored.
+      - Threshold for 'carries the signature'.
+    memo: "§3 step 4"
+    v1: none
+
+  - id: themescore
+    name: Theme significance score
+    lane: propagate
+    kind: deterministic
+    status: draft
+    inputs: [variance explained by PC1, clusters of quotes with loading-weighted mass, theme signature per non-PC1 name, with quote]
+    outputs: [significance score per theme, ranked]
+    rule: The output of steps 1 to 5. A significance score per theme. Both agreed this is only the first step. Repeated periodically (step 5).
+    checks: [comparator is the PM manually typing themes every week]
+    on_failure: n/a
+    open:
+      - The formula.
+      - Cadence of the repeat.
+      - Learning loop so PM input decreases over time.
+    memo: "§3 step 5, §6"
+
+  - id: poscluster
+    name: Cluster names by positioning
+    lane: positioning
+    kind: deterministic
+    status: draft
+    inputs: [positioning per name or per theme]
+    outputs: [positioning clusters]
+    rule: Cluster names thematically and by positioning. They usually overlap, since hedge funds are mostly positioned on one theme.
+    checks: []
+    on_failure: overlap not computed
+    open:
+      - Depends entirely on what the positioning data is.
+    memo: "§7"
+    v1: comovement, flows, route3
+
+  - id: timebombs
+    name: Time bombs, theme signature without the blow-up
+    lane: positioning
+    kind: deterministic
+    status: settled
+    inputs: [theme signature per non-PC1 name, with quote, positioning clusters, daily returns per name]
+    outputs: [names carrying PC1's signature, heavily positioned, not yet moving]
+    rule: Non-overlap is the interesting part. If PC1's signature is found on stocks that are not blowing up yet but are heavily positioned, the unwind could be bigger than thought.
+    checks: []
+    on_failure: n/a
+    open:
+      - Definition of 'not blowing up yet'.
+      - Definition of 'heavily positioned'.
+    memo: "§7, §6"
+
+  - id: catagent
+    name: Catalyst proposal
+    lane: catalysts
+    kind: model
+    status: settled
+    inputs: [theme name per cluster, with its K supporting quotes, headlines and articles over a long window, analyst commentary]
+    outputs: [proposed catalysts per theme, dated]
+    rule: After themes, an LLM reads news and analyst chatter to identify catalysts it thinks matter for the theme. Memory example this summer, Broadcom and Hynix earnings. A human reviews.
+    checks: [PM approval; a catalyst must carry a date and a source quote]
+    on_failure: no catalyst listed; vol view undated
+    open:
+      - Dropped, leaning out, not finally decided. The LLM proposing monitoring metrics per theme.
+    memo: "§3, §8"
+    v1: calendar, catextract
+
+  - id: volmodel
+    name: Vol model around catalysts
+    lane: catalysts
+    kind: deterministic
+    status: draft
+    inputs: [significance score per theme, ranked, names carrying PC1's signature, heavily positioned, not yet moving, proposed catalysts per theme, dated, book returns, implied vol per name and around known event dates]
+    outputs: [forecast of momentum-factor vol around each catalyst; comparison with the market's implied pricing]
+    rule: The reviewer's reframe. The claim is that momentum-factor volatility around the catalyst is higher than what the market is pricing. A vol model is trainable, unlike the sign of returns. The edge is the cross-name propagation, not the date. Framed in vol rather than correlation.
+    checks: [realised vol around historical catalysts against the estimate; GARCH-style baseline, backtested]
+    on_failure: GARCH baseline printed alone
+    open:
+      - Model form, target and regressors.
+      - Training set of historical catalysts without hindsight.
+      - Vol or correlation as the tradable framing.
+      - Relationship to v1's severity quantile model.
+    memo: "§3, §5, §8"
+    v1: severity
+
+  - id: thepage
+    name: The page, get out now or hedge now
+    lane: output
+    kind: output
+    status: settled
+    inputs: [significance score per theme, ranked, names carrying PC1's signature, heavily positioned, not yet moving, proposed catalysts per theme, dated, forecast of momentum-factor vol around each catalyst; comparison with the market's implied pricing]
+    outputs: [one page]
+    rule: PM-facing takeaway is "get out now or hedge now." Not alpha; it tells you to back down. The only claim is "this catalyst matters more for you than the market thinks."
+    checks: [every number links to a stored output; every theme to its supporting quotes]
+    on_failure: template with a banner
+    open:
+      - Do the v1 page elements survive?
+    memo: "§6"
+    v1: thepage
+
+  - id: analogue
+    name: Historical regime analogues
+    lane: output
+    kind: model
+    status: settled
+    inputs: [significance score per theme, ranked, book returns]
+    outputs: [nearest past regimes, argued apt or not]
+    rule: Kept from v1, easy to justify. Finds historical regime analogues and argues whether the match is apt, citing fields.
+    checks: [field-citation gate, as v1]
+    on_failure: retrieval list alone
+    open:
+      - Which state vector now feeds retrieval.
+    memo: "§3"
+    v1: analogue, panel
+
+  - id: pmworries
+    name: PM presets the worry list
+    lane: human
+    kind: human
+    status: settled
+    inputs: []
+    outputs: [PM worry list, declared cluster phrases]
+    rule: A macro trader presets a short list of the top ~5 worries before the model runs. The PM can add a theme the empirical model missed, or declare that a phrase should be a cluster. The comparator for the theme machinery is the PM manually typing themes every week.
+    checks: []
+    on_failure: system runs on news-derived themes alone
+    open:
+      - Cadence.
+      - Which bet the memo makes, (a) discovery or (b) crescendo.
+    memo: "§3, §10"
+    v1: signoff (task 4), vocab naming
+
+  - id: catapprove
+    name: PM reviews catalysts
+    lane: human
+    kind: human
+    status: settled
+    inputs: [proposed catalysts per theme, dated]
+    outputs: [approved catalysts, added catalysts]
+    rule: The PM scans proposed catalysts for reasonableness, approves or adds.
+    checks: []
+    on_failure: unapproved catalysts shown as proposed
+    open: []
+    memo: "§10"
+    v1: calendar acceptance
+
+  - id: garch
+    name: GARCH baseline
+    lane: research
+    kind: deterministic
+    status: settled
+    inputs: [book returns]
+    outputs: [baseline vol forecast around the same catalysts]
+    rule: Fit a GARCH-style model on the same data and backtest. (Transcript said 'garbage model' / 'coach model'; read as GARCH.)
+    checks: []
+    on_failure: n/a
+    open:
+      - Confirm GARCH is what was meant.
+    memo: "§5"
+
+  - id: volvalidation
+    name: Realised vol around historical catalysts
+    lane: research
+    kind: deterministic
+    status: settled
+    inputs: [forecast of momentum-factor vol around each catalyst; comparison with the market's implied pricing, baseline vol forecast around the same catalysts, book returns]
+    outputs: [forecast error of the system against the baseline and against implied]
+    rule: Compare the system's estimates against historical realised vol around those catalysts, and against the GARCH baseline.
+    checks: []
+    on_failure: n/a
+    open:
+      - Sample of historical catalysts.
+    memo: "§5"
+
+  - id: poc
+    name: Proof of concept, one curated case
+    lane: research
+    kind: human
+    status: settled
+    inputs: [theme name per cluster, with its K supporting quotes]
+    outputs: [one case study showing the system identified the theme]
+    rule: One case study. Curate the quotes for the case and show the system identified the theme. Disclose as curated, not out of sample.
+    checks: [disclosure sentence in the memo]
+    on_failure: n/a
+    open:
+      - Which case; which formation date.
+    memo: "§4"
+
+  - id: retired
+    name: v1 components with no decision yet
+    lane: research
+    kind: deterministic
+    status: placeholder
+    inputs: []
+    outputs: []
+    rule: Not discussed and therefore neither kept nor dropped; the eight reference series and z-scores; the three routes and the classification rule; the severity quantile model and event definitions; the register; the same-rule sorts; the falsifiers; the numeral gate and composer.
+    checks: []
+    on_failure: n/a
+    open:
+      - Keep, drop, or fold, for each item.
+    memo: "—"
+
+edges:
+  - {from: prices, to: sort, carries: returns and universe, when: monthly rebuild}
+  - {from: prices, to: covariance, carries: daily returns per name, when: at rebalance}
+  - {from: sort, to: covariance, carries: the book's names, when: at rebalance}
+  - {from: covariance, to: pca, carries: covariance matrix, when: at rebalance}
+  - {from: pca, to: pc1text, carries: PC1 set and loadings, when: at rebalance}
+  - {from: filings, to: pc1text, carries: 10-K text, when: at rebalance}
+  - {from: pc1text, to: riskextract, carries: text per PC1 name, loading-weighted, when: at rebalance}
+  - {from: riskextract, to: cluster, carries: verbatim risk-factor quotes, when: at rebalance}
+  - {from: news, to: newsagent, carries: headlines over a long window, when: continuous}
+  - {from: newsagent, to: embedspace, carries: dated news quotes, when: slow update}
+  - {from: pmworries, to: embedspace, carries: ~5 worries and declared phrases, when: before the run}
+  - {from: embedspace, to: cluster, carries: context space with theme centres, when: at rebalance}
+  - {from: cluster, to: namecluster, carries: clusters with loading-weighted mass, when: at rebalance}
+  - {from: newsagent, to: namecluster, carries: news quotes to cross-compare, when: at rebalance}
+  - {from: namecluster, to: propagate, carries: named theme and its quotes, when: at rebalance}
+  - {from: filings, to: propagate, carries: 10-K text of non-PC1 names, when: at rebalance}
+  - {from: pca, to: themescore, carries: variance explained, when: at rebalance}
+  - {from: cluster, to: themescore, carries: cluster mass, when: at rebalance}
+  - {from: propagate, to: themescore, carries: signature breadth, when: at rebalance}
+  - {from: posdata, to: poscluster, carries: positioning per name, when: when published}
+  - {from: propagate, to: timebombs, carries: theme signature per name, when: at rebalance}
+  - {from: poscluster, to: timebombs, carries: positioning clusters, when: at rebalance}
+  - {from: prices, to: timebombs, carries: recent returns, when: daily}
+  - {from: namecluster, to: catagent, carries: named theme, when: after naming}
+  - {from: news, to: catagent, carries: news, when: after naming}
+  - {from: analystchatter, to: catagent, carries: analyst commentary, when: after naming}
+  - {from: catagent, to: catapprove, carries: proposed catalysts, when: after naming}
+  - {from: catapprove, to: volmodel, carries: approved catalysts with dates, when: after approval}
+  - {from: themescore, to: volmodel, carries: theme significance, when: at rebalance}
+  - {from: timebombs, to: volmodel, carries: time bombs, when: at rebalance}
+  - {from: sort, to: volmodel, carries: book returns, when: daily}
+  - {from: options, to: volmodel, carries: implied vol around event dates, when: daily}
+  - {from: volmodel, to: thepage, carries: vol view against implied, when: on catalyst horizon}
+  - {from: themescore, to: thepage, carries: ranked themes, when: at rebalance}
+  - {from: timebombs, to: thepage, carries: time bombs, when: at rebalance}
+  - {from: catapprove, to: thepage, carries: approved catalysts, when: after approval}
+  - {from: themescore, to: analogue, carries: theme state, when: at rebalance}
+  - {from: sort, to: analogue, carries: book returns, when: at rebalance}
+  - {from: analogue, to: thepage, carries: analogues, apt or not, when: at rebalance}
+  - {from: sort, to: garch, carries: book returns, when: backtest}
+  - {from: garch, to: volvalidation, carries: baseline forecast, when: backtest}
+  - {from: volmodel, to: volvalidation, carries: system forecast, when: backtest}
+  - {from: sort, to: volvalidation, carries: realised vol around past catalysts, when: backtest}
+  - {from: namecluster, to: poc, carries: identified theme on the curated case, when: once}
+  - {from: thepage, to: pmworries, carries: themes the PM adds or removes, when: weekly, feedback: true}
+  - {from: thepage, to: retired, hidden: true}

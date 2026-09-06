@@ -1,0 +1,856 @@
+# System design v2, draft 4. Extends the v1 baseline; overlays the advisor call (draft 3) plus the thirteen
+# decisions of docs/design/decisions-for-draft4.md. Every node carries `lookahead` (none | data | model |
+# model-unmitigable | human) with a `mitigation`, and every data node carries `access` per feed
+# (public | licensed | desk), so the causal spine and the public subset can be read off the canvas.
+# Status: settled | memo (v1, unchanged) | retired (kept on the canvas with a reason).
+
+base: versions/v1-baseline.yaml
+
+meta:
+  title: Momentum reversal-risk system, v2 draft 4
+  version: v2-draft-4
+  updated: "2026-09-06"
+  note: >
+    One tail model (severity, with the catalyst and text features inside it), the PCA object corrected to the
+    book's variance share with sign composition and a placebo, a registered worry taxonomy as the fixed
+    anchors of a date-constrained embedding space, retirements kept on the canvas, and a look-ahead label on
+    every node. Data nodes list every intended feed with its access: public, licensed, or desk-only.
+
+lanes:
+  - {id: data, name: Data in}
+  - {id: book, name: The book and its nulls}
+  - {id: exposure, name: Exposure reading}
+  - {id: decomp, name: "Step 1: decomposition"}
+  - {id: context, name: "Step 3: context space"}
+  - {id: naming, name: "Step 2: name the component"}
+  - {id: propagate, name: "Step 4: propagate"}
+  - {id: positioning, name: Positioning}
+  - {id: routes, name: Tail model}
+  - {id: catalysts, name: Catalysts}
+  - {id: context2, name: Analogue}
+  - {id: page, name: The page and the people}
+  - {id: research, name: Validation}
+
+drop_nodes: [filter, extractor, quotegate, mapper, vocab, condmeasures, datereader, catextract, comovement, flows, calendar, caldata, evidence]
+drop_edges:
+  - {from: sort, to: filings}
+  - {from: zscore, to: analogue}
+  - {from: condmeasures, to: analogue}
+  - {from: zscore, to: labeller}
+
+nodes:
+  # ============================================================ data in
+  - id: prices
+    name: Prices, returns, index membership
+    lane: data
+    kind: data
+    status: settled
+    lookahead: none
+    mitigation: point-in-time universe from archived holdings at announcement date
+    access: public
+    inputs: []
+    outputs: [daily returns per name, point-in-time universe, sector codes]
+    rule: |
+      Universe from the archived daily holdings of the Russell 3000 ETF at the date each change was announced (public); daily prices with corporate actions (public, Stooq or Tiingo; CRSP licensed in production); SIC codes from EDGAR (public), GICS in production (licensed). Delisted names terminate, never flatten. Printed numbers use value weights, since mega-cap concentration is the theme most often under watch; equal-weighted readings are computed and kept in the appendix.
+    checks: [reconciled against the French factor file]
+    on_failure: hold the day's state
+    open: []
+    memo: "§2"
+
+  - id: refseries
+    name: Six reference series
+    lane: data
+    kind: data
+    status: settled
+    lookahead: data
+    mitigation: ALFRED first-print vintages where FRED-hosted
+    access: public
+    inputs: []
+    outputs: [six daily series]
+    rule: S&P 500; ten-year yield change; front-month WTI; dollar index; investment-grade spread; the ten largest index names against the equal-weighted index, constructed from holdings. The two cross-asset principal components of v1 are retired (uninterpretable on the page). Fixed list, familywise-corrected; grows only by re-registration.
+    checks: [family charged as a group]
+    on_failure: series withheld; page says which
+    open: []
+    memo: "§3.1"
+
+  - id: filings
+    name: Company text, layered
+    lane: data
+    kind: data
+    status: settled
+    lookahead: none
+    mitigation: dated at acceptance or receipt; verbatim spans string-matched
+    access: mixed
+    inputs: []
+    outputs: [risk-factor and outlook text per name, dated; intra-quarter event text per name, dated]
+    rule: |
+      Three layers, each feed labelled. Context layer: the latest 10-K accepted before the formation date plus the latest 10-Q's Part II Item 1A where newer, Item 1A and the MD&A overview cut by regex (PUBLIC, EDGAR). Event stream: 8-K Items 2.02, 7.01 and 8.01 with exhibits (PUBLIC, EDGAR), earnings-call transcripts (PUBLIC for a subset via free feeds; LICENSED for full coverage). Production layer: equity research (LICENSED, not available to us now), dealer colour and prime-broker notes (DESK-ONLY, not available to us now). Every extracted span must string-match its source before storage.
+    checks: [coverage per name printed by leg and by layer; string-match gate]
+    on_failure: name marked unread on that layer
+    open: []
+    memo: "§2"
+
+  - id: news
+    name: News, two lanes
+    lane: data
+    kind: data
+    status: settled
+    lookahead: data
+    mitigation: the context space is rebuilt as-of each backtest date from the archive
+    access: mixed
+    inputs: []
+    outputs: [headlines and articles, timestamped; fast-lane items]
+    rule: |
+      Slow lane: a rolling twelve-month archive rebuilt weekly into the context space. Feeds: GDELT (PUBLIC), Fed, Treasury and BLS release pages (PUBLIC), SEC press-release 8-K exhibits (PUBLIC), Bloomberg and Reuters headlines (LICENSED, not available to us now). Fast lane: the last five sessions' items scanned daily for new dense regions, feeding the catalyst agent only. Each item timestamped at publication.
+    checks: [source list versioned; as-of rebuild for backtests]
+    on_failure: last space used, flagged stale
+    open: []
+    memo: "§2"
+
+  - id: posdata
+    name: Positioning, named components
+    lane: data
+    kind: data
+    status: settled
+    lookahead: data
+    mitigation: every source keyed to release date, never settlement; maximum input lag printed
+    access: mixed
+    inputs: []
+    outputs: [positioning score per name, with its lag]
+    rule: |
+      Score = 0.5 × comomentum rank (within-leg co-movement beyond fundamentals; PUBLIC, from returns) + 0.5 × 13F crowding rank (overlap among momentum-style filers; PUBLIC, 45-day lag). Short interest (PUBLIC, two-week lag) is the loser-leg reading printed beside it, not mixed in. Top quintile over the book marked heavily positioned. Production feeds, each printed as a separate line when present: securities-lending utilisation (LICENSED), options open interest (PUBLIC, delayed), ETF flows (PUBLIC), prime-broker aggregate colour and per-name positioning (DESK-ONLY, not available to us now). The maximum lag of any input to the score is printed on the day it is printed.
+    checks: [lag printed; overlap history]
+    on_failure: score absent; time-bomb lines suppressed and the page says so
+    open: []
+    memo: "§2, §7"
+
+  - id: options
+    name: Event-implied moves
+    lane: data
+    kind: data
+    status: settled
+    lookahead: data
+    mitigation: historical surfaces as-of; where absent the comparison is marked illustrative
+    access: mixed
+    inputs: []
+    outputs: [implied event move per component name; sector ETF implied move]
+    rule: The comparator for the catalyst claim is the component set's event-implied move, each name's implied earnings move (LICENSED for history, OptionMetrics; PUBLIC delayed for the live date) weighted by loading. The relevant sector ETF's implied move around the same date (PUBLIC delayed) is printed beside it as the price of the hedge. No book-level implied vol is constructed; the claim is stated for the component set.
+    checks: []
+    on_failure: comparison marked illustrative
+    open: []
+    memo: "§2, §3"
+
+  # ============================================================ book
+  - id: sort
+    name: 12-1 sort, the book
+    lane: book
+    kind: deterministic
+    status: settled
+    lookahead: none
+    mitigation: trailing window closed at formation
+    inputs: [daily returns per name, point-in-time universe]
+    outputs: [winner leg, loser leg, position weights, book returns]
+    rule: As v1. Rank on trailing 12-month return skipping the latest month; top and bottom decile; rebuilt monthly, measured daily. Position weights w (positive winners, negative losers) are the object every book-level statistic uses. Decomposition on both legs; every reading reported by leg.
+    checks: [leg sizes logged]
+    on_failure: previous book carried with a banner
+    open: []
+    memo: "§1"
+
+  # ============================================================ exposure
+  - id: zscore
+    name: Conferred exposure, one line per series
+    lane: exposure
+    kind: deterministic
+    status: settled
+    lookahead: none
+    mitigation: random portfolios drawn on the same date
+    inputs: [leg spread per series, N random books per date]
+    outputs: [per series, the exposure in hedgeable units, its cross-sectional percentile against random books, and its time-series percentile against the book's own history]
+    rule: The v1 reading kept as a line, not an alarm. For each of the six series, the conferred spread is printed in hedgeable units (dollars of ten-year duration equivalent, index beta, and so on), with two percentiles beside it, against the random portfolios (is this the sort's doing) and against the book's own history (is today unusual). Only the second can fire a page. The family-maximum form stays retired. The former Route 2 reading is this line for the driving series.
+    checks: [claim 1 as an instrument check, not a finding]
+    on_failure: n/a
+    open: []
+    memo: "§3.1"
+
+  - id: labeller
+    name: Labeller (retired)
+    lane: exposure
+    kind: model
+    status: retired
+    lookahead: model
+    mitigation: n/a
+    inputs: []
+    outputs: []
+    rule: Retired in draft 4. Duplicate of the cluster-naming role and unvalidated (row 10 unrun). The series name is printed instead.
+    checks: []
+    on_failure: n/a
+    open: []
+    memo: "—"
+
+  # ============================================================ step 1
+  - id: covariance
+    name: Covariance of the book's names
+    lane: decomp
+    kind: deterministic
+    status: settled
+    lookahead: none
+    mitigation: trailing window closed at formation
+    inputs: [daily returns per name, winner leg, loser leg]
+    outputs: [shrunk covariance matrix over the book's names]
+    rule: Daily returns over the trailing 126 trading days ending at formation, residualised to the market only; Ledoit-Wolf shrinkage because N is about 600 against T of 126. Sectors are not residualised, since sector is often the vehicle of the theme.
+    checks: [condition number printed; the same matrix built on random books gives the placebo eigenvalues]
+    on_failure: decomposition not run this period
+    open: []
+    memo: "§3 step 1"
+
+  - id: pca
+    name: Components, book share, and sign
+    lane: decomp
+    kind: deterministic
+    status: settled
+    lookahead: none
+    mitigation: arithmetic on the point-in-time book
+    inputs: [shrunk covariance matrix over the book's names, position weights]
+    outputs: [components above the bulk edge; per component the book's variance share, its placebo percentile, the component set with signs, and the case flag]
+    rule: |
+      Eigen-decomposition; components kept while their eigenvalue clears the Marchenko-Pastur bulk edge, at most three. For component k the headline is the book's variance share, λ_k (w'v_k)² / (w'Σw), not the name-level variance explained, with its percentile against the same statistic on cap- and sector-matched random books. Sign fixed so the component's position-weighted return over the window is positive. Component set: top quartile of absolute loading, each name keeping its loading sign. Case flag: if loadings are opposite-sign across the legs the component is the momentum factor itself (comomentum) and is handed to the tail model as a state, not to the naming pipeline; if same-sign it is a theme and goes to naming. Diagnostic beside it: the first component of each leg decomposed separately.
+    checks: [placebo percentile; stability of the set across adjacent months; per-leg diagnostic]
+    on_failure: theme naming not run
+    open: []
+    memo: "§3 step 1"
+
+  - id: bridge
+    name: Component against the six series
+    lane: decomp
+    kind: deterministic
+    status: settled
+    lookahead: none
+    mitigation: same windows
+    inputs: [components above the bulk edge, six daily series]
+    outputs: [R² and loadings of each component's return on the six series]
+    rule: Each component's daily return regressed on the six reference series over the same window. High R² means arithmetic has already named the theme (a rates bet, an oil bet) and the text step is confirmatory; low R² means the text step is doing real work. Printed as the bridge between the exposure line and the theme reading, and it decides which is the headline that month.
+    checks: [R² against the same regression on random books' first components]
+    on_failure: n/a
+    open: []
+    memo: "§3 step 1"
+
+  # ============================================================ step 3
+  - id: newsagent
+    name: News risk-statement extraction
+    lane: context
+    kind: model
+    status: settled
+    lookahead: model
+    mitigation: date- and name-blind prompt; distilled to a dated classifier for the backtest
+    inputs: [headlines and articles, timestamped]
+    outputs: [macro-risk statements from news, dated, with a canonical short paraphrase]
+    rule: A light model extracts statements of macro risk over a one-year horizon, verbatim plus a canonical short paraphrase for embedding, with the date. In the backtest the LLM labels a sample once and a small classifier on the date-constrained encoder does the rest.
+    checks: [quote gate; monthly audit sample]
+    on_failure: last space used
+    open: []
+    memo: "§3 step 3"
+
+  - id: taxonomy
+    name: Registered worry taxonomy
+    lane: context
+    kind: human
+    status: settled
+    lookahead: human
+    mitigation: frozen before each run; backtests run with the taxonomy as of the date, and once without it
+    inputs: [PM edits]
+    outputs: [about thirty external conditions with an 'other' bucket, versioned]
+    rule: Replaces 'about five worries'. A registered list of about thirty external conditions (rates, the memory cycle, tariffs, a regulatory decision, financing, and so on) with an 'other' bucket, versioned, reviewed quarterly from the 'other' residue. The PM edits it whenever something bites; every edit is logged as a labelled event. Under the crescendo view the top entry by mass is the theme most of the time.
+    checks: [every edit logged; quarterly 'other' review]
+    on_failure: last version used
+    open: []
+    memo: "§3, §10"
+
+  - id: embedspace
+    name: Date-constrained context space
+    lane: context
+    kind: deterministic
+    status: settled
+    lookahead: model
+    mitigation: ChronoBERT-class encoder with a cutoff before each backtest date; BM25 as the lexical twin
+    inputs: [macro-risk statements from news, dated, with a canonical short paraphrase, about thirty external conditions with an 'other' bucket, versioned]
+    outputs: [context space with anchors, news clusters, and a threshold]
+    rule: |
+      Encoder: a date-constrained sentence encoder (ChronoBERT-class) whose training cutoff precedes each date; the current model for the live date. News paraphrases over the rolling window are embedded and clustered unsupervised (HDBSCAN, minimum cluster size registered) so the dense macro stories emerge. Each taxonomy entry is placed as a query: its anchor is the centroid of its nearest news statements, not the phrase's own vector, so a three-word entry is not competing with forty-word sentences. Threshold: the 90th percentile of within-cluster member-to-centroid distance across the news clusters. The space is rebuilt weekly and every in-window quote is re-assigned at each rebuild. A taxonomy entry with no news mass is printed as such. Run once more without the taxonomy anchors; if the headline theme changes, both are printed.
+    checks: [mass per entry; residual share; with-and-without-anchors comparison; BM25 twin agreement]
+    on_failure: cluster on company quotes alone, flagged
+    open: []
+    memo: "§3 step 3"
+
+  # ============================================================ step 2
+  - id: pc1text
+    name: Gather the component names' text
+    lane: naming
+    kind: deterministic
+    status: settled
+    lookahead: none
+    mitigation: dated documents
+    inputs: [components above the bulk edge; per component the book's variance share, its placebo percentile, the component set with signs, and the case flag, risk-factor and outlook text per name, dated; intra-quarter event text per name, dated]
+    outputs: [text per component name with loading weight and sign]
+    rule: All context-layer and event-stream passages for every name in a theme-case component set. Loading enters as the quote weight at clustering.
+    checks: [coverage of the set printed by leg and by layer]
+    on_failure: theme named on partial coverage, flagged
+    open: []
+    memo: "§3 step 2"
+
+  - id: riskextract
+    name: Risk-factor extraction
+    lane: naming
+    kind: model
+    status: settled
+    lookahead: model
+    mitigation: name- and date-blind prompt; cutoff-split error comparison; distil to a dated classifier; post-cutoff months carry the predictive claim
+    inputs: [text per component name with loading weight and sign]
+    outputs: [risk-factor quotes per name, verbatim, with sign and canonical paraphrase]
+    rule: |
+      A light model, one document one call, blind to the company name and the date: extract up to three risk factors over a one-year horizon that would cause a significant drawdown, each with a verbatim quote, a sign (the company gains or loses if the risk materialises) and a canonical short paraphrase. Sign is informative from MD&A and event text; Item 1A is downside by construction. Quote gate applies. Extraction error measured on the stratified monthly sample split at the model's training cutoff; the difference bounds contamination. Production path: distil to a classifier on the dated encoder.
+    checks: [quote gate; hand-labelled sample by leg, era and cutoff side]
+    on_failure: record dropped and counted
+    open: []
+    memo: "§3 step 2"
+
+  - id: cluster
+    name: Assign quotes in the context space
+    lane: naming
+    kind: deterministic
+    status: settled
+    lookahead: model
+    mitigation: dated encoder; supersession instead of decay; re-assignment at each rebuild
+    inputs: [risk-factor quotes per name, verbatim, with sign and canonical paraphrase, context space with anchors, news clusters, and a threshold]
+    outputs: [mass per taxonomy entry and residual cluster, loading-weighted, by leg and by loss direction, with its sector-matched placebo]
+    rule: |
+      Each paraphrase is embedded with the dated encoder and assigned to the nearest anchor within the threshold, else to a residual cluster. Supersession, not decay: a document's quotes are current until the next document from that company on that layer. Mass is loading-weighted and composed into loss direction (leg × loading sign × quote sign). The same assignment run on the filings of sector-matched random sets of the same size gives the placebo mass per entry, so a boilerplate risk shared by every company reads as zero excess.
+    checks: [placebo mass; residual share; stability month to month]
+    on_failure: previous assignment used
+    open: []
+    memo: "§3 step 2"
+
+  - id: namecluster
+    name: Name the theme
+    lane: naming
+    kind: model
+    status: settled
+    lookahead: model
+    mitigation: names grounded in the 20 nearest quotes; c-TF-IDF label as the deterministic twin; low stakes
+    inputs: [mass per taxonomy entry and residual cluster, loading-weighted, by leg and by loss direction, with its sector-matched placebo, context space with anchors, news clusters, and a threshold]
+    outputs: [theme name per component with its supporting quotes; the nearest news cluster and its headline count]
+    rule: For a taxonomy entry the name is the entry. For a residual cluster an LLM reads the 20 quotes nearest its centre and names it; the c-TF-IDF label prints beside it as the twin. Cross-compare with news by printing the nearest news cluster's name and headline count; a theme with no news mass is flagged company-specific. Calibrated on sector-matched random name sets.
+    checks: [placebo calibration on sector-matched sets; twin printed]
+    on_failure: twin label printed alone
+    open: []
+    memo: "§3 step 2"
+
+  # ============================================================ step 4
+  - id: propagate
+    name: Propagate the theme
+    lane: propagate
+    kind: model
+    status: settled
+    lookahead: model
+    mitigation: retrieval with the dated encoder is the historical instrument; LLM rerank only on post-cutoff months; retrieval-only as the twin
+    inputs: [theme name per component with its supporting quotes; the nearest news cluster and its headline count, risk-factor and outlook text per name, dated; intra-quarter event text per name, dated, positioning score per name, with its lag]
+    outputs: [theme signature per name outside the component set, with quote and score]
+    rule: |
+      Scope: the rest of the book plus the universe's top positioning quintile. Every passage in scope is embedded once with the dated encoder and cached; retrieval by the theme anchor returns candidates; the LLM reranks the top candidates 0 to 3 with a verbatim quote, 2 or more carries the signature. In the backtest before the LLM's cutoff the retrieval score alone is the instrument. Placebo: the same run with last year's headline theme; the false-signature rate is printed beside the signature rate every time.
+    checks: [quote gate; placebo with a plausible-but-wrong theme; retrieval-only twin]
+    on_failure: name marked unscanned
+    open: []
+    memo: "§3 step 4"
+
+  - id: themescore
+    name: Theme readings, two numbers
+    lane: propagate
+    kind: deterministic
+    status: settled
+    lookahead: none
+    mitigation: inherits its inputs' labels
+    inputs: [components above the bulk edge; per component the book's variance share, its placebo percentile, the component set with signs, and the case flag, mass per taxonomy entry and residual cluster, loading-weighted, by leg and by loss direction, with its sector-matched placebo, theme signature per name outside the component set, with quote and score]
+    outputs: [book variance share on the theme with its placebo percentile; share of book weight by leg carrying the theme in the loss direction, with its placebo; agreement line]
+    rule: |
+      Replaces the product formula. Two placebo-referenced numbers per theme: (1) the book's variance share on the component with its percentile against random books; (2) the share of the book's weight, by leg, that carries the theme in the loss direction, component set plus signature carriers, with the sector-matched placebo share. Converted on the page to bp: the book's loss if the component set returns minus two sigma, signature carriers included. Agreement line: whether the taxonomy's top entry by mass and the component's name are the same theme. Recomputed weekly on the event stream, monthly for the decomposition.
+    checks: [both placebos; a filing-season check, February against August]
+    on_failure: n/a
+    open: []
+    memo: "§3 step 5, §6"
+
+  # ============================================================ positioning
+  - id: poscluster
+    name: Positioning overlap with the theme
+    lane: positioning
+    kind: deterministic
+    status: settled
+    lookahead: data
+    mitigation: positioning as-of release
+    inputs: [positioning score per name, with its lag, theme signature per name outside the component set, with quote and score, components above the bulk edge; per component the book's variance share, its placebo percentile, the component set with signs, and the case flag]
+    outputs: [overlap of the heavily positioned set with the theme set, by leg; the non-overlap; history]
+    rule: Theme set (component set plus signature carriers) against the top positioning quintile of the book, by leg. Overlap and non-overlap both reported with their history, which measures the claim that hedge funds are mostly positioned on one theme rather than asserting it. Absorbs the former Route 3 reading.
+    checks: [overlap history]
+    on_failure: overlap not computed
+    open: []
+    memo: "§7"
+
+  - id: timebombs
+    name: Time bombs, two objects
+    lane: positioning
+    kind: deterministic
+    status: settled
+    lookahead: none
+    mitigation: returns and positioning as-of
+    inputs: [overlap of the heavily positioned set with the theme set, by leg; the non-overlap; history, daily returns per name]
+    outputs: [pre-catalyst list; contagion list; both by leg]
+    rule: |
+      Two lines. Pre-catalyst: signature carriers that have rallied with the component (trailing 20-day return beyond one sigma of their own trailing year, same direction as the component) and sit in the top positioning quintile, the names with the most to give back. Contagion, read after an unwind starts: signature carriers still within one sigma while the component has moved beyond one, and crowded, the names that have not yet paid. Split by leg, since a crowded short that has not rallied in a squeeze is where the next squeeze goes.
+    checks: [event study registered per object (see validation)]
+    on_failure: n/a
+    open: []
+    memo: "§7, §6"
+
+  # ============================================================ tail model
+  - id: route1
+    name: Route 1 detector (retired)
+    lane: routes
+    kind: deterministic
+    status: retired
+    lookahead: none
+    mitigation: n/a
+    inputs: []
+    outputs: []
+    rule: Retired in draft 4. Its input node no longer exists and the theme readings by leg carry the short-leg-on-one-condition case. The loser-leg beta, distance from highs and short interest survive as inputs to the tail model.
+    checks: []
+    on_failure: n/a
+    open: []
+    memo: "—"
+
+  - id: route2
+    name: Driving-series reading (was Route 2)
+    lane: routes
+    kind: deterministic
+    status: settled
+    lookahead: none
+    mitigation: n/a
+    inputs: [per series, the exposure in hedgeable units, its cross-sectional percentile against random books, and its time-series percentile against the book's own history]
+    outputs: [the winner leg's driving-series exposure, in hedgeable units, with where inside the leg it sits]
+    rule: The one v1 detector a desk would use, kept as a reading and stripped of the route vocabulary. The winner leg's exposure to the driving series in hedgeable units, its two percentiles, and where in the leg it sits.
+    checks: [check 5 recovered 3 of 4]
+    on_failure: n/a
+    open: []
+    memo: "§3"
+
+  - id: route3
+    name: Route 3 detector (retired)
+    lane: routes
+    kind: deterministic
+    status: retired
+    lookahead: none
+    mitigation: n/a
+    inputs: []
+    outputs: []
+    rule: Retired in draft 4. Fired on zero of 195 episodes; its inputs are absorbed into the positioning score and the overlap reading.
+    checks: []
+    on_failure: n/a
+    open: []
+    memo: "—"
+
+  - id: classify
+    name: Classification rule (retired; inventory kept)
+    lane: routes
+    kind: deterministic
+    status: retired
+    lookahead: none
+    mitigation: n/a
+    inputs: []
+    outputs: [the crash inventory, 195 episodes]
+    rule: The rule is retired as a page-facing node after its refutation (44.1% fits none). The crash inventory stays as data for the tail model and the analogue. The finding that 77 of the 86 unassigned episodes are a loser-leg loss in a rising market with no prior bear state goes into the memo as a finding.
+    checks: []
+    on_failure: n/a
+    open: []
+    memo: "§5, memo finding"
+
+  - id: severity
+    name: Conditional tail model
+    lane: routes
+    kind: deterministic
+    status: settled
+    lookahead: none
+    mitigation: earnings calendar known in advance; all regressors as-of
+    inputs: [book returns, book variance share on the theme with its placebo percentile; share of book weight by leg carrying the theme in the loss direction, with its placebo; agreement line, overlap of the heavily positioned set with the theme set, by leg; the non-overlap; history, approved catalysts, added catalysts, baseline vol forecast, event-density baseline, the crash inventory, 195 episodes]
+    outputs: [10-day 5% VaR and ES; the catalyst-window conditional VaR; the ablation ladder]
+    rule: |
+      One tail model. Linear quantile regression of the book's ten-day forward return at the 5% quantile on trailing volatility, the Daniel-Moskowitz bear-state terms, the comomentum state from the case flag, and the new features: the book's variance share on the theme, the loss-direction signature share by leg, the positioning overlap, a catalyst-window indicator with days to the nearest approved catalyst, the GARCH forecast and the event-density baseline as controls. Fitted on every day up to the formation date. Output: the ten-day VaR and ES, and the catalyst-window conditional VaR, whose difference from the unconditional is the 'bump' stated in loss terms. Ablation ladder reported every run: (0) vol and bear state; (1) plus variance share and price-only signature; (2) plus text signature; (3) plus positioning. Whether the quantile moves with the state is reported as the state-conditional breach rate.
+    checks: [breach rate on held-out years; state-conditional breach rates; ablation ladder; ES no milder than VaR]
+    on_failure: unconditional quantile alone
+    open: []
+    memo: "§3, §5, §6"
+
+  - id: volmodel
+    name: Vol model (retired, folded into the tail model)
+    lane: routes
+    kind: deterministic
+    status: retired
+    lookahead: none
+    mitigation: n/a
+    inputs: []
+    outputs: []
+    rule: Retired in draft 4. Its regressors and the catalyst-window indicator live in the conditional tail model; its comparator is the component set's event-implied move; its symmetric five-day vol target is replaced by the lower tail.
+    checks: []
+    on_failure: n/a
+    open: []
+    memo: "—"
+
+  # ============================================================ catalysts
+  - id: catagent
+    name: Catalyst proposal (live only)
+    lane: catalysts
+    kind: model
+    status: settled
+    lookahead: model-unmitigable
+    mitigation: none possible; excluded from every backtest; scheduled macro catalysts come from calendars deterministically
+    inputs: [theme name per component with its supporting quotes; the nearest news cluster and its headline count, fast-lane items, intra-quarter event text per name, dated]
+    outputs: [proposed catalysts per theme, dated, with source quote, typed scheduled or unscheduled]
+    rule: Scheduled macro catalysts (FOMC, CPI, payrolls, index rebalances) are taken from calendars with no model. The LLM proposes company and off-universe catalysts (a foreign supplier's earnings, a regulatory readout) from the fast news lane and event text, each with a date, a source quote and a type. A 2025 model reading 2019 news would propose what mattered, so this node runs live only and is absent from the backtest.
+    checks: [date and quote required; type recorded; PM approval]
+    on_failure: calendar catalysts only
+    open: []
+    memo: "§3, §8"
+
+  - id: catapprove
+    name: PM reviews catalysts
+    lane: catalysts
+    kind: human
+    status: settled
+    lookahead: human
+    mitigation: live only
+    inputs: [proposed catalysts per theme, dated, with source quote, typed scheduled or unscheduled]
+    outputs: [approved catalysts, added catalysts]
+    rule: Weekly, under ten items. Approval is about the date and relevance, never about the forecast; adding is where the PM's value is. Unapproved catalysts print as proposed.
+    checks: []
+    on_failure: unapproved shown as proposed
+    open: []
+    memo: "§10"
+
+  # ============================================================ analogue
+  - id: analogue
+    name: Analogue retrieval
+    lane: context2
+    kind: deterministic
+    status: settled
+    lookahead: none
+    mitigation: one-year embargo; state as of each date
+    inputs: [book variance share on the theme with its placebo percentile; share of book weight by leg carrying the theme in the loss direction, with its placebo; agreement line, overlap of the heavily positioned set with the theme set, by leg; the non-overlap; history, per series, the exposure in hedgeable units, its cross-sectional percentile against random books, and its time-series percentile against the book's own history, the crash inventory, 195 episodes]
+    outputs: [five nearest past states with what followed, quiet outcomes included]
+    rule: |
+      State vector: the six conferred exposures, the book's variance share on its first component, the positioning overlap, the book's trailing realised vol, the bear state. Dimensions that begin in 2014 restrict neighbours to 2014 onward for the theme and positioning entries; pre-2014 neighbours are matched on the exposures and vol only, and the page says which. Covariance-aware distance, one-year embargo. The field-comparison rule that was the panel's twin decides aptness; the panel is retired.
+    checks: [as-of replay]
+    on_failure: distance list alone
+    open: []
+    memo: "§3"
+
+  - id: panel
+    name: Analogue panel (retired)
+    lane: context2
+    kind: model
+    status: retired
+    lookahead: model-unmitigable
+    mitigation: n/a
+    inputs: []
+    outputs: []
+    rule: Retired in draft 4. Three roles arguing over five rows, with a model that knows what followed 2009; the deterministic field-comparison rule is the product.
+    checks: []
+    on_failure: n/a
+    open: []
+    memo: "—"
+
+  # ============================================================ page and people
+  - id: eventrule
+    name: When a page fires
+    lane: page
+    kind: deterministic
+    status: settled
+    lookahead: none
+    mitigation: thresholds registered
+    inputs: [approved catalysts, added catalysts, 10-day 5% VaR and ES; the catalyst-window conditional VaR; the ablation ladder, book variance share on the theme with its placebo percentile; share of book weight by leg carrying the theme in the loss direction, with its placebo; agreement line, per series, the exposure in hedgeable units, its cross-sectional percentile against random books, and its time-series percentile against the book's own history]
+    outputs: [calendar page; threshold page; weekly summary]
+    rule: |
+      Two triggers. Calendar: a page five sessions before each approved catalyst, carrying the catalyst-window VaR and the bump. Threshold: a page when the ten-day VaR, the book's variance share on its first component, or a conferred exposure crosses the 95th time-series percentile of its own history, at most two expected false pages a month on the registered null. Cross-sectional percentiles print as context and never fire. Weekly summary otherwise. Production form: a standing state pushed on change.
+    checks: [measured false-page rate]
+    on_failure: template with a banner
+    open: []
+    memo: "§7"
+
+  - id: thepage
+    name: The page
+    lane: page
+    kind: output
+    status: settled
+    lookahead: none
+    mitigation: n/a
+    inputs: [the page]
+    outputs: [one page, pushed]
+    rule: |
+      Horizon for every headline number: ten trading days. Order: (1) the theme, its book variance share and placebo percentile, the agreement line, by leg; (2) the loss in bp if the component set returns minus two sigma, signature carriers included, with direction from the composed sign; (3) the ten-day VaR and ES, and the catalyst-window VaR beside the component set's event-implied move and the sector ETF's implied move as the hedge price; (4) the pre-catalyst and contagion time-bomb lists by leg, with the positioning lag; (5) approved catalysts with dates and types; (6) the driving-series line in hedgeable units; (7) what the usual screens show; (8) the analogues; (9) what changed since the last page; (10) coverage by layer and the beta mapping: this is the paper 12-1 book, and the reader maps through his own beta. The takeaway is stated as the direction and the hedge, never as 'get out'. Every number links to a stored output; every theme to its quotes; prose over fixed fields with the numeral gate.
+    checks: [numeral gate; every quote string-matched]
+    on_failure: template with a banner
+    open: []
+    memo: "§6"
+
+  - id: falsifiers
+    name: Falsifiers and the hit-and-miss log
+    lane: page
+    kind: deterministic
+    status: settled
+    lookahead: none
+    mitigation: n/a
+    inputs: [calendar page; threshold page; weekly summary, book returns]
+    outputs: [hit-and-miss log]
+    rule: |
+      Every page now has a date: calendar pages resolve at the catalyst, threshold pages at the ten-day horizon. A hit is a realised loss beyond the conditional VaR; a miss is a page with no such loss; a silence is a loss with no page. All three are counted and printed monthly.
+    checks: []
+    on_failure: n/a
+    open: []
+    memo: "§3, §7"
+
+  - id: signoff
+    name: Acknowledgement and the human tasks
+    lane: page
+    kind: human
+    status: settled
+    lookahead: human
+    mitigation: live only
+    inputs: [calendar page; threshold page; weekly summary]
+    outputs: [acknowledged page, or shipped unacknowledged]
+    rule: |
+      A page ships when it fires and records whether it was acknowledged; the two-hour signature is dropped, since on the days a page fires the market is moving. Human tasks: the taxonomy edits; the weekly catalyst pass; a monthly stratified sample of 90 records labelled by a research analyst, not the PM.
+    checks: []
+    on_failure: shipped unacknowledged
+    open: []
+    memo: "§3.6, §7"
+
+  - id: pmworries
+    name: PM edits the taxonomy
+    lane: page
+    kind: human
+    status: settled
+    lookahead: human
+    mitigation: edits logged; backtests run without them
+    inputs: []
+    outputs: [PM edits]
+    rule: The PM adds, removes or promotes taxonomy entries whenever something bites, and can declare that a phrase should be an anchor. Every edit is a labelled event. The comparator for the whole theme machinery is the taxonomy's top entry alone.
+    checks: [edit log]
+    on_failure: system runs on news-derived anchors alone
+    open: []
+    memo: "§3, §10"
+
+  # ============================================================ validation
+  - id: labels
+    name: Hand-labelled sample
+    lane: research
+    kind: human
+    status: settled
+    lookahead: human
+    mitigation: labels are the audit, not an input
+    inputs: [risk-factor quotes per name, verbatim, with sign and canonical paraphrase]
+    outputs: [precision and recall by leg, era and cutoff side]
+    rule: About 90 records a month, stratified by leg, era and the model's cutoff side, second-rated, labelled by a research analyst. Classical intervals; the prediction-powered machinery is dropped at this sample size. The cutoff-side split is the contamination bound.
+    checks: []
+    on_failure: labels carry the estimate alone
+    open: []
+    memo: "§5"
+
+  - id: referees
+    name: Referee roles (moved to the memo)
+    lane: research
+    kind: model
+    status: retired
+    lookahead: none
+    mitigation: n/a
+    inputs: []
+    outputs: []
+    rule: Not a system node. The referee, dissenting referee and research-assistant roles describe how the memo was produced and live in its AI-use section.
+    checks: []
+    on_failure: n/a
+    open: []
+    memo: "AI-use section"
+
+  - id: garch
+    name: GARCH baseline
+    lane: research
+    kind: deterministic
+    status: settled
+    lookahead: none
+    mitigation: refit at each formation date
+    inputs: [book returns]
+    outputs: [baseline vol forecast]
+    rule: GARCH(1,1) on the book's daily returns, refit at each formation date; enters the tail model as a control and the validation as the calendar-blind baseline.
+    checks: []
+    on_failure: n/a
+    open: []
+    memo: "§5"
+
+  - id: eventbaseline
+    name: Event-density baseline
+    lane: research
+    kind: deterministic
+    status: settled
+    lookahead: none
+    mitigation: earnings calendar known in advance
+    inputs: [book returns, position weights, approved catalysts, added catalysts]
+    outputs: [event-density baseline]
+    rule: |
+      The calendar-aware baseline: book weight reporting inside the window times each name's historical announcement move. Beating GARCH around scheduled events is trivial; the system has to beat this.
+    checks: []
+    on_failure: n/a
+    open: []
+    memo: "§5"
+
+  - id: volvalidation
+    name: Catalyst-window validation
+    lane: research
+    kind: deterministic
+    status: settled
+    lookahead: none
+    mitigation: component-set earnings dates from the filing calendar
+    inputs: [10-day 5% VaR and ES; the catalyst-window conditional VaR; the ablation ladder, baseline vol forecast, event-density baseline, implied event move per component name; sector ETF implied move, book returns]
+    outputs: [breach rates and pinball loss per ablation rung, per catalyst type; the bump against the implied comparator where it exists]
+    rule: One observation per formation month (the month's catalyst window), errors clustered by month, effective sample stated, power statement registered first. The tail model's rungs are scored on breach rate and pinball loss against GARCH and the event-density baseline; the catalyst-window VaR is compared with the component set's event-implied move where the history exists, otherwise marked illustrative. The register carries the margin.
+    checks: [register row with margin and power]
+    on_failure: n/a
+    open: []
+    memo: "§5"
+
+  - id: bombtest
+    name: Time-bomb event study
+    lane: research
+    kind: deterministic
+    status: settled
+    lookahead: none
+    mitigation: positioning as-of; flagged lists frozen before the outcome window
+    inputs: [pre-catalyst list; contagion list; both by leg, daily returns per name]
+    outputs: [flagged against sector-matched unflagged, per unwind, per object]
+    rule: On the in-sample unwinds (2020-11, 2021-Q1, 2022-11, 2025-01, 2025-04), did names on each list the month before move with the theme more than sector-matched unflagged names over the following twenty days, using positioning as it stood. Registered before the lists are printed on any page.
+    checks: [register row]
+    on_failure: lists not printed until run
+    open: []
+    memo: "§5"
+
+  - id: themevalidation
+    name: Theme machinery against the taxonomy
+    lane: research
+    kind: deterministic
+    status: settled
+    lookahead: human
+    mitigation: no history until a PM edits the taxonomy; production measurement
+    inputs: [book variance share on the theme with its placebo percentile; share of book weight by leg carrying the theme in the loss direction, with its placebo; agreement line, PM edits]
+    outputs: [share of PM-promoted entries the system had surfaced first; share of system residual themes later adopted]
+    rule: Quarterly. The number that says whether discovery adds anything beyond the list and whether PM input can decrease.
+    checks: [register row]
+    on_failure: n/a
+    open: []
+    memo: "§5"
+
+  # ============================================================ v1 nodes kept unchanged, look-ahead labels only
+  - {id: french, lookahead: none, mitigation: thresholds frozen on the pre-sample, access: public}
+  - {id: random, lookahead: none, mitigation: drawn on the same date from the point-in-time universe}
+  - {id: controls, lookahead: none, mitigation: same windows as the book}
+  - {id: sensitivities, lookahead: none, mitigation: rolling windows closed before formation}
+  - {id: composer, lookahead: none, mitigation: prose only; every numeral gated against a computed field}
+  - {id: responselog, lookahead: human, mitigation: production only; needs the reader's positions}
+  - {id: register, lookahead: none, mitigation: thresholds and sentences written before each run}
+
+edges:
+  # decomposition and exposure
+  - {from: prices, to: covariance, carries: daily returns, when: at rebalance}
+  - {from: sort, to: covariance, carries: the book's names, both legs, when: at rebalance}
+  - {from: covariance, to: pca, carries: shrunk covariance, when: at rebalance}
+  - {from: sort, to: pca, carries: position weights, when: at rebalance}
+  - {from: random, to: pca, carries: placebo eigenvalues and shares, when: at rebalance}
+  - {from: pca, to: bridge, carries: component returns, when: at rebalance}
+  - {from: refseries, to: bridge, carries: six series, when: at rebalance}
+  - {from: pca, to: severity, carries: comomentum state (case flag), when: at rebalance}
+  # context space
+  - {from: news, to: newsagent, carries: slow-lane archive, when: weekly}
+  - {from: newsagent, to: embedspace, carries: dated risk statements, when: weekly}
+  - {from: taxonomy, to: embedspace, carries: entries as queries, when: on change}
+  - {from: pmworries, to: taxonomy, carries: edits, when: on change}
+  - {from: embedspace, to: cluster, carries: anchors, threshold, when: weekly}
+  # naming
+  - {from: pca, to: pc1text, carries: theme-case component sets, when: at rebalance}
+  - {from: filings, to: pc1text, carries: context and event text, when: at rebalance, weekly for events}
+  - {from: pc1text, to: riskextract, carries: text with loading and sign, when: per document}
+  - {from: riskextract, to: cluster, carries: quotes with sign and paraphrase, when: per document}
+  - {from: random, to: cluster, carries: sector-matched random sets, when: at rebalance}
+  - {from: cluster, to: namecluster, carries: mass per entry and residual clusters, when: weekly}
+  - {from: embedspace, to: namecluster, carries: news clusters to cross-compare, when: weekly}
+  # propagation and readings
+  - {from: namecluster, to: propagate, carries: theme anchor and quotes, when: at rebalance}
+  - {from: filings, to: propagate, carries: text of names in scope, when: at rebalance}
+  - {from: posdata, to: propagate, carries: top positioning quintile as scope, when: at rebalance}
+  - {from: pca, to: themescore, carries: book variance share and placebo, when: at rebalance}
+  - {from: cluster, to: themescore, carries: loss-direction mass and placebo, when: weekly}
+  - {from: propagate, to: themescore, carries: signature carriers, when: at rebalance}
+  - {from: taxonomy, to: themescore, carries: top entry for the agreement line, when: weekly}
+  - {from: bridge, to: themescore, carries: R² deciding the headline, when: at rebalance}
+  # positioning
+  - {from: posdata, to: poscluster, carries: positioning score with lag, when: at release}
+  - {from: propagate, to: poscluster, carries: signature carriers, when: at rebalance}
+  - {from: pca, to: poscluster, carries: component sets, when: at rebalance}
+  - {from: poscluster, to: timebombs, carries: overlap and non-overlap by leg, when: at rebalance}
+  - {from: prices, to: timebombs, carries: trailing returns, when: daily}
+  # catalysts
+  - {from: namecluster, to: catagent, carries: named themes, when: live}
+  - {from: news, to: catagent, carries: fast-lane items, when: daily, live only}
+  - {from: filings, to: catagent, carries: event text, when: daily, live only}
+  - {from: catagent, to: catapprove, carries: proposed catalysts, when: weekly}
+  # tail model
+  - {from: sort, to: severity, carries: book returns, when: daily}
+  - {from: themescore, to: severity, carries: theme share and signature share, when: weekly}
+  - {from: poscluster, to: severity, carries: positioning overlap, when: at rebalance}
+  - {from: catapprove, to: severity, carries: approved catalysts with dates, when: after approval}
+  - {from: garch, to: severity, carries: vol forecast as control, when: daily}
+  - {from: eventbaseline, to: severity, carries: event-density baseline as control, when: daily}
+  - {from: classify, to: severity, carries: the crash inventory, when: frozen}
+  - {from: zscore, to: route2, carries: driving-series exposure, when: daily}
+  # analogue
+  - {from: themescore, to: analogue, carries: theme share, when: at rebalance}
+  - {from: poscluster, to: analogue, carries: positioning overlap, when: at rebalance}
+  - {from: zscore, to: analogue, carries: six conferred exposures, when: at rebalance}
+  - {from: classify, to: analogue, carries: the crash inventory, when: frozen}
+  # page
+  - {from: catapprove, to: eventrule, carries: approved catalyst dates, when: after approval}
+  - {from: severity, to: eventrule, carries: VaR and catalyst-window VaR, when: daily}
+  - {from: themescore, to: eventrule, carries: variance share percentile, when: weekly}
+  - {from: zscore, to: eventrule, carries: time-series percentiles, when: daily}
+  - {from: eventrule, to: composer, carries: fire or quiet, when: daily}
+  - {from: severity, to: composer, carries: VaR, ES, catalyst-window VaR, when: daily}
+  - {from: options, to: composer, carries: event-implied and sector ETF implied moves, when: daily}
+  - {from: themescore, to: composer, carries: theme readings and bp loss, when: weekly}
+  - {from: timebombs, to: composer, carries: two lists by leg, when: at rebalance}
+  - {from: catapprove, to: composer, carries: approved catalysts, when: after approval}
+  - {from: route2, to: composer, carries: driving-series line, when: daily}
+  - {from: analogue, to: composer, carries: analogues, when: at rebalance}
+  - {from: namecluster, to: composer, carries: theme name and quotes, when: weekly}
+  - {from: thepage, to: falsifiers, carries: dated pages, when: on event}
+  - {from: sort, to: falsifiers, carries: realised returns, when: at resolution}
+  # validation
+  - {from: sort, to: garch, carries: book returns, when: at formation}
+  - {from: sort, to: eventbaseline, carries: book returns and weights, when: at formation}
+  - {from: catapprove, to: eventbaseline, carries: catalyst dates, when: after approval}
+  - {from: severity, to: volvalidation, carries: rungs and catalyst-window VaR, when: backtest}
+  - {from: garch, to: volvalidation, carries: baseline, when: backtest}
+  - {from: eventbaseline, to: volvalidation, carries: baseline, when: backtest}
+  - {from: options, to: volvalidation, carries: implied comparator where it exists, when: backtest}
+  - {from: sort, to: volvalidation, carries: realised returns, when: backtest}
+  - {from: timebombs, to: bombtest, carries: lists as of each unwind, when: backtest}
+  - {from: prices, to: bombtest, carries: forward returns, when: backtest}
+  - {from: themescore, to: themevalidation, carries: system themes, when: quarterly}
+  - {from: pmworries, to: themevalidation, carries: edit log, when: quarterly}
+  - {from: register, to: volvalidation, carries: margin and power, when: before the run}
+  - {from: register, to: bombtest, carries: threshold and sentences, when: before the run}
+  - {from: register, to: themevalidation, carries: threshold and sentences, when: before the run}
+  - {from: signoff, to: labels, carries: monthly sample, when: monthly}
+  - {from: labels, to: riskextract, carries: error by stratum and cutoff side, when: monthly, feedback: true}
+  - {from: thepage, to: pmworries, carries: what the PM edits after reading, when: on change, feedback: true}
+  - {from: thepage, to: register, hidden: true}

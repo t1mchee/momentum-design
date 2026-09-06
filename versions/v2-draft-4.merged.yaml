@@ -1311,12 +1311,10 @@ edges:
 - from: prices
   to: sort
   carries: returns and universe
-  when: monthly rebuild
-  daily measurement: null
+  when: monthly rebuild, daily measurement
 - from: prices
   to: random
-  carries: universe
-  leg sizes and cap profile: null
+  carries: universe, leg sizes and cap profile
   when: daily
 - from: prices
   to: controls
@@ -1344,8 +1342,7 @@ edges:
   when: monthly
 - from: zscore
   to: route2
-  carries: z per series
-  both nulls: null
+  carries: z per series, both nulls
   when: daily
 - from: french
   to: severity
@@ -1390,8 +1387,7 @@ edges:
   when: daily
 - from: severity
   to: composer
-  carries: VaR
-  ES: null
+  carries: VaR, ES
   when: daily
 - from: labeller
   to: composer
@@ -1404,8 +1400,7 @@ edges:
 - from: composer
   to: thepage
   carries: composed page or template
-  when: on a rule firing
-  weekly otherwise: null
+  when: on a rule firing, weekly otherwise
 - from: thepage
   to: signoff
   carries: page
@@ -1421,8 +1416,7 @@ edges:
 - from: signoff
   to: labels
   carries: monthly labelled sample
-  when: monthly
-  never done: null
+  when: monthly, never done
 - from: referees
   to: register
   carries: flaws in a results-stripped design

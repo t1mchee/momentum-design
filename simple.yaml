@@ -1,0 +1,575 @@
+# The simplified map: twenty-two boxes over the same design as spec.yaml (draft 8). Each box lists the
+# full-view components it absorbs. The full view stays the record; this map is the reading order for the
+# memo. Written under the twenty-two rules in eval-rubric.md section 6.
+#
+# Fields per box: id, name, lane (the step), kind (data | deterministic | model | human | output), lookahead
+# (clean | as-of | model | live-only | human), access (data boxes), absorbs (ids in spec.yaml), inputs,
+# outputs, rule, comparator (model boxes), check, open.
+# Fields per edge: from, to, sends, when, mode, feedback.
+
+meta:
+  title: Momentum reversal-risk system, simplified map
+  version: v2-draft-8-simple
+  updated: "2026-09-07"
+  problem:
+    exposure: "the 12-1 momentum book: the top and bottom deciles of the Russell 3000 by return from twelve months before to one month before, value-weighted within each leg, dollar-neutral, rebuilt monthly"
+    event: "a ten-day return of the reconstructed book at or below its own unconditional 5% quantile on the history since December 2013; the French factor's -432bp is the same quantile on the published factor over 1926 to 2022 and is printed as the long-run reference"
+    horizon: "ten trading days, for every forecast on the page"
+    user: "the PM running momentum, or the risk manager covering that book"
+    decision: "whether and how much to hedge the book's exposure to the named theme before the next catalyst; the page gives the direction of the risk and the hedge, and the reader decides"
+  note: >
+    The design assumes that the theme behind a reversal has been building in the news for some time and that
+    the PM can put a label on it. The system measures how much of the book depends on that theme, where it has
+    spread, who is positioned on it, and how much worse the book's tail becomes around the next catalyst. When
+    a reversal comes from a theme that nobody had labelled and that the news had not covered, the page shows no
+    theme or the wrong one, and the tail model falls back to its price-and-calendar form.
+  legend:
+    box: "one box here absorbs one or more components of the full view; the panel lists them. The full view (index.html) is the record; this map is the reading order."
+    kind: "data = a feed (grey pill); deterministic = a rule with no model (white box, blue band); model = a language-model step (orange); human = a person's task (tan hexagon); output = the page (green double border)."
+    lookahead: "clean = uses only values that were public on the date; as-of = the values exist historically but are taken at their release date; model = a model trained after the date reads text from inside it; live-only = no mitigation exists and the box is excluded from every backtest; human = a person's input that a backtest runs without. A box's label is at least the strongest label among its backtest inputs."
+    access: "public = every feed is public today; mixed = public feeds today, with licensed or desk-only feeds named for production."
+    comparator: "a method that does the same job as a model step without a language model, printed beside it."
+    quote gate: "every span a model extracts must appear verbatim in its source document, or the record is dropped and counted."
+    two runs: "every text statistic is computed twice, once on the keyword run (the comparators end to end) and once on the model run (the language-model steps end to end); the tail model's ablation compares the two."
+    DV01: "the dollar change in a position's value for a one basis point move in yield."
+    pinball loss: "the scoring rule for a quantile forecast; a breach costs 0.95 times its size and a non-breach costs 0.05 times the distance."
+    Kupiec test: "a test of whether the observed breach count is consistent with the target 5% rate, given the number of observations."
+    retired: "components retired from the first design are listed in the full view with the reason; none appears here."
+
+lanes:
+  - {id: s1, name: "1. Inputs"}
+  - {id: s2, name: "2. The book"}
+  - {id: s3, name: "3. The theme"}
+  - {id: s4, name: "4. Crowding"}
+  - {id: s5, name: "5. Severity and timing"}
+  - {id: s6, name: "6. The page"}
+  - {id: s7, name: "7. Validation"}
+
+nodes:
+  # ---------------------------------------------------------------- 1. inputs
+  - id: market
+    name: Market data and calendars
+    lane: s1
+    kind: data
+    lookahead: clean
+    access: mixed
+    absorbs: [prices, refseries, french, options]
+    inputs: []
+    outputs:
+      - "daily returns and the point-in-time universe"
+      - "six reference series and the bear state"
+      - "earnings and macro calendars"
+      - "the French factor and the reversal record"
+      - "implied moves and the hedge line"
+    rule: |
+      The universe is the Russell 3000 ETF's archived daily holdings, taken at the effective date of each change (PUBLIC). Daily prices come from Stooq or Tiingo (PUBLIC; CRSP in production, LICENSED). Six reference series give the macro exposures: the S&P 500, the ten-year yield, WTI, the broad dollar, the investment-grade spread, and the ten largest index companies against the equal-weighted index (PUBLIC, FRED and holdings). The bear state is an indicator that the trailing 24-month market return is negative. The earnings calendar in the backtest projects each company's date from its 8-K one year earlier; macro releases come from the published calendars (PUBLIC). The French factor file gives the long history and the reversal record, 195 episodes since 1926. Options give each component company's implied earnings move and a hedge line for the sector ETF, with its notional per $100m of book and its ten-day premium (LICENSED for history; PUBLIC delayed data live).
+    check: "monthly correlation of the reconstructed book with the French factor, reported"
+    open:
+      - "EMPIRICS: the French correlation."
+
+  - id: filings
+    name: Company text
+    lane: s1
+    kind: data
+    lookahead: clean
+    access: mixed
+    absorbs: [filings]
+    inputs: []
+    outputs:
+      - "risk-factor and MD&A text per company, dated"
+      - "8-K and transcript text per company, dated"
+      - "coverage by leg and by layer"
+    rule: |
+      The context layer is the latest 10-K accepted before the formation date, plus the latest 10-Q's risk factors where newer, cut by regex on the standard headers (PUBLIC, EDGAR). The event layer is 8-K Items 2.02, 7.01 and 8.01 with exhibits (PUBLIC, EDGAR) and earnings-call transcripts (PUBLIC for a subset; LICENSED for full coverage). Equity research and dealer notes form a third layer in production (LICENSED and DESK-ONLY). Every document is dated at acceptance. Every extracted span must appear verbatim in its source before it is stored. The bias runs one way: quote weights are understated on companies without text, so a theme concentrated in companies the free feeds miss is under-read.
+    check: "coverage per company, by leg and by layer, printed in the page footer"
+    open:
+      - "EMPIRICS: the free transcript feeds and the share of companies they cover."
+
+  - id: news
+    name: News
+    lane: s1
+    kind: data
+    lookahead: as-of
+    access: mixed
+    absorbs: [news]
+    inputs: []
+    outputs:
+      - "headlines and release text, rolling twelve months"
+      - "items from the last five sessions"
+    rule: |
+      GDELT headlines and URLs, Fed, Treasury and BLS release pages, and SEC press-release exhibits (PUBLIC); Bloomberg and Reuters headlines in production (LICENSED). Every item is timestamped at publication. A rolling twelve-month archive feeds the embedding space; the last five sessions feed the catalyst proposal. For a backtest date, only items published before that date enter the archive. GDELT has no article text, so risk statements are under-counted and more themes are marked company-specific than a full-text feed would mark. The theme pipeline starts at GDELT's first usable date.
+    check: "the source list is versioned"
+    open:
+      - "EMPIRICS: GDELT's first usable date."
+
+  - id: positioning
+    name: Positioning feeds
+    lane: s1
+    kind: data
+    lookahead: as-of
+    access: mixed
+    absorbs: [posdata]
+    inputs: []
+    outputs:
+      - "13F holdings, keyed to release date"
+      - "short interest per company"
+    rule: |
+      13F holdings are keyed to their release date, 45 days after quarter end, never to the period end (PUBLIC). Short interest is keyed to its release, two weeks after the count (PUBLIC). In production, securities-lending utilisation (LICENSED), options open interest and ETF flows (PUBLIC), and prime-broker positioning (DESK-ONLY) are printed as separate lines. The longest input lag is printed wherever a positioning number appears. The bias runs one way: the 45-day lag understates crowding while it builds and overstates it after the unwind has begun.
+    check: "longest input lag printed"
+    open: []
+
+  # ---------------------------------------------------------------- 2. the book
+  - id: sort
+    name: The 12-1 book
+    lane: s2
+    kind: deterministic
+    lookahead: clean
+    absorbs: [sort]
+    inputs:
+      - "daily returns and the point-in-time universe"
+    outputs:
+      - "the two legs and the position weights"
+      - "book returns"
+    rule: |
+      On the last trading day of each month the rule ranks every company on its return from twelve months before to one month before. The top decile is held long and the bottom decile short, value-weighted within each leg and dollar-neutral across them. The book is rebuilt monthly and measured daily. The position-weight vector, positive for winners and negative for losers, is the input to every book-level statistic. The page prints value-weighted numbers; equal-weighted versions go to the appendix.
+    check: "leg sizes and the capitalisation profile are logged"
+    open: []
+
+  - id: random
+    name: Random portfolios
+    lane: s2
+    kind: deterministic
+    lookahead: clean
+    absorbs: [random, controls]
+    inputs:
+      - "daily returns and the point-in-time universe"
+      - "the two legs and the position weights"
+    outputs:
+      - "200 random portfolios per date, cap-matched and cap-and-sector-matched"
+    rule: |
+      For each date the rule draws 200 portfolios from the same universe with the same leg sizes and capitalisation deciles, so that the only difference from the book is that they were not ranked on past returns. The cap-matched set is the null for the exposure statistics. A second set, also matched on sector, is the null for the text statistics, since a macro bet is usually expressed through a sector tilt. Both percentiles are printed for the exposures. Every statistic the page prints for the book is computed on each random portfolio by the box that computes it for the book, and the book's percentile among them is what the page shows. Two other return sorts, 6-1 and 24-13, and the book ranked 24 months earlier are computed as controls for the appendix.
+    check: "the construction parameters are hashed and stored with each run"
+    open: []
+
+  - id: exposure
+    name: Macro exposures in hedgeable units
+    lane: s2
+    kind: deterministic
+    lookahead: clean
+    absorbs: [sensitivities, zscore, route2]
+    inputs:
+      - "the two legs and the position weights"
+      - "six reference series and the bear state"
+      - "200 random portfolios per date, cap-matched and cap-and-sector-matched"
+    outputs:
+      - "per reference series: the exposure in hedgeable units with two percentiles"
+      - "the driving series and the leg that holds its exposure"
+    rule: |
+      For each company and each reference series the rule fits a rolling 126-day slope, then takes the value-weighted winner-minus-loser spread. The spread over the window ending at formation is the conferred exposure, since the ranking selected it. The spread over the window ending at the next formation is the carried exposure, since the book held it. The conferred spread is printed in units a desk can hedge: DV01-equivalent dollars per $100m of book for the ten-year, a beta for the index, notional dollars for the rest. Two percentiles are printed beside each exposure. The first, against the random portfolios, shows whether the sort produced the exposure. The second, against the book's own history since December 2013, shows whether today is unusual, and only this one can trigger a page. The driving series is the reference series with the highest own-history percentile that month.
+    check: "the six percentiles are adjusted as one family, so a series is unusual only above the 99.2nd percentile"
+    open: []
+
+  # ---------------------------------------------------------------- 3. the theme
+  - id: decompose
+    name: Co-movement inside the book
+    lane: s3
+    kind: deterministic
+    lookahead: clean
+    absorbs: [covariance, pca, bridge]
+    inputs:
+      - "daily returns and the point-in-time universe"
+      - "the two legs and the position weights"
+      - "200 random portfolios per date, cap-matched and cap-and-sector-matched"
+      - "six reference series and the bear state"
+    outputs:
+      - "the named component, its variance share with percentile, its company set with loadings, and its ten-day sigma"
+      - "the case flag and the share of book weight in price-correlated companies"
+      - "component sets of the random portfolios"
+      - "which statistic is printed first"
+    rule: |
+      A Ledoit-Wolf shrunk covariance of the book's companies over 126 days, market-residualised, is decomposed and the components above the Marchenko-Pastur noise edge are kept, at most three. A component's statistic is the share of the position-weighted book's variance it explains, printed with its percentile against the random portfolios. Its company set is the top quartile by absolute loading. The case flag marks a component as the momentum factor itself when the two legs' mean loadings have opposite signs and each exceeds half the typical loading; such a component enters the tail model as a state indicator and is still labelled as a diagnostic. The named component is the highest-variance component flagged as a theme. A regression of the component on the six reference series decides what the page prints first: the driving-series exposure when the R-squared is above 0.5, the theme otherwise. Each random portfolio is decomposed the same way, and its company set feeds the text placebo.
+    check: "the Jaccard overlap of the company set with the previous month's is printed; below 0.5 the component is marked unstable"
+    open:
+      - "A covariance-only decomposition misses links between companies that were not historically correlated; the variance share is then understated for a theme that is spreading, and the search in the propagate box partly compensates."
+
+  - id: context
+    name: News embedding space
+    lane: s3
+    kind: model
+    lookahead: model
+    absorbs: [newsagent, embedspace]
+    inputs:
+      - "headlines and release text, rolling twelve months"
+      - "the worry list, versioned"
+    outputs:
+      - "a reference point per list entry, the assignment distance, and news weight per entry"
+    rule: |
+      A small language model reads each news item with dates and entity names redacted and extracts statements of macro risk, each with a verbatim span and a short paraphrase. In the backtest the model labels a sample of 2,000 items once, and a classifier trained on labels dated before each year labels the rest. The encoder is a masked language model with one version per calendar year, trained only on text before that year, so that phrases such as "vaccine timing" and "travel resumption" are close together on the dates when they were. The paraphrases are clustered into topics under discussion. Each worry-list entry gets a reference point, the centroid of its 50 nearest news statements, and its news weight is the count of statements within the assignment distance. The space is rebuilt weekly. The bias runs one way: the current encoder has learnt associations the historical ones had not, so live theme statistics run higher than the backtest's for the same text.
+    comparator: "a keyword extractor on the registered term list for the statements, and BM25 retrieval for the reference points; agreement is printed"
+    check: "quote gate; a monthly audit sample of 30 news records labelled by hand"
+    open:
+      - "EMPIRICS: the encoder family and its yearly cutoffs."
+
+  - id: worrylist
+    name: The PM's worry list
+    lane: s3
+    kind: human
+    lookahead: human
+    absorbs: [taxonomy, pmworries]
+    inputs:
+      - "list edits after reading the page"
+    outputs:
+      - "the worry list, versioned"
+    rule: |
+      A registered list of about thirty external conditions, for example rates, the memory cycle, tariffs, a regulatory decision, financing, with an 'other' entry. The PM adds or removes entries whenever a worry becomes relevant, and every edit is logged with a date. For dates before the list existed, the backtest uses the initial list written on the memo date, and the run with no list is the control for it. The bias runs one way: the initial list holds the themes that later mattered, so backtest theme weights are overstated. The list's leading entry by news weight, on its own, is the baseline the whole theme pipeline is judged against.
+    check: "every edit is logged; the 'other' entry is reviewed quarterly"
+    open: []
+
+  - id: extract
+    name: Risk statements from filings
+    lane: s3
+    kind: model
+    lookahead: model
+    absorbs: [pc1text, riskextract]
+    inputs:
+      - "the named component, its variance share with percentile, its company set with loadings, and its ten-day sigma"
+      - "component sets of the random portfolios"
+      - "risk-factor and MD&A text per company, dated"
+      - "8-K and transcript text per company, dated"
+      - "error rates from the hand-labelled sample"
+    outputs:
+      - "risk statements per company with a verbatim span, a sign and a paraphrase, on both runs"
+    rule: |
+      For every company in the named component's set, and in each random portfolio's set, the rule gathers the context and event text. A small language model reads one section per call, with the company name and dates redacted, and extracts up to three risks that could cause a drawdown within a year. Each comes with a verbatim span, a paraphrase for embedding, and a sign for whether the company loses or gains if the risk materialises. The model reads the book's component set directly; a classifier distilled from its labels reads everything else, the component set included, so that treatment and placebo use one instrument. Every filing in the universe is classified once and cached. Error is measured on a hand-labelled sample split by whether the document predates the model's training cutoff; the gap bounds how much the model may be recalling rather than reading, and only post-cutoff months support a predictive claim.
+    comparator: "a keyword extractor on the registered term list, taking the three highest-scoring sentences with a loss sign by default; its records are the keyword run"
+    check: "quote gate; precision and recall on the hand-labelled sample for the model and the keyword extractor side by side"
+    open:
+      - "EMPIRICS: the model and its training cutoff date."
+
+  - id: assign
+    name: Theme assignment and label
+    lane: s3
+    kind: model
+    lookahead: model
+    absorbs: [cluster, namecluster]
+    inputs:
+      - "risk statements per company with a verbatim span, a sign and a paraphrase, on both runs"
+      - "a reference point per list entry, the assignment distance, and news weight per entry"
+      - "the named component, its variance share with percentile, its company set with loadings, and its ten-day sigma"
+    outputs:
+      - "the theme: its label, its excess quote weight by leg, its top three entries, and its supporting quotes, on both runs"
+      - "the book-effect split of the theme's quotes"
+    rule: |
+      Each paraphrase is embedded with the year's encoder and assigned to the nearest worry-list entry within the assignment distance. Quotes beyond the distance from every entry are clustered among themselves, and each residual cluster is labelled separately. A quote counts toward a component's theme only when its risk moves the company the same way a reversal of the component would. Quote weights are the absolute loadings of those quotes, summed per entry and per leg. The same assignment on each random portfolio's set gives a placebo weight per entry, and the excess weight is the difference. The theme is the entry or residual cluster with the largest excess weight, provided that excess is larger than random sets reach on 95% of draws; otherwise the component has no theme above placebo. A list entry's label is its name. A residual cluster is labelled by a language model from its 20 central quotes, with a keyword label printed beside it. The split of the theme's quotes by whether the book loses if the risk materialises is printed with the theme.
+    comparator: "the keyword label from the cluster's distinguishing terms, printed beside the model's label"
+    check: "placebo weight per entry; the share of quotes in residual clusters; month-to-month stability of the assignment"
+    open: []
+
+  - id: propagate
+    name: Search for the theme elsewhere
+    lane: s3
+    kind: model
+    lookahead: model
+    absorbs: [propagate]
+    inputs:
+      - "the theme: its label, its excess quote weight by leg, its top three entries, and its supporting quotes, on both runs"
+      - "risk-factor and MD&A text per company, dated"
+      - "8-K and transcript text per company, dated"
+      - "the universe's top positioning quintile"
+    outputs:
+      - "companies outside the component set with the theme, each with a score and a quote, on both runs"
+    rule: |
+      Once a theme is labelled, the rule searches the rest of the book and the universe's most crowded quintile. Retrieval by the theme's reference point returns the 200 nearest passages. A language model scores each candidate company from 0 to 3 for whether its filings contain the theme, each score with a verbatim span, and a score of 2 or more marks the company. Before the model's training cutoff the model is not used: a company is marked when its nearest passage is within the assignment distance, and the keyword run uses that rule on every date. As a control, the same search runs with a plausible but wrong theme, the entry that led the news weight twelve months earlier, and the share of companies it marks is printed as the method's false-positive rate.
+    comparator: "retrieval alone, always printed beside the model's ranking"
+    check: "quote gate; the false-positive rate from the wrong-theme control"
+    open:
+      - "EMPIRICS: the model's cutoff and the number of post-cutoff months."
+
+  - id: themescore
+    name: Theme statistics
+    lane: s3
+    kind: deterministic
+    lookahead: model
+    absorbs: [themescore]
+    inputs:
+      - "the named component, its variance share with percentile, its company set with loadings, and its ten-day sigma"
+      - "the theme: its label, its excess quote weight by leg, its top three entries, and its supporting quotes, on both runs"
+      - "companies outside the component set with the theme, each with a score and a quote, on both runs"
+      - "a reference point per list entry, the assignment distance, and news weight per entry"
+      - "the two legs and the position weights"
+    outputs:
+      - "the book's variance share on the theme, with its percentile"
+      - "the loss share by leg, and the loss in basis points if the component returns minus two sigma"
+      - "the share of book weight in in-book companies found with the theme, by leg, on both runs"
+      - "the agreement line"
+    rule: |
+      Two statistics lead. The first is the book's variance share on the named component, with its percentile. The second is the loss share: the share of book weight, by leg, in companies that lose if the theme reverses. A company in the component set loses when its leg sign times its loading sign is positive; an in-book company found by the search loses when its leg sign times its beta to the component is positive. The loss share is also stated in basis points of book if the component returns minus two sigma over ten days. The share of book weight in in-book companies found with the theme is computed on both runs and goes to the tail model. The agreement line records whether the worry-list entry with the most news weight and the component's theme label match.
+    check: "both placebo comparisons; a February-against-August check that filing season does not drive the statistics"
+    open: []
+
+  # ---------------------------------------------------------------- 4. crowding
+  - id: crowding
+    name: Who is positioned on the theme
+    lane: s4
+    kind: deterministic
+    lookahead: model
+    absorbs: [poscluster, timebombs]
+    inputs:
+      - "13F holdings, keyed to release date"
+      - "short interest per company"
+      - "the named component, its variance share with percentile, its company set with loadings, and its ten-day sigma"
+      - "companies outside the component set with the theme, each with a score and a quote, on both runs"
+      - "the two legs and the position weights"
+      - "daily returns and the point-in-time universe"
+    outputs:
+      - "the positioning score per company, with its lag"
+      - "the universe's top positioning quintile"
+      - "the overlap of crowded companies with theme companies, by leg, with its history since 2014"
+      - "the pre-catalyst list and the post-unwind list, by leg"
+    rule: |
+      The score is computed here from the positioning feeds. Each company in the book gets a positioning score from two inputs ranked within its leg: comomentum, its average residual correlation with the other companies in its leg over 126 days, and 13F crowding, the count of momentum-style filers holding it. Crowded means the top quintile of the score within a leg. The overlap is the share of theme companies' book weight that is crowded, by leg, with its history since 2014; random assignment gives 20%, and the claim that funds are positioned on one theme holds if the median overlap exceeds it. From the crowded theme companies come two lists. The pre-catalyst list holds companies whose trailing 20-day return is more than one standard deviation in the component's direction, the ones with the most recent gain to give up. The post-unwind list holds companies that have not yet moved while the component has. Neither list is printed until its event study has run.
+    check: "the count and weight of each list, with their history"
+    open:
+      - "EMPIRICS: the number of momentum-style filers."
+
+  # ---------------------------------------------------------------- 5. severity and timing
+  - id: tail
+    name: Conditional tail model
+    lane: s5
+    kind: deterministic
+    lookahead: model
+    absorbs: [severity, garch, eventbaseline]
+    inputs:
+      - "book returns"
+      - "six reference series and the bear state"
+      - "earnings and macro calendars"
+      - "the case flag and the share of book weight in price-correlated companies"
+      - "the book's variance share on the theme, with its percentile"
+      - "the theme: its label, its excess quote weight by leg, its top three entries, and its supporting quotes, on both runs"
+      - "the share of book weight in in-book companies found with the theme, by leg, on both runs"
+      - "the overlap of crowded companies with theme companies, by leg, with its history since 2014"
+      - "approved catalysts, with dates and types"
+    outputs:
+      - "ten-day 5% VaR and expected shortfall, in bp of book"
+      - "the catalyst-window VaR and its increase over the unconditional VaR"
+      - "the ablation sequence"
+    rule: |
+      A linear quantile regression of the book's ten-day forward return at the 5% quantile, fitted on every day up to the formation date. The price regressors are trailing volatility, the bear state and its interaction with market variance, the case flag, the variance share and the price-correlated weight share. The text regressors are the theme's excess quote weight and the in-book theme-company share, by leg. The positioning overlap and a catalyst-window indicator with days to the nearest catalyst complete the set. A GARCH forecast and a calendar baseline enter as controls. The catalyst window is the ten trading days beginning five sessions before the catalyst. The ablation is reported on every run. Step 0 uses prices and the calendar only. Step 1 adds the variance share and the price-correlated share. Step 2a adds the two text regressors on the keyword run. Step 2b replaces them with the model run. Step 3 adds the overlap and is the full model. The comparison of 2b with 2a tests whether the language model's extraction, labelling and ranking add anything beyond a keyword rule in the same embedding space. If 2b does not beat 2a by the registered margin, the memo reports that and the keyword extractor takes the model's place in production.
+    check: "breach rate by state (bear on or off, factor or theme, inside or outside a window); expected shortfall no milder than the VaR; the prior v1 result of 2 breaches in 42 held-out forecasts, from a model with no text"
+    open: []
+
+  - id: catalysts
+    name: Catalyst proposal, live only
+    lane: s5
+    kind: model
+    lookahead: live-only
+    absorbs: [catagent]
+    inputs:
+      - "the theme: its label, its excess quote weight by leg, its top three entries, and its supporting quotes, on both runs"
+      - "items from the last five sessions"
+      - "8-K and transcript text per company, dated"
+    outputs:
+      - "proposed catalysts with a date, a source quote and a type"
+    rule: |
+      Scheduled catalysts, the macro releases and the component companies' earnings, come from the calendars with no model. This box proposes the unscheduled ones, such as a foreign supplier's earnings or a regulatory readout. A language model reads the last five sessions' news and event text and proposes each catalyst with a date and a source quote. A model reading past news would propose the catalysts that turned out to matter, so this box runs on live data only and no backtest claim depends on it.
+    comparator: "a term-list extractor over the same five sessions, taking dated sentences that name a component company or its listed suppliers and customers; the PM's approval share for each list is printed"
+    check: "a date and a quote are required"
+    open: []
+
+  - id: catapprove
+    name: PM approves catalysts
+    lane: s5
+    kind: human
+    lookahead: human
+    absorbs: [catapprove]
+    inputs:
+      - "proposed catalysts with a date, a source quote and a type"
+    outputs:
+      - "approved catalysts, with dates and types"
+    rule: |
+      The PM reviews the proposals weekly, fewer than ten a week, and approves each on its date and relevance rather than on any view of its outcome. The PM's main contribution is adding catalysts the model missed. Catalysts not yet approved appear on the page as proposed.
+    check: "none"
+    open: []
+
+  - id: analogue
+    name: Analogues
+    lane: s5
+    kind: deterministic
+    lookahead: model
+    absorbs: [analogue]
+    inputs:
+      - "per reference series: the exposure in hedgeable units with two percentiles"
+      - "the book's variance share on the theme, with its percentile"
+      - "the overlap of crowded companies with theme companies, by leg, with its history since 2014"
+      - "the French factor and the reversal record"
+      - "six reference series and the bear state"
+    outputs:
+      - "the five nearest past dates, what followed over ten days, and whether each is apt"
+    rule: |
+      A date's state is its six exposures, the variance share, the overlap, trailing volatility and the bear state. The rule finds the five past dates nearest to today's state by Mahalanobis distance among the reversal record and an equal number of quiet dates, excluding the last year, and prints what the book did over the following ten days. Before 2014 only the price dimensions exist, with a note on the page. An analogue is apt when its bear state and case flag match today's and its theme is the same worry-list entry. No language model is involved.
+    check: "each past date's state is regenerated from inputs public before it"
+    open: []
+
+  # ---------------------------------------------------------------- 6. the page
+  - id: trigger
+    name: When a page is produced
+    lane: s6
+    kind: deterministic
+    lookahead: model
+    absorbs: [eventrule]
+    inputs:
+      - "approved catalysts, with dates and types"
+      - "earnings and macro calendars"
+      - "ten-day 5% VaR and expected shortfall, in bp of book"
+      - "the book's variance share on the theme, with its percentile"
+      - "per reference series: the exposure in hedgeable units with two percentiles"
+      - "book returns"
+    outputs:
+      - "the page type and its fields, with each field's change since the last page"
+      - "hits, misses and silences, monthly"
+    rule: |
+      A calendar page is produced five sessions before each approved catalyst. A threshold page is produced when the maximum of eight own-history percentiles, the VaR, the variance share and the six exposures, crosses its 95th percentile, which happens on about one day a month by construction. Otherwise a weekly summary is produced. A hit is a loss beyond the unconditional 5% quantile after a page; a miss is a page with no such loss; a silence is such a loss with no page. A threshold page is justified if hits on page days exceed the 5% that any day gives.
+    check: "the measured false-page rate; hits, misses and silences, monthly"
+    open: []
+
+  - id: page
+    name: The page
+    lane: s6
+    kind: output
+    lookahead: model
+    absorbs: [composer, thepage, signoff, responselog]
+    inputs:
+      - "the page type and its fields, with each field's change since the last page"
+      - "the theme: its label, its excess quote weight by leg, its top three entries, and its supporting quotes, on both runs"
+      - "the book-effect split of the theme's quotes"
+      - "the book's variance share on the theme, with its percentile"
+      - "the loss share by leg, and the loss in basis points if the component returns minus two sigma"
+      - "the agreement line"
+      - "ten-day 5% VaR and expected shortfall, in bp of book"
+      - "the catalyst-window VaR and its increase over the unconditional VaR"
+      - "implied moves and the hedge line"
+      - "the overlap of crowded companies with theme companies, by leg, with its history since 2014"
+      - "the pre-catalyst list and the post-unwind list, by leg"
+      - "the positioning score per company, with its lag"
+      - "approved catalysts, with dates and types"
+      - "the driving series and the leg that holds its exposure"
+      - "which statistic is printed first"
+      - "the five nearest past dates, what followed over ten days, and whether each is apt"
+      - "coverage by leg and by layer"
+    outputs:
+      - "one page, pushed to the reader"
+      - "list edits after reading the page"
+      - "a monthly hand-labelled sample"
+    rule: |
+      Every forecast on the page is over ten trading days. The page prints, in order, the theme with its variance share, top entries, split and agreement line; the loss in basis points and its direction; the VaR and expected shortfall, the catalyst-window VaR beside the implied move, and the hedge line with instrument, notional and premium; the overlap and, once their event study has run, the two lists; the approved catalysts; the driving-series exposure, first when the bridge R-squared is above 0.5; the five analogues; each field's change since the last page; and a footer with text coverage and a note that the numbers describe the paper 12-1 book, with the reader's beta to it. A language model writes the prose over these fields, and a check sends the plain template instead if any number in the prose fails to match its field. The conclusion gives the direction of the risk and the hedge and leaves the decision with the reader. The PM acknowledges each page, edits the worry list, and approves catalysts; a research analyst labels about 90 extracted records a month, which a second analyst checks. In production, whether the PM looked at, ignored or acted on each page is logged, once the PM's positions are an input.
+    comparator: "the template with the same fields and no prose, rendered daily; a blind comparison decides whether the prose stays"
+    check: "the numeral check; every quote passes the quote gate"
+    open:
+      - "The example page with numbers, required by the brief, is in the memo."
+
+  # ---------------------------------------------------------------- 7. validation
+  - id: scoring
+    name: Registered tests
+    lane: s7
+    kind: deterministic
+    lookahead: model
+    validation: true
+    absorbs: [register, labels, volvalidation, bombtest, themevalidation]
+    inputs:
+      - "ten-day 5% VaR and expected shortfall, in bp of book"
+      - "the catalyst-window VaR and its increase over the unconditional VaR"
+      - "the ablation sequence"
+      - "implied moves and the hedge line"
+      - "book returns"
+      - "earnings and macro calendars"
+      - "the pre-catalyst list and the post-unwind list, by leg"
+      - "daily returns and the point-in-time universe"
+      - "the French factor and the reversal record"
+      - "a monthly hand-labelled sample"
+      - "list edits after reading the page"
+    outputs:
+      - "error rates from the hand-labelled sample"
+      - "breach and pinball scores per ablation step, against both baselines"
+      - "each list's excess move over sector-matched companies, per unwind"
+    rule: |
+      Before each test runs, the author writes its pass threshold and the sentence the memo will hold under each outcome; the losing sentence is deleted when the result is in. The tail model is scored every formation month from December 2015: the unconditional VaR on every month and the catalyst-window VaR on every month with a catalyst, each against the realised ten-day return. Each ablation step must pass Kupiec's coverage test at the 10% level, with the acceptance range printed for the observations available, and its pinball loss must be at least 5% below the GARCH and calendar baselines. Step 2b must cut step 2a's pinball loss by at least 2% for the language model to be judged to add anything. The two lists are tested on the five recorded unwinds since 2020: listed companies must move in the loss direction by at least 200bp more than sector-matched companies, with the same sign in four of five. Extraction error is measured on the hand-labelled sample, split by training cutoff. In production, a quarterly reading measures whether the pipeline surfaces themes before the PM adds them. Every v2 test runs on dates that were used to build the design and is labelled as such; the only test that has run is v1's severity breach test, 2 in 42 forecasts, from a model with no text features.
+    check: "the smallest effect each test could detect is found by simulation before it runs, and a null is a finding only if that floor is below the effect of interest"
+    open:
+      - "EMPIRICS: the power calculations; the five unwind dates."
+
+edges:
+  # inputs
+  - {from: market, to: sort, sends: "returns and the universe", when: "at rebalance", mode: "backtest and live"}
+  - {from: market, to: random, sends: "the universe and sector codes", when: "at rebalance", mode: "backtest and live"}
+  - {from: market, to: exposure, sends: "six reference series", when: "daily", mode: "backtest and live"}
+  - {from: market, to: decompose, sends: "daily returns and the reference series", when: "at rebalance", mode: "backtest and live"}
+  - {from: market, to: tail, sends: "the calendars and the bear state", when: "daily", mode: "backtest and live"}
+  - {from: market, to: analogue, sends: "the reversal record and the bear state", when: "at rebalance", mode: "backtest and live"}
+  - {from: market, to: trigger, sends: "calendar catalyst dates", when: "daily", mode: "backtest and live"}
+  - {from: market, to: page, sends: "implied moves and the hedge line", when: "on event", mode: "backtest and live"}
+  - {from: market, to: scoring, sends: "realised returns and the calendars", when: "monthly", mode: "backtest only"}
+  - {from: market, to: crowding, sends: "daily returns", when: "daily", mode: "backtest and live"}
+  - {from: filings, to: extract, sends: "context and event text", when: "weekly", mode: "backtest and live"}
+  - {from: filings, to: propagate, sends: "text of companies in scope", when: "weekly", mode: "backtest and live"}
+  - {from: filings, to: catalysts, sends: "event text", when: "daily", mode: "live only"}
+  - {from: filings, to: page, sends: "coverage, for the footer", when: "on event", mode: "backtest and live"}
+  - {from: news, to: context, sends: "the twelve-month archive", when: "weekly", mode: "backtest and live"}
+  - {from: news, to: catalysts, sends: "the last five sessions' items", when: "daily", mode: "live only"}
+  - {from: positioning, to: crowding, sends: "13F holdings and short interest", when: "on release", mode: "backtest and live"}
+  # the book
+  - {from: sort, to: random, sends: "leg sizes and the capitalisation profile", when: "at rebalance", mode: "backtest and live"}
+  - {from: sort, to: exposure, sends: "the two legs", when: "daily", mode: "backtest and live"}
+  - {from: sort, to: decompose, sends: "the book's companies and the position weights", when: "at rebalance", mode: "backtest and live"}
+  - {from: sort, to: themescore, sends: "position weights", when: "at rebalance", mode: "backtest and live"}
+  - {from: sort, to: crowding, sends: "the two legs and the position weights", when: "at rebalance", mode: "backtest and live"}
+  - {from: sort, to: tail, sends: "book returns", when: "daily", mode: "backtest and live"}
+  - {from: sort, to: trigger, sends: "realised returns, for scoring pages", when: "daily", mode: "backtest and live"}
+  - {from: sort, to: scoring, sends: "book returns", when: "monthly", mode: "backtest only"}
+  - {from: random, to: exposure, sends: "random portfolios, cap-matched", when: "daily", mode: "backtest and live"}
+  - {from: random, to: decompose, sends: "random portfolios, sector-matched", when: "at rebalance", mode: "backtest and live"}
+  - {from: exposure, to: analogue, sends: "six exposures", when: "at rebalance", mode: "backtest and live"}
+  - {from: exposure, to: trigger, sends: "own-history percentiles", when: "daily", mode: "backtest and live"}
+  - {from: exposure, to: page, sends: "the driving-series exposure", when: "on event", mode: "backtest and live"}
+  # the theme
+  - {from: decompose, to: extract, sends: "company sets of the book and of the random portfolios", when: "at rebalance", mode: "backtest and live"}
+  - {from: decompose, to: assign, sends: "the named component and its loadings", when: "at rebalance", mode: "backtest and live"}
+  - {from: decompose, to: themescore, sends: "variance share, company set, sigma", when: "at rebalance", mode: "backtest and live"}
+  - {from: decompose, to: tail, sends: "case flag and the price-correlated share", when: "at rebalance", mode: "backtest and live"}
+  - {from: decompose, to: crowding, sends: "the company set", when: "at rebalance", mode: "backtest and live"}
+  - {from: decompose, to: page, sends: "which statistic is printed first", when: "on event", mode: "backtest and live"}
+  - {from: worrylist, to: context, sends: "list entries, as retrieval queries", when: "on change", mode: "backtest and live"}
+  - {from: context, to: assign, sends: "reference points and the assignment distance", when: "weekly", mode: "backtest and live"}
+  - {from: context, to: themescore, sends: "news weight per entry, for the agreement line", when: "weekly", mode: "backtest and live"}
+  - {from: extract, to: assign, sends: "risk statements, both runs", when: "weekly", mode: "backtest and live"}
+  - {from: assign, to: propagate, sends: "the theme and its quotes", when: "weekly", mode: "backtest and live"}
+  - {from: assign, to: themescore, sends: "the theme label and its excess weight", when: "weekly", mode: "backtest and live"}
+  - {from: assign, to: tail, sends: "excess quote weight by leg, both runs", when: "weekly", mode: "backtest and live"}
+  - {from: assign, to: page, sends: "the theme, its top entries and its split", when: "on event", mode: "backtest and live"}
+  - {from: assign, to: catalysts, sends: "the theme", when: "daily", mode: "live only"}
+  - {from: crowding, to: propagate, sends: "the universe's top positioning quintile, as scope", when: "at rebalance", mode: "backtest and live"}
+  - {from: propagate, to: themescore, sends: "companies found with the theme, both runs", when: "weekly", mode: "backtest and live"}
+  - {from: propagate, to: crowding, sends: "companies found with the theme", when: "weekly", mode: "backtest and live"}
+  - {from: themescore, to: tail, sends: "variance share and the in-book theme-company share, both runs", when: "weekly", mode: "backtest and live"}
+  - {from: themescore, to: trigger, sends: "variance share percentile", when: "weekly", mode: "backtest and live"}
+  - {from: themescore, to: analogue, sends: "variance share", when: "at rebalance", mode: "backtest and live"}
+  - {from: themescore, to: page, sends: "variance share, loss share, bp loss, agreement line", when: "on event", mode: "backtest and live"}
+  # crowding
+  - {from: crowding, to: tail, sends: "the positioning overlap", when: "at rebalance", mode: "backtest and live"}
+  - {from: crowding, to: analogue, sends: "the positioning overlap", when: "at rebalance", mode: "backtest and live"}
+  - {from: crowding, to: page, sends: "overlap, score with lag, and the two lists once tested", when: "on event", mode: "backtest and live"}
+  - {from: crowding, to: scoring, sends: "the two lists as of each unwind", when: "once", mode: "backtest only"}
+  # severity and timing
+  - {from: catalysts, to: catapprove, sends: "proposed catalysts, beside the comparator's", when: "weekly", mode: "live only"}
+  - {from: catapprove, to: tail, sends: "approved catalysts", when: "on change", mode: "live only"}
+  - {from: catapprove, to: trigger, sends: "approved catalyst dates", when: "on change", mode: "live only"}
+  - {from: catapprove, to: page, sends: "approved catalysts", when: "on event", mode: "live only"}
+  - {from: tail, to: trigger, sends: "VaR and catalyst-window VaR", when: "daily", mode: "backtest and live"}
+  - {from: tail, to: page, sends: "VaR, expected shortfall, catalyst-window VaR", when: "on event", mode: "backtest and live"}
+  - {from: tail, to: scoring, sends: "the ablation sequence and both VaRs", when: "monthly", mode: "backtest only"}
+  - {from: analogue, to: page, sends: "the five analogues, each marked apt or not", when: "on event", mode: "backtest and live"}
+  # the page
+  - {from: trigger, to: page, sends: "the page type, its fields, and each field's change", when: "on event", mode: "backtest and live"}
+  - {from: page, to: worrylist, sends: "list edits after reading", when: "on change", mode: "live only", feedback: true}
+  - {from: page, to: scoring, sends: "the monthly hand-labelled sample and the edit log", when: "monthly", mode: "live only"}
+  # validation
+  - {from: scoring, to: extract, sends: "error rates, which set the next sample's strata", when: "monthly", mode: "backtest and live", feedback: true}

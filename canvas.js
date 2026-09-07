@@ -26,12 +26,11 @@ async function poll(){
     const st=await loadText(SPEC); let doc=jsyaml.load(st); let key=st;
     if(doc&&doc.base){const bt=await loadText(doc.base); key+=bt; doc=mergeSpec(doc,jsyaml.load(bt));}
     let gt=''; try{ gt=await loadText(C.groups); }catch(e){}
-    let ct=''; try{ ct=await loadText(C.changelog); }catch(e){}
-    key+=gt+ct;
+    key+=gt;
     if(C.simple&&!fullSpec){ try{ fullSpec=jsyaml.load(await loadText('spec.yaml')); }catch(e){} }
-    if(key!==lastKey){ lastKey=key; spec=doc; groups=gt?jsyaml.load(gt):null; changelog=ct?jsyaml.load(ct):null; buildBands(); if(!expanded.size&&firstFit) bands.filter(b=>!b.retired).forEach(b=>expanded.add(b.id)); render(); renderLeft(); $('status').textContent='updated '+new Date().toLocaleTimeString(); if(firstFit){fit();firstFit=false;} }
-  }catch(e){ $('status').textContent='error: '+e.message; }
-  setTimeout(poll,1500);
+    if(key!==lastKey){ lastKey=key; spec=doc; groups=gt?jsyaml.load(gt):null; buildBands(); if(!expanded.size&&firstFit) bands.filter(b=>!b.retired).forEach(b=>expanded.add(b.id)); render(); renderLeft(); if(firstFit){fit();firstFit=false;} }
+  }catch(e){ console.error(e); }
+  setTimeout(poll,4000);
 }
 
 // ---------- bands: the seven steps (groups.yaml) or the lanes of the simple map
@@ -74,8 +73,7 @@ function cardHTML(n,feeds){
   const chips=(n.validation?`<span class="chip val">validation</span>`:'')+(kind!=='deterministic'?`<span class="chip kind-${kind}">${kind==='model'?'LLM':kind==='data'?'data in':kind}</span>`:'')+((n.lookahead&&!laHide)?`<span class="chip la-${n.lookahead}" title="${esc(n.mitigation||'')}">${esc(n.lookahead)}</span>`:'');
   const sm=n.status==='retired'?'':`<div class="sm">${ruleSummary(n.rule,C.simple?150:95)}</div>`;
   const tags=(feeds&&feeds.length&&!showData)?`<div class="tags"><b>from</b> ${feeds.map(f=>`<span class="t" data-src="${esc(f.id)}">${esc(f.name)}</span>`).join('')}</div>`:'';
-  const nopen=(n.open||[]).length;
-  return `<div class="nm">${esc(n.name)}</div><span class="gl" title="${esc(kind)}">${GLYPH[kind]||''}</span>${sm}<div>${chips}</div>${tags}`+(nopen?`<div class="badge" title="open questions">${nopen}</div>`:'');
+  return `<div class="nm">${esc(n.name)}</div><span class="gl" title="${esc(kind)}">${GLYPH[kind]||''}</span>${sm}<div>${chips}</div>${tags}`;
 }
 function summaryHTML(b,byId){
   const c={}; b.leaves.forEach(id=>{const n=byId[id]; if(n) c[n.kind]=(c[n.kind]||0)+1;});
@@ -104,7 +102,7 @@ function layoutBlock(ids,edges,byId,els){ // dagre LR over one block of componen
 function render(){
   if(!spec) return;
   const m=spec.meta||{}; $('title').textContent=m.title||'System design';
-  const upd=m.updated instanceof Date?m.updated.toISOString().slice(0,10):m.updated; $('version').textContent=[m.version,upd].filter(Boolean).join(' · ');
+  $('version').textContent=String(m.version||'').replace(/-draft-\d+.*$/,'');
   world.querySelectorAll('.node,.elabel,.band').forEach(e=>e.remove());
   const byId=Object.fromEntries(spec.nodes.map(n=>[n.id,n]));
   const edges=(spec.edges||[]).filter(e=>!e.hidden);
@@ -198,7 +196,7 @@ function select(id){ sel=id; const n=spec.nodes.find(x=>x.id===id); showNode(n);
 function deselect(){ sel=null; clearFocus(); $('right').classList.remove('open'); }
 
 // ---------- drawers
-function openLeft(tab){ $('left').classList.add('open'); ['step','story','key','history'].forEach(t=>{ $('tab_'+t).classList.toggle('on',t===tab); $('pane_'+t).hidden=t!==tab; }); }
+function openLeft(tab){ $('left').classList.add('open'); ['step','story','key'].forEach(t=>{ $('tab_'+t).classList.toggle('on',t===tab); $('pane_'+t).hidden=t!==tab; }); }
 function renderLeft(){
   if(!spec) return;
   const m=spec.meta||{};
@@ -219,10 +217,6 @@ function renderLeft(){
   if(Object.keys(SY).length) h+='<div class="k">Symbols</div><ul>'+Object.entries(SY).map(([k,v])=>`<li><span class="sym">${esc(k)}</span>: ${esc(String(v))}</li>`).join('')+'</ul>';
   if(P){ const notes=P.path_notes||{}; h+=`<div class="k">Proof of concept</div>${P.status?`<div>${esc(P.status)}</div>`:''}<div style="margin-top:6px"><b>Produces:</b> ${esc(P.produces||'')}</div><div style="margin-top:6px"><b>Built:</b> ${(P.path||[]).map(id=>notes[id]?`${esc(id)} <span class="muted">(${esc(notes[id])})</span>`:esc(id)).join(', ')}</div><div style="margin-top:6px"><b>Deferred:</b> ${esc((P.deferred||[]).join(', '))}</div>${P.described_only?`<div style="margin-top:6px"><b>Described only:</b> ${esc(P.described_only.join(', '))}</div>`:''}`; }
   $('pane_key').innerHTML=h; renderMath($('pane_key'));
-  // history
-  const cur=m.version||'';
-  $('pane_history').innerHTML='<h2>History</h2><div class="muted">Click a version to load that snapshot.</div>'+((changelog&&changelog.entries)||[]).map(e=>`<div class="ce${e.version===cur?' cur':''}"><div class="cv"><a href="?spec=${esc(e.file)}">${esc(e.version)}</a> <span class="cd">${esc(e.date)}${e.status==='current'?' · current':''}</span></div><div class="cs">${esc(e.summary)}</div><div class="k">What changed</div>${list(e.changes)}<div class="k">Why</div><div class="cr">${esc(e.reasoning)}</div></div>`).join('');
-  renderMath($('pane_history'));
   if(selBand) openStep(selBand.id,selBand.sub,true);
   // step buttons
   $('stepbtns').innerHTML=live.map(b=>`<button title="${esc(b.name)}" data-band="${esc(b.id)}">${esc(b.num)}</button>`).join('');
@@ -295,8 +289,8 @@ $('b_open').onclick=()=>{ bands.forEach(b=>{ if(!b.retired||showRetired) expande
 $('b_close').onclick=()=>{ expanded.clear(); render(); fit(); };
 $('b_data').onclick=()=>{ showData=!showData; $('b_data').classList.toggle('on',showData); render(); };
 $('b_ret').onclick=()=>{ showRetired=!showRetired; $('b_ret').classList.toggle('on',showRetired); if(showRetired) bands.filter(b=>b.retired).forEach(b=>expanded.add(b.id)); render(); };
-$('b_story').onclick=()=>openLeft('story'); $('b_key').onclick=()=>openLeft('key'); $('b_hist').onclick=()=>openLeft('history');
-['step','story','key','history'].forEach(t=>$('tab_'+t).onclick=()=>openLeft(t));
+$('b_story').onclick=()=>openLeft('story'); $('b_key').onclick=()=>openLeft('key');
+['step','story','key'].forEach(t=>$('tab_'+t).onclick=()=>openLeft(t));
 $('left_close').onclick=()=>$('left').classList.remove('open'); $('right_close').onclick=deselect;
 if(document.fonts) document.fonts.addEventListener('loadingdone',()=>{ if(spec) render(); });
 poll();

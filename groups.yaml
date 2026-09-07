@@ -26,8 +26,8 @@ groups:
           stood on each date. It also covers six reference series, none of which is revised, with the bear
           state computed from the first of them, and the French factor file, which gives a long history and
           the reversal record. The earnings and macro calendars supply the catalyst dates, with earnings
-          dates projected from the prior year. Options give the premium on the hedge line and nothing else.
-        children: [prices, refseries, french, options]
+          dates projected from the prior year, and the hedge instruments' daily returns.
+        children: [prices, refseries, french]
       - id: g_text
         name: Text, in layers
         short: Text
@@ -62,7 +62,7 @@ groups:
       percentile that can trigger a page; the percentile against the random portfolios, which shows whether
       the sort produced the exposure, goes to the appendix. The driving series is the one of the six on which
       the book's exposure has the highest own-history percentile that month.
-    children: [sort, random, sensitivities, percentiles, drivingseries]
+    children: [sort, random, sensitivities, percentiles]
 
   - id: g_theme
     name: 3. Naming the theme and finding where it has spread
@@ -71,9 +71,9 @@ groups:
     synthesis: >
       First find the leading co-movements among the book's companies, three components, and keep those that
       explain more of the book's variance than a random book of the same shape does. Then label the named
-      component from its companies' filings, by assigning their risk statements to the nearest news cluster
-      in an embedding space built from news, and on the live page to the nearest entry of a worry list the PM
-      maintains. Finally, search the rest of the book and the crowded companies for others whose filings
+      component from its companies' filings, by assigning their risk statements to the nearest cluster in an
+      embedding space built from news and filing statements together; on the live page an entry of the PM's
+      worry list labels the cluster it reaches. Finally, search the rest of the book and the crowded companies for others whose filings
       contain the same theme; a company counts as having the theme when one of its risk statements lies
       within the assignment distance of the theme's reference point, and that statement is the quote kept
       with the result. The decomposition, the assignment and the search are deterministic. The language model
@@ -101,13 +101,12 @@ groups:
         name: Build the embedding space
         short: Context
         synthesis: >
-          The embedding space is built from news risk statements, using one named public encoder on every
-          date with a keyword retrieval beside it, so that a theme statistic the keyword run also produces
-          is not an artefact of the encoder. News statements are clustered into topics under discussion, and
-          the cluster centroids are the reference points of the themes the backtest can find. On the live
-          page each entry of the PM's worry list also gets a reference point, and the list gives the
-          clusters names.
-        children: [newsagent, taxonomy, embedspace, pmworries]
+          The embedding space is built from news risk statements and the component companies' filing risk
+          statements together, using one named public encoder on every date; the encoder's look-ahead is not
+          bounded, and the design says so. The statements are clustered into topics, the cluster centroids are
+          the reference points of the themes, and one assignment distance applies to headlines and filing
+          sentences alike. On the live page an entry of the PM's worry list labels the cluster it reaches.
+        children: [newsagent, taxonomy, embedspace]
       - id: g_name
         name: Label the component from its filings
         short: Label
@@ -115,20 +114,21 @@ groups:
           From each component company's filings, take the sentences a classifier marks as risk statements,
           and count a company toward a theme when one of its statements lies within the assignment distance
           of the theme's reference point. Compare the resulting weight with the same procedure run on the
-          random books' component sets; the theme is the reference point with the largest excess, if that
-          excess is larger than random books reach. Then label it: a list entry's name, or for a residual
-          cluster the model's label printed beside a keyword label so the reader can check one against the
-          other.
+          random books' component sets; the theme is the cluster with the largest excess, if that excess is
+          larger than random books reach, and the excess is a share of the component's loading, from zero to
+          one. Then label it: a list entry's name where an entry reaches the cluster, or a model's label
+          printed beside a keyword label so the reader can check one against the other.
         children: [gathertext, riskextract, cluster, namecluster]
       - id: g_propagate
         name: Search other companies, and the two theme statistics
         short: Propagate
         synthesis: >
           Search the rest of the book and the crowded quintiles for companies whose risk statements lie
-          within the assignment distance of the theme's reference point, with no cap and no reranking. Then
-          print two statistics: the share of the book's variance explained by the theme component, beside
-          its random-book comparison, and the loss in basis points of book, by leg, if the component returns
-          minus two standard deviations over ten days.
+          within the assignment distance of the theme's centroid, with no cap and no reranking. Then print
+          two statistics and the hedge line: the share of the book's variance explained by the theme
+          component, beside its random-book comparison; the loss in basis points of book, by leg, if the
+          component returns minus two standard deviations over ten days; and a short in the instrument that
+          best tracks the component, sized to offset that loss, with the VaR before and after it.
         children: [propagate, themescore]
 
   - id: g_crowding
@@ -137,14 +137,13 @@ groups:
     brief: "Element 3, positioning and crowding information integrated with the text reading."
     synthesis: >
       Compare the list of theme companies with the list of crowded companies. The overlap is the share of
-      theme companies' book weight that is crowded, per leg; its null is the crowded set's share of the leg's weight, printed
-      beside it, and the claim that funds are positioned on one theme is supported when the median gap since
-      2014 is above zero.
+      theme companies' book weight that is crowded, per leg, printed beside its null, the crowded set's share
+      of the leg's weight.
       Two vulnerable-name lists are drawn from the crowded theme companies: the pre-catalyst list, companies
       that rose with the component and have the most recent gain at risk, and the post-unwind list,
       companies that have not yet moved after the component has fallen. On the loser leg the post-unwind
-      list is the heavily shorted theme companies that have not yet rallied. The lists are held back until a
-      five-episode event study shows they move more than sector-matched companies.
+      list is the heavily shorted theme companies that have not yet rallied. The lists are held back until an
+      event study over the recorded unwinds passes.
     children: [poscluster, timebombs]
 
   - id: g_tail
@@ -154,8 +153,8 @@ groups:
     synthesis: >
       One tail model gives the severity estimate. It is the 5% quantile of the book's past ten-day returns,
       each divided by the book's volatility at the time, taken over past starts in the same calendar state as
-      today (inside or outside a window around an FOMC decision or a heavy earnings day) and multiplied by
-      today's volatility. Its outputs are a ten-day 5% VaR and expected shortfall in basis points of book, the
+      today (whether the ten days it covers contain an FOMC decision, a heavy earnings day or an approved
+      catalyst) and multiplied by today's volatility. Its outputs are a ten-day 5% VaR and expected shortfall in basis points of book, the
       probability of a return at or below the long-run threshold, and how much worse the VaR is inside a
       catalyst window. It is scored against two baselines, the same quantile with no volatility scaling and
       with no calendar state, so the ablation is three lines a reader can compute by hand. Text and
@@ -199,15 +198,15 @@ groups:
     short: Output
     brief: "Element 6, the example output; element 3, which parts require human review; element 7, the production path."
     synthesis: >
-      A page is produced five sessions before a catalyst, or whenever the maximum of the book's monitored
-      percentiles crosses the 95th percentile of its own history. The page is a template of nine fixed items
+      A page is produced five sessions before a window catalyst, or on the day the maximum of the book's
+      monitored percentiles crosses the 95th percentile of its own history; about thirty pages a year. The page is a template of nine fixed items
       rendered from stored outputs; the only free text is the quotes and the theme label. It reports the theme
       and its variance share; the loss in basis points if the theme reverses, by leg; the VaR beside the hedge
       line, which names the instrument, its notional sized from the component and its premium; the positioning
       overlap; the two vulnerable-name lists, once their event study has run; the catalysts; and what changed
       since the last page. It gives the direction of the risk and the sized hedge and leaves the decision to
       exit with the reader, and its numbers describe the paper 12-1 book, to be scaled by the reader's beta
-      to it. An item that has not run is not on the page; the footer names it. The PM acknowledges the page,
+      to it. An item that has not run or has failed its test is not on the page; the footer names it. The PM acknowledges the page,
       edits the worry list and approves catalysts. Whether the PM looked at, ignored or acted on each page is
       logged; until the PM's positions are an input, the proxy is the acknowledgement and the two logged
       actions within five sessions of a page. In production the page is kept current and pushed on change,
@@ -224,11 +223,10 @@ groups:
       wording and the thresholds, not the inference, and every v2 result is in-sample. The tail model is
       scored on coverage, where Kupiec's test at 130 months accepts 3 to 10 breaches, and on the ratio of its
       pinball loss to each baseline's, with a bootstrap interval; the model beats a baseline only when the
-      interval excludes one. Text is tested as a sort of the breach record by theme weight, and the register
-      labels it illustrative if fewer than five of the breaches fall on the high side. The vulnerable-name
-      lists are tested in an event study over five recorded unwinds. Extraction error is measured on
-      hand-labelled sentences, for the classifier and the keyword rule side by side, split by whether the
-      document predates the labelling model's cutoff. The premise, that a theme is visible before a reversal,
+      interval excludes one. Coverage is also scored inside and outside catalyst windows, which is the test of the calendar
+      state. The vulnerable-name lists are tested in an event study over the recorded unwinds, and print only
+      if it passes. Extraction error is measured on hand-labelled sentences, for the classifier and the
+      keyword rule side by side. The premise, that a theme is visible before a reversal,
       is measured over the recorded episodes and printed as a share beside the same share on calm months. Only the first design's severity test on
       held-out years has run, with a model that had no text: 2 breaches in 42 forecasts. The v2 scoring, the
       labels and the event study have not run, and the worry-list comparison can only be made in production.
@@ -241,6 +239,7 @@ groups:
     synthesis: >
       Components that a later draft replaced or refuted, each kept with the reason: the three-route taxonomy
       and its detectors, the separate vol model, the labeller, the three-role analogue panel, the referee
-      roles, and from draft 11 the control sorts, the GARCH baseline and the prose composer.
+      roles, the control sorts, the GARCH baseline, the prose composer, the options feed, and two nodes folded
+      into their neighbours.
     hidden: true
-    children: [controls, garch, composer, route1, route3, classify, volmodel, labeller, panel, referees]
+    children: [options, drivingseries, pmworries, controls, garch, composer, route1, route3, classify, volmodel, labeller, panel, referees]

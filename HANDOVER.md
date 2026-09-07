@@ -107,6 +107,17 @@ distance, and the loser leg has its own positioning input. `simple.yaml`'s box r
 abridging paragraphs and are consistent with the spec. The design is frozen again at draft 11 pending the
 fresh catch-out read.
 
+## 3c. Drafts 12 and 13
+
+Draft 12 corrected the arithmetic the draft-11 read found (hedge ratio, loser-leg sign, overlap null,
+calendar state, cluster identity). Draft 13 applied the triage of the design-only read of draft 12
+(`triage-draft12-review.md`): 51 fixes, 9 decisions taken toward the simpler mechanism, 5 findings left
+with reasons. The design is 38 live nodes and 13 retired. The main changes: a short as the hedge with the
+VaR before and after it, no options feed; news and filing statements clustered together with one
+distance; the worry list labels clusters; the calendar state on the ten-day span; crossing-day threshold
+pages; the excess weight as a share; every printed diagnostic gates something or is gone. The spec's
+header no longer narrates its review history; the change log holds it.
+
 ## 4. Files in this directory
 
 | file | what |

@@ -1,7 +1,7 @@
 # Proof-of-concept brief for the executor
 
-Design: `docs/design/spec.yaml`, draft 11, with the draft-12 corrections listed in section 2 below, which
-the executor implements as stated here without waiting for the spec. House rules of the repo apply
+Design: `docs/design/spec.yaml`, draft 13. Section 2 lists the corrections made since the executor may have
+started; the spec is the authority where the two differ. House rules of the repo apply
 (`CLAUDE.md` section 9): an experiment is created in `project/experiments.yaml` before it runs, with
 hypothesis, prediction and method frozen; an implausible number is an instrument bug until proven
 otherwise, a good one included; a null is a finding only once the instrument is shown able to see the
@@ -32,7 +32,7 @@ in the memo if it fails.
 - Encoders: ChronoBERT vintages exist (`embed/chrono`); draft 11 uses one named encoder on every date, and
   the vintage family is a production-path item. Use one encoder and name it.
 
-## 2. Draft-12 corrections the executor implements
+## 2. Corrections since draft 11 that the executor implements
 
 1. Hedge ratio: the bridge regresses the instrument on the component, $r_{Ht} = a + h_k f_{kt} + e_t$, so
    the notional per $100m is $100\text{m} \cdot g_k / h_k$ with $g_k = w'v_k$.
@@ -46,8 +46,15 @@ in the memo if it fails.
 5. Theme identity across dates: two dates share a theme when their cluster centroids are within $d^*$.
 6. BM25 assignment: a statement is assigned to the cluster whose top-20 c-TF-IDF terms score highest.
 7. Probability line: $P(R_{t,t+10} \le -432\text{bp}) = \text{share of } z_u \text{ in today's state below } -432\text{bp}/\sigma_t$.
-8. The implied-move comparison is dropped; options supply the hedge premium only, and only where a surface
-   exists on the date.
+8. The implied-move comparison and the options feed are dropped; the hedge line is a short in the instrument,
+   sized $100\text{m} \cdot g_k / h_k$ with the instrument residualised on the market first, and the page prints the
+   VaR before and after the hedge (the hedged sigma over the current window times the state quantile).
+9. News and filing risk statements are clustered together; $d^*$ is calibrated on that pooled population, and a
+   cluster with fewer than 25 news members is company-specific. There is no BM25 run.
+10. The excess weight $E_e$ is a share of the component set's total absolute loading. The pre/post-cutoff split
+    of the labels, the wrong-theme control and the breach sort are dropped; coverage is scored by state.
+11. The calendar state of a start is whether its ten-day span contains a window catalyst (FOMC, heavy earnings
+    day above the registered floor, or an approved catalyst); CPI and payrolls do not open windows.
 
 ## 3. The experiments, in order
 
@@ -127,7 +134,7 @@ Prediction: on 100 hand-labelled filing sentences, classifier recall exceeds key
 Method: the language model labels 2,000 Item 1A and 8-K sentences, stratified by year, leg and layer,
 company identity and dates redacted; a classifier head on the encoder is trained on them. Tim labels 100
 sentences (the 90 gold plus 10), drawn stratified the same way, before seeing either output. Precision and
-recall for both, binomial intervals, split by whether the document predates the labelling model's cutoff.
+recall for both, with binomial intervals; precision's standard error is about ten points at 100 sentences.
 
 Artifact: `reports/poc/e3_labels.csv` (sentence, hand label, classifier, keyword), `e3_summary.json`.
 
@@ -157,7 +164,7 @@ theme, sizes the hedge, and prints a VaR that the November 2020 reversal breache
 
 Method: render the nine items from E1, E2 and the exposure panel (conferred exposures, driving series; the
 overlap from 13F and short interest with the corrected null). The hedge line from the bridge with
-correction 1; the premium only if a surface exists (none for the memo date, so the footer says so). The
+corrections 1 and 8, with the VaR before and after the hedge; no premium. The
 memo-date page uses the live worry list, labelled as written with hindsight, and the latest filings; its
 news window is whatever GDELT GKG holds for the trailing twelve months, and if that is thin the footer
 says the theme rests on filings.

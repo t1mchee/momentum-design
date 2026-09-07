@@ -3,10 +3,28 @@
 # summary, changes (what), reasoning (why), status (done | current | planned).
 
 entries:
+  - version: v2-draft-13
+    date: "2026-09-07"
+    file: versions/v2-draft-13.yaml
+    status: current
+    summary: "Fifty-one corrections and nine decisions from the triage of the draft-12 read (triage-draft12-review.md), every decision taken toward the simpler mechanism; three nodes retired, none added."
+    changes:
+      - "The hedge line is a short in the instrument, residualised on the market like the companies, sized as the book's loading over the instrument's slope, with the VaR before and after the hedge printed; the options feed is retired."
+      - "News and filing risk statements are clustered together, so one assignment distance applies to one population, a cluster with fewer than 25 news members is company-specific, and the worry list labels clusters rather than forming a second set of reference points; the backtest scores the same object the page shows. BM25 and the look-ahead comparator rule are gone, and the encoder's look-ahead is stated as unbounded."
+      - "The calendar state is defined on the ten-day span a start covers; only FOMC decisions, heavy earnings days and approved catalysts open windows and calendar pages; the yearly page count is printed. Threshold pages fire on the crossing day only, and the hit test counts one outcome per crossing."
+      - "The excess weight is a share of the component set's loading, from zero to one. The overlap's null is the crowded set's weight share, printed beside it; the claim about funds is dropped. The analogues use the eight price dimensions, Mahalanobis, with the theme as annotation."
+      - "The probability line is the event's own threshold and is covered by the coverage test; the breach sort is dropped; coverage is scored by state; the event study has a pass condition and gates the lists. The pre/post-cutoff split, the wrong-theme control, the non-overlap, the leg-mean loadings and the February check's wrong home are gone."
+      - "Every printed diagnostic now gates something or is gone. The driving-series node and the PM-edits node are folded into their neighbours. The register holds the parameters set from the record. Symbol collisions resolved; the symbol table completed; the review history removed from the spec's header."
+    reasoning: >
+      A design-only read of draft 12 found arithmetic and connection faults that a builder would have seen
+      by walking one example through two nodes, and machinery that printed numbers no decision used. Each
+      finding was classified as a fix, a decision or a point to leave, and the decisions were taken toward
+      the mechanism that can be walked through. The five findings left are recorded with their reasons.
+
   - version: v2-draft-12
     date: "2026-09-07"
     file: versions/v2-draft-12.yaml
-    status: current
+    status: done
     summary: "Corrections from the draft-11 catch-out read: the hedge ratio, the loser-leg sign, the overlap null, the calendar state, theme identity across dates, the BM25 assignment; a probability line added; the implied-move comparison dropped; asserted counts replaced by printed ones; worked examples in the two nodes that lacked them; the proof-of-concept scope stated against the news on disk."
     changes:
       - "The bridge regresses each instrument on the component, so the notional per $100m is the book's loading over the instrument's slope as written; a worked example with a loading of 0.5 and a slope of 2 gives a $25m short."

@@ -3,10 +3,29 @@
 # summary, changes (what), reasoning (why), status (done | current | planned).
 
 entries:
+  - version: v2-draft-15
+    date: "2026-09-07"
+    file: versions/v2-draft-15.yaml
+    status: current
+    summary: "Close-out of the draft-14 read (pm-catchout-v2-draft-14.md): the four errors draft 14 introduced and the cheap pre-existing ones; no fresh read after it."
+    changes:
+      - "The market line is computed in the theme-statistics node: the book's beta net of the theme hedge's market beta, and the index notional that flattens it; item 6 has a producer. The own-history percentile of the largest variance share is computed in the trigger node, absent when no component is above noise."
+      - "The premise share is demoted when the episode share is not above the calm-window share; the register and the scoring node agree on it. The bootstrap block is described against the horizon and the covariance window."
+      - "The exposure percentile is of the absolute exposure with the sign beside it, so either tail can trigger. The hedge example uses a loading of 0.1, and the bound on the loading is stated. The placebo compares components of the same rank."
+      - "The independence claim behind the overlap null is withdrawn; the null is the crowded quintile's weight share with the size channel stated as remaining in it. The momentum-style filer cutoff is a registered parameter with its count printed."
+      - "The centroid distance is the 10th percentile of nearest-centroid distance; clusters are matched across weekly rebuilds by it, and worry-list collisions go to the nearer entry. The clustered population is the model run's statements; the keyword run is assigned into it."
+      - "The book and tail syntheses are brought to their nodes. The February check, the duplicate French correlation check and the news hand-label check in the proof of concept are gone; the response log's three states are defined from the two logs."
+    reasoning: >
+      The draft-14 read scored the design as the two before it and found four errors the draft-14 patch had
+      introduced beside a set of pre-existing ones a run would expose. The loop of read and fix is at
+      diminishing returns; this draft closes the errors that are edits, records the design's position on the
+      reader's structural objection (text names the risk and chooses the component; the tail model is
+      text-free by design), and hands the remaining thresholds to the proof of concept.
+
   - version: v2-draft-14
     date: "2026-09-07"
     file: versions/v2-draft-14.yaml
-    status: current
+    status: done
     summary: "Thirty-six corrections and five decisions from the triage of the draft-13 read (triage-draft13-review.md); the hedge ratio, the trigger, the analogue distance, a second radius, one node folded."
     changes:
       - "The hedge is sized by the minimum-variance ratio, the slope of the component on the instrument's market-residual return, so it removes the share of the component's variance the instrument explains and no more; the unexplained-share line is gone, and the hedged return is written in returns with the instrument's market beta sent to the index line."

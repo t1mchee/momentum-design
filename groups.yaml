@@ -44,9 +44,9 @@ groups:
         synthesis: >
           The positioning score has one input per leg: 13F crowding on the winner leg, short interest on the
           loser leg, each ranked within its leg. A 13F count on a short would measure the wrong side, which is
-          why the loser leg has its own input. Neither input is a function of the residual covariance, so under
-          no crowding the crowded set is independent of the loadings, which is what the overlap's null relies
-          on. Because the inputs arrive with different lags, the longest of those lags is shown next to
+          why the loser leg has its own input. Neither input is a function of the residual covariance, so the crowded set does not move with the
+          loadings; both rise with company size, so the overlap's null is the crowded quintile's weight share
+          rather than one fifth, and the size channel remains in it. Because the inputs arrive with different lags, the longest of those lags is shown next to
           the score wherever the score appears.
         children: [posdata]
 
@@ -56,12 +56,12 @@ groups:
     brief: "Element 1, problem definition: the exposure monitored is the 12-1 book. The event, horizon, user and decision are stated in the problem block at the top of the spec."
     synthesis: >
       Rebuild the 12-1 momentum book monthly. Then measure which macro exposures the ranking rule gave the
-      book, in hedgeable units, and compare each against 200 random portfolios of the same size, capitalisation
-      profile and sector mix. One first-stage regression on the market gives the residual return that every
-      later statistic uses, and one slope per company and series gives the exposure, over the 126 days ending
-      at formation. The page prints one percentile per series, against the book's own history, and it is the
-      percentile that can trigger a page; the percentile against the random portfolios, which shows whether
-      the sort produced the exposure, goes to the appendix. The driving series is the one of the six on which
+      book, in hedgeable units. One first-stage regression on the market gives the residual return that every
+      later statistic uses, and one slope per company and series gives the exposure, over a 126-day window
+      that rolls daily. The page prints one percentile per series, of the exposure's size against the book's
+      own history with its sign beside it, and it is the percentile that can trigger a page. The 200 random
+      portfolios, matched on size, capitalisation profile and sector mix, are drawn here and serve two
+      statistics later: the variance share and the theme's excess weight. The driving series is the one of the six on which
       the book's exposure has the highest own-history percentile that month.
     children: [sort, random, sensitivities, percentiles]
 
@@ -130,7 +130,8 @@ groups:
           two statistics and the hedge line: the share of the book's variance explained by the theme
           component, beside its random-book comparison; the loss in basis points of book, by leg, if the
           component returns minus two standard deviations over ten days; and a short in the instrument that
-          best tracks the component, sized by the minimum-variance hedge ratio, with the VaR before and after it.
+          best tracks the component, sized by the minimum-variance hedge ratio, with the VaR before and after it
+          and the market line, the book's beta net of that short and the index notional that flattens it.
         children: [propagate, themescore]
 
   - id: g_crowding
@@ -158,7 +159,7 @@ groups:
       each divided by the book's volatility at the time, taken over past starts in the same calendar state as
       today (whether the ten days it covers contain an FOMC decision, a heavy earnings day or an approved
       catalyst) and multiplied by today's volatility. Its outputs are a ten-day 5% VaR and expected shortfall in basis points of book, the
-      probability of a return at or below the long-run threshold, and how much worse the VaR is inside a
+      probability of a return at or below the book's own unconditional 5% quantile, and how much worse the VaR is inside a
       catalyst window. It is scored against three baseline lines, the same quantile with neither ingredient, with the state
       only and with the scaling only, so the ablation is four lines a reader can compute by hand and what each
       ingredient adds is visible. Text and
@@ -233,8 +234,8 @@ groups:
       beside it. The vulnerable-name lists are tested in an event study over the recorded unwinds, and print only
       if it passes. Extraction error is measured on hand-labelled sentences, for the classifier and the
       keyword rule side by side. The premise, that a theme is visible before a reversal,
-      is measured over the recorded episodes and printed as a share beside the same share on calm months,
-      with the demotion threshold set in advance. Only the first design's severity test on
+      is measured over the recorded episodes and printed as a share beside the same share on calm months;
+      the theme machinery is demoted if the first is not above the second. Only the first design's severity test on
       held-out years has run, with a model that had no text: 2 breaches in 42 forecasts. The v2 scoring, the
       labels and the event study have not run, and the worry-list comparison can only be made in production.
     children: [register, labels, volvalidation, bombtest, themevalidation]

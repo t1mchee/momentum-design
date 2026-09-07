@@ -1,6 +1,6 @@
 # Proof-of-concept brief for the executor
 
-Design: `docs/design/spec.yaml`, draft 14. Section 2 lists the corrections made since the executor may have
+Design: `docs/design/spec.yaml`, draft 15. Section 2 lists the corrections made since the executor may have
 started; the spec is the authority where the two differ. House rules of the repo apply
 (`CLAUDE.md` section 9): an experiment is created in `project/experiments.yaml` before it runs, with
 hypothesis, prediction and method frozen; an implausible number is an instrument bug until proven
@@ -69,6 +69,14 @@ in the memo if it fails.
 15. Theme companies $T$ are the component-set members whose nearest statement is within $d^*$ plus the propagated
     companies; the overlap $O$ is computed on $T$, not on the whole component set.
 16. The unexplained-share line is gone; the page prints instrument, notional and the VaR before and after the hedge.
+17. The market line: $\beta^{\text{net}} = S_1 - (n/100\text{m})\,\beta_H$ with $\beta_H$ the instrument's first-stage market beta;
+    the index notional per $100m is $100\text{m} \cdot \beta^{\text{net}}$. Print $g_k$ and $\|w\|_2$ on every date; $g_k$ should
+    be a few tenths at most.
+18. The exposure percentile is of $|S_s|$ with the sign printed. The trigger's seventh statistic is the own-history
+    percentile of the largest $\mathrm{VS}_k$ above noise, computed in the trigger, absent when none is above noise.
+19. The placebo compares the book's component $k$ with each random portfolio's component of the same rank. $d^*_c$ is the
+    10th percentile of nearest-centroid distance. The premise rule: demote if the episode share is at or below the
+    calm-window share, on the model run.
 
 ## 3. The experiments, in order
 

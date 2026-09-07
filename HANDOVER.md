@@ -130,6 +130,19 @@ four ablation lines; a centroid distance beside the assignment distance; the gat
 the assignment node. Lesson from this round: when a node is rewritten, rewrite the synthesis paragraph in
 `groups.yaml` in the same patch; three stale paragraphs cost more in the read than any single error.
 
+## 3e. Draft 15 and the end of the read-and-fix loop
+
+Draft 15 closed the draft-14 read without a fresh read after it. Scores over the design-only reads were 26,
+26, 25 out of 40 for drafts 12, 13 and 14, with "author understands" at 3 each time; each read found a
+different layer and each patch introduced a few errors of its own (draft 14: the market line without a
+producer, the trigger's seventh statistic without a producer, an unpassable premise threshold, a false
+sentence about block length). Draft 15 fixed those and the cheap pre-existing ones. The reader's standing
+objection, that the text nodes change no number on the hedge line, is the design's position: text names
+the risk, chooses the component and gates the lists; the tail model is text-free by design; switch the text
+off and the named component, so the instrument and the notional, change. The remaining doubts are
+thresholds a run settles (the R-squared gate, the size of the loading, the filer count), which E1 to E5
+produce. Do not run another design-only read before the proof of concept.
+
 ## 4. Files in this directory
 
 | file | what |

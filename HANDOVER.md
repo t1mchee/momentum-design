@@ -85,6 +85,17 @@ Live copies: https://t1mchee.github.io/momentum-design/ (index), `/levels.html`,
   pass should bring that to zero without changing structure. It reads `spec.yaml`, `groups.yaml`,
   `simple.yaml` and `changelog.yaml`.
 
+## 3a. Notation (draft 10)
+
+Draft 10 added a symbol table (`meta.symbols`) and one-line formulas in twelve nodes, per
+`notation-for-draft10.md` as amended by `docs/reviews/notation-review-draft-10.md`. The rule for further
+notation is in `eval-rubric.md` section 6 under "Notation". Writing the lines exposed four faults in
+draft 9's rules, corrected in draft 10: the price-correlated rule needed absolute correlations; the
+Marchenko-Pastur edge is applied to the correlation matrix's eigenvalues, not the covariance's; the tail
+model is fitted on days u <= t-10 so every target is realised; the calendar baseline no longer adds a
+book-level macro return on top of company draws. Comomentum now uses the one market residual u, and the
+bridge regresses on series 2 to 6 only, since the market is removed at the first stage.
+
 ## 4. Files in this directory
 
 | file | what |

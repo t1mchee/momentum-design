@@ -169,3 +169,15 @@ counts against C7.
 8. Say what has not run once, in a full sentence, not as a tag.
 9. Keep one fact per sentence, but supply the connective when one fact causes another.
 10. Do not narrate the document's own history inside a rule; the change log holds it.
+
+### Notation
+
+Notation is plain ASCII in the spec and typeset in the memo. A line is added only where prose was
+carrying a sum over a set, a product of signs, a regression, or a threshold built from other numbers.
+Every regression is written once, stating what is regressed on what, over which observations, and what
+is reported. A forward-return target is fitted only on observations whose target is realised on the
+forecast date. The system has one residualisation; a second would need its own letter and a stated
+reason. Named estimators and tests (Ledoit-Wolf, GARCH, HDBSCAN, BM25, Kupiec, Mahalanobis, quantile
+regression) are named, not derived; the scoring rule is defined once, where the reader meets it. The
+symbol table in the legend holds only symbols used by two or more nodes, and favours the statistics the
+page prints over the arithmetic's inputs.

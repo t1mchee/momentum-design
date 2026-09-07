@@ -3,10 +3,28 @@
 # summary, changes (what), reasoning (why), status (done | current | planned).
 
 entries:
+  - version: v2-draft-10
+    date: "2026-09-07"
+    file: versions/v2-draft-10.yaml
+    status: current
+    summary: "Notation where prose was carrying a formula, a symbol table, and four rule corrections that writing the lines exposed."
+    changes:
+      - "A symbol table in the legend: legs, weights, leg sign, the market and the five other reference series, the one residual u, the covariance and its components, component returns and sigma, betas, the spread S_s, the variance share VS_k, the excess weight E_e, the overlap O, the bear state B_t, the book's forward return and the VaR."
+      - "One line each for the first-stage residual, the slope regression, the bridge regression and the tail model, stating what is regressed on what, over which observations, reporting what. The ten-day implied move, the weights, the case flag, the two quote tags and the theme rule, the loss share and bp loss, the overlap and non-overlap, the two vulnerable-name thresholds, the trigger, the hit, the breach and the calendar-baseline draw are each one line. The event definition in the problem block is written as an indicator. The ablation is a five-row table."
+      - "Corrections the lines exposed. Price-correlated companies are now defined on absolute correlations with the component; the previous rule admitted nearly every company once set members had loadings of both signs. The Marchenko-Pastur edge is applied to the eigenvalues of the correlation matrix of u, and the components are the first K eigenvectors of Sigma; the previous rule compared quantities on different scales. The tail model is fitted on formation days u <= t-10, so that every ten-day target in the fit is realised on the forecast date; the previous rule fitted on every day up to formation. The calendar baseline draws a macro release through the company returns around the last eight releases of that type, instead of adding a book-level return on top of company draws that already sum to the book."
+      - "Two simplifications. Comomentum uses the one market residual u rather than a second residual on the six series. The bridge regresses on series 2 to 6, since the market is removed at the first stage and its coefficient would be zero by construction."
+      - "Not applied, on the reviewer's verdict: hedgeable units as a symbol, the route2 ranking as a formula, the analogue state vector, and the trigger as first proposed (which compared the maximum with the number 95 rather than with its own 95th percentile)."
+    reasoning: >
+      An independent reader judged each proposed line against the brief's reader, a PM or risk manager
+      reading a 6 to 10 page memo once. Thirteen lines made the design clearer, three were neutral and two
+      made it worse; the thirteen are applied and the five are not. Four of the lines, once written, showed
+      that the prose they replaced stated a rule that could not work as written; those rules are corrected
+      here and the corrections are listed above.
+
   - version: v2-draft-9
     date: "2026-09-07"
     file: versions/v2-draft-9.yaml
-    status: current
+    status: done
     summary: "Language only. No node, edge, input, output, number, label or fallback changed on purpose; the eight places where the first pass changed meaning were restored."
     changes:
       - "One meaning per word: company for a stock (name survives only in vulnerable names), theme label for the words given to a theme, keyword run and model run for the two text pipelines, node and group for parts of the pipeline, and carry only in the conferred and carried pair."

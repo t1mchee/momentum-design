@@ -3,10 +3,31 @@
 # summary, changes (what), reasoning (why), status (done | current | planned).
 
 entries:
+  - version: v2-draft-11
+    date: "2026-09-07"
+    file: versions/v2-draft-11.yaml
+    status: current
+    summary: "The simplification. Every decision the PM catch-out read exposed was taken in the direction of the mechanism that can be walked through with one example; three nodes retired, the tail model replaced, the text pipeline reduced to one object and one distance."
+    changes:
+      - "The tail model is the 5% quantile of the book's own volatility-standardised ten-day returns, conditioned on the calendar state; no fitted parameters, twelve observations below the line on the first scored date rather than one. The two baselines are the same quantile without scaling and without state, so the ablation is three lines. GARCH is retired. Text and positioning do not enter the model."
+      - "The case flag is retired. Naming runs on every component above the random-book noise, and the placebo keeps the sort's own axis from being named; the November 2020 page names the vaccine. The leg-mean loadings are printed as description."
+      - "The hedge line is sized from the component: the bridge chooses the instrument by R-squared over sector ETFs and macro futures, and the notional is the book's loading over the instrument's slope, so the hedge line and the bp loss are one number with opposite signs. The unexplained share is printed beside it."
+      - "One object, one distance: every embedded thing is a risk sentence; no paraphrase, no reranker, no passage cap; the classifier trained on 2,000 language-model labels reads the book and the random sets alike; the keyword run is followed as far as the theme and no further. The language model does two jobs in the theme group: it labels the training sentences and it names residual clusters."
+      - "The loser leg gets its own rule: short interest on the loser leg and 13F crowding on the winner leg, comomentum dropped, a squeeze state line. The overlap's null of one fifth is now valid because neither input comes from returns."
+      - "The calendar baseline uses the book's own past window returns with no draws. Analogues are post-2013 formation dates only, Euclidean on standardised dimensions, with the theme reaching the aptness rule by an edge. The worry list is used on the live page only; the backtest names themes from news clusters."
+      - "Scoring: Kupiec at 130 months accepts 3 to 10 breaches; margins become bootstrap intervals with a stated floor; the unresolvable 2% ablation is replaced by 100 hand labels and a breach sort by theme weight; the register is stated as fixing wording and thresholds, not inference; the premise share is measured. The proof of concept produces five named things."
+      - "Retired: control sorts, GARCH, the prose composer, the Bonferroni family, price-correlated companies, the naming calibration, the carried exposure, the cap-only null, the Marchenko-Pastur edge, the hindsight illustration, the register row numbers. Ids: zscore to percentiles, pc1text to gathertext, route2 to drivingseries. Every number that survives has a stated origin."
+    reasoning: >
+      A sceptical PM read draft 10 to find out whether the author understood it, and found a tail model that
+      could not be fitted, a flag that demoted the vaccine theme, a hedge unrelated to the loss it sat under,
+      and a proof of concept whose one registered test could not resolve. The fix list answered every finding
+      under one rule, simplify and clarify, and a second reader judged the corrected design against the
+      twelve interview questions the first had written. Draft 11 is that list applied.
+
   - version: v2-draft-10
     date: "2026-09-07"
     file: versions/v2-draft-10.yaml
-    status: current
+    status: done
     summary: "Notation where prose was carrying a formula, a symbol table, and four rule corrections that writing the lines exposed."
     changes:
       - "A symbol table in the legend: legs, weights, leg sign, the market and the five other reference series, the one residual u, the covariance and its components, component returns and sigma, betas, the spread S_s, the variance share VS_k, the excess weight E_e, the overlap O, the bear state B_t, the book's forward return and the VaR."

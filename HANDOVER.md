@@ -97,6 +97,16 @@ model is fitted on days u <= t-10 so every target is realised; the calendar base
 book-level macro return on top of company draws. Comomentum now uses the one market residual u, and the
 bridge regresses on series 2 to 6 only, since the market is removed at the first stage.
 
+## 3b. Draft 11, the simplification
+
+Draft 11 applied `fixes-for-draft11-proposal.md`, the answer to `docs/reviews/pm-catchout-v2-draft-10.md`.
+The design is 45 live nodes; three were retired (controls, garch, composer) and three renamed (zscore to
+percentiles, pc1text to gathertext, route2 to drivingseries). The tail model is an empirical quantile, the
+case flag is gone, the hedge is sized from the component, the text pipeline has one object and one
+distance, and the loser leg has its own positioning input. `simple.yaml`'s box rules are now the memo's
+abridging paragraphs and are consistent with the spec. The design is frozen again at draft 11 pending the
+fresh catch-out read.
+
 ## 4. Files in this directory
 
 | file | what |

@@ -73,7 +73,9 @@ def check_graph(doc, name, edge_field):
 
 def check_writing(doc, name):
     for n in doc["nodes"]:
-        for sent in re.split(r"(?<=[.;])\s+", (n.get("rule") or "").replace("\n", " ")):
+        # a line on its own with an '=' or an 'iff' is a formula, not a sentence, and is skipped
+        prose = [l for l in (n.get("rule") or "").split("\n") if not re.search(r"=|\biff\b|^\s*step \d", l)]
+        for sent in re.split(r"(?<=[.;:])\s+", " ".join(prose)):
             if len(sent.split()) > 45:
                 warn(f"{name}: {n['id']} sentence over 45 words: {sent[:60]!r}")
     txt = yaml.safe_dump(doc)

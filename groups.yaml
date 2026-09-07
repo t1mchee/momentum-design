@@ -46,7 +46,7 @@ groups:
           loser leg, each ranked within its leg. A 13F count on a short would measure the wrong side, which is
           why the loser leg has its own input. Neither input is a function of the residual covariance, so the crowded set does not move with the
           loadings; both rise with company size, so the overlap's null is the crowded quintile's weight share
-          and the size channel remains in it. Because the inputs arrive with different lags, the longest of those lags is shown next to
+          rather than one fifth, and the size channel remains in it. Because the inputs arrive with different lags, the longest of those lags is shown next to
           the score wherever the score appears.
         children: [posdata]
 
@@ -107,7 +107,7 @@ groups:
         synthesis: >
           The embedding space is built from news risk statements and the component companies' filing risk
           statements together, using one named public encoder on every date; the encoder's look-ahead is not
-          bounded, and no mitigation is claimed. The statements are clustered into topics, the cluster centroids are
+          bounded, and the design says so. The statements are clustered into topics, the cluster centroids are
           the reference points of the themes, and one assignment distance applies to headlines and filing
           sentences alike. On the live page an entry of the PM's worry list labels the cluster it reaches.
         children: [newsagent, taxonomy, embedspace]
@@ -189,7 +189,7 @@ groups:
           taken from calendars with no model. Company-specific and off-universe catalysts are proposed by a
           language model, each with a date and a source quote, beside a term-list extractor over the same news,
           and approved by the PM as they arrive. That model runs only on live data and is excluded from the backtest; an
-          approved catalyst is a calendar-page trigger and a window catalyst day for the scoring split; the tail model reads no state.
+          approved catalyst opens a window in the tail model.
         children: [catagent, catapprove]
       - id: g_analogue
         name: Analogues
@@ -201,8 +201,8 @@ groups:
           analogue is apt by the deterministic rule when its bear state matches today's. On the live page a
           panel of three model roles, advocate, dissent and adjudicator, retrieves the condition records for
           each analogue date and rules apt, not apt, or cannot be ruled on; a mechanism claim is kept only
-          with a verbatim span from a record, and a date with no record is ruled unrulable; the model's memory is
-          not admitted. This is the design's one agentic step: a model retrieving records, using the
+          with a verbatim span from a record, and a date with no record is ruled unrulable rather than argued
+          from memory. This is the design's one agentic step: a model retrieving records, using the
           extractor's tools and updating an assessment, and it runs live only.
         children: [analogue, panel]
 
@@ -220,7 +220,7 @@ groups:
       overlap; the two vulnerable-name lists, once their event study has run; the catalysts; and what changed
       since the last page. It gives the direction of the risk and the sized hedge and leaves the decision to
       exit with the reader, and its numbers describe the paper 12-1 book, to be scaled by the reader's beta
-      to it. An item that has not run or has failed its test is not on the page and is listed in the footer. The PM acknowledges the page,
+      to it. An item that has not run or has failed its test is not on the page; the footer names it. The PM acknowledges the page,
       edits the worry list and approves catalysts. Whether the PM looked at, ignored or acted on each page is
       logged; until the PM's positions are an input, the proxy is the acknowledgement and the two logged
       actions within five sessions of a page. In production the page is kept current and pushed on change,

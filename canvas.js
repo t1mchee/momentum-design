@@ -263,7 +263,7 @@ function showNode(n){
     ${(n.checks||n.check)?`<div class="k">Checks</div>${n.check?`<div>${esc(n.check)}</div>`:list(n.checks)}`:''}
     ${n.on_failure?`<div class="k">On failure</div><div>${esc(n.on_failure)}</div>`:''}
     ${abs?`<div class="k">In the full view</div><ul>${abs}</ul>`:''}
-    ${(n.open||[]).length?`<div class="k">Open</div><div class="open">${list(n.open)}</div>`:''}`;
+    `;
   renderMath($('rbody')); $('right').classList.add('open');
   $('rbody').querySelectorAll('.golink').forEach(a=>a.onclick=ev=>{ev.preventDefault(); const id=a.dataset.id; const bb=bandOf(id); if(bb&&!expanded.has(bb.id)){expanded.add(bb.id); render();} select(id); scrollTo(id);});
 }

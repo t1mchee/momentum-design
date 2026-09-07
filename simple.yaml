@@ -1,4 +1,4 @@
-# The simplified map: twenty-two boxes over the same design as spec.yaml (draft 17). Each box lists the
+# The simplified map: twenty-two boxes over the same design as spec.yaml (draft 13). Each box lists the
 # full-view components it absorbs. The full view is the record; this map is the reading order for the memo,
 # and each box's rule is the abridging paragraph the memo will use.
 #
@@ -76,7 +76,7 @@ nodes:
       - "8-K and transcript sentences per company, dated"
       - "coverage by leg and by layer"
     rule: |
-      The context layer is Item 1A of the latest 10-K accepted before the formation date, plus the latest 10-Q's risk factors where newer, split into sentences (PUBLIC, EDGAR). The event layer is 8-K Items 2.02, 7.01 and 8.01 with exhibits (PUBLIC) and earnings-call transcripts (PUBLIC for a subset; LICENSED for full coverage). Equity research and dealer notes form a third layer in production (LICENSED and DESK-ONLY). Every document is dated at acceptance. Every extracted span must appear verbatim in its source before it is stored. Coverage gates the page: an item whose companies are unread on the layer it needs is withheld and listed in the footer. Quote weights are understated on companies without text.
+      The context layer is Item 1A of the latest 10-K accepted before the formation date, plus the latest 10-Q's risk factors where newer, split into sentences (PUBLIC, EDGAR). The event layer is 8-K Items 2.02, 7.01 and 8.01 with exhibits (PUBLIC) and earnings-call transcripts (PUBLIC for a subset; LICENSED for full coverage). Equity research and dealer notes form a third layer in production (LICENSED and DESK-ONLY). Every document is dated at acceptance. Every extracted span must appear verbatim in its source before it is stored. Coverage gates the page: an item whose companies are unread on the layer it needs is withheld, and the footer names it. Quote weights are understated on companies without text.
     check: "quote gate"
     open:
       - "EMPIRICS: the free transcript feeds and the share of companies they cover."
@@ -197,7 +197,7 @@ nodes:
     outputs:
       - "the embedding space: clusters, centroids, the assignment distance, and the news weight per cluster"
     rule: |
-      A language model labels 2,000 news sentences once as risk statements or not, with dates and company names redacted, and a classifier trained on those labels marks every sentence in the archive; the sentence itself is the record and its embedding is the encoder's. The encoder is one named public encoder on every date; its look-ahead is not bounded and no mitigation is claimed. The news risk statements over the rolling twelve-month window and the filing risk statements of the book's and the random portfolios' component sets are embedded and clustered together, so headlines and filing sentences are one population and one distance applies to both. HDBSCAN finds the clusters and a noise set, at a minimum size of about two statements a month; a cluster is then treated as a ball around its centroid, an approximation. The assignment distance is the 90th percentile of a member's distance to its own cluster's centroid, noise excluded. A cluster with fewer than 25 news members is company-specific.
+      A language model labels 2,000 news sentences once as risk statements or not, with dates and company names redacted, and a classifier trained on those labels marks every sentence in the archive; the sentence itself is the record and its embedding is the encoder's. The encoder is one named public encoder on every date; its look-ahead is not bounded, and the design says so rather than claiming a mitigation. The news risk statements over the rolling twelve-month window and the filing risk statements of the book's and the random portfolios' component sets are embedded and clustered together, so headlines and filing sentences are one population and one distance applies to both. HDBSCAN finds the clusters and a noise set, at a minimum size of about two statements a month; a cluster is then treated as a ball around its centroid, an approximation the design accepts. The assignment distance is the 90th percentile of a member's distance to its own cluster's centroid, noise excluded. A cluster with fewer than 25 news members is company-specific.
     comparator: "a keyword rule on the registered term list for the statements; its records are the keyword run"
     check: "quote gate; precision and recall of the classifier and the keyword rule on hand-labelled news sentences; the number of clusters and the noise share, printed"
     open:
@@ -371,7 +371,7 @@ nodes:
     outputs:
       - "approved catalysts, with dates and types"
     rule: |
-      The PM reviews proposals as they arrive, at most once a day, and approves each on its date and relevance, not on any view of its outcome. The PM's main contribution is adding catalysts the model missed. An approved catalyst is a window catalyst: it is a calendar-page trigger and a window catalyst day for the scoring split; the tail model reads no state. Catalysts not yet approved appear on the page as proposed.
+      The PM reviews proposals as they arrive, at most once a day, and approves each on its date and relevance rather than on any view of its outcome. The PM's main contribution is adding catalysts the model missed. An approved catalyst is a window catalyst: it opens a window in the tail model and a calendar page. Catalysts not yet approved appear on the page as proposed.
     check: "none"
 
   - id: analogue

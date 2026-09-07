@@ -89,8 +89,11 @@ in the memo if it fails.
   beside it either way.
 - The page for 2020-10-30 at `reports/poc/page_2020-10-30`, nine items registered before rendering, every number linked to
   its stored output. Effective N and $\|w\|_2$ per leg on every date.
+- Item 7 of the page: the five nearest dates from the deterministic rule, and beside them the analogue panel's 2020-10-31
+  verdicts from exp-082 (advocate, dissent, adjudicator; spans cited; claims dropped by the gate counted), labelled as a
+  live-only component run on a historical date. Draft 17 restored the panel node.
 - Not run, stated as such: hand labels (production item), the memo-date page, the premise share, positioning, the lists,
-  analogues, the catalyst agent.
+  the catalyst agent.
 
 ## 3. The experiments, in order
 

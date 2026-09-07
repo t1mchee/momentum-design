@@ -3,10 +3,27 @@
 # summary, changes (what), reasoning (why), status (done | current | planned).
 
 entries:
+  - version: v2-draft-17
+    date: "2026-09-07"
+    file: versions/v2-draft-17.yaml
+    status: current
+    summary: "The analogue panel returns as a live-only node: the design's one agentic step, disciplined by the grounded-span gate the first design's planted-claim test established."
+    changes:
+      - "The panel node leaves the retired lane. Three model roles, advocate, dissent and adjudicator, retrieve the condition records for each of the five analogue dates and rule apt, not apt, or cannot be ruled on; a mechanism claim is kept only with a verbatim span from a record, a date with no record is ruled unrulable rather than argued from memory, and the count of dropped claims is printed. The deterministic bear-state rule stays as the comparator beside the verdict."
+      - "Live only, like the catalyst proposal: no backtest claim depends on it, and the mitigation is the gate, not the label. The 2020-10-31 run from the first design's planted-claim test (exp-082) renders item 7 of the page, labelled as a live-only component run on a historical date."
+      - "Edges from the analogue rule, the extractor, the reversal record and the theme label into the panel, and from the panel to the page, all live only. The simplified map's analogue box absorbs both nodes."
+    reasoning: >
+      The brief lists agentic workflows, retrieving information, using tools and updating an assessment,
+      as a thing the system may include, and asks where AI adds value. Draft 11 retired the panel because
+      a model's memory of what followed a date cannot be a backtest input; that reason still holds, and
+      it is a reason to run the panel live and gate it on retrieved records, not to remove it. A production
+      system would use it, and it is the design's clearest instance of a model doing something a rule
+      cannot.
+
   - version: v2-draft-16
     date: "2026-09-07"
     file: versions/v2-draft-16.yaml
-    status: current
+    status: done
     summary: "Three decisions from the proof-of-concept runs: the tail model loses its conditioning state, the book stays value-weighted with its concentration printed, and the proof of concept narrows to three artifacts; the embedding space gains its reduction step."
     changes:
       - "The tail model is one line, sigma_t times the 5% quantile of past scaled returns, with no state. The bear state (exp-084), the calendar state and the volatility tercile (exp-089) each scored within one of the scaled line, so the model keeps none and the scoring node prints the three ratios beside it. The catalyst-window VaR and its increase leave the page; the calendar state stays as page fields, the trigger's window catalyst days and a scoring split."

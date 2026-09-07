@@ -168,7 +168,8 @@ groups:
       stays as catalyst dates on the page and as the trigger. Text and positioning do not enter the model.
       Scheduled catalysts come from calendars; company-specific and off-universe catalysts are proposed live
       by a model from news, beside a term-list comparator, and approved by the PM. Analogues supply
-      historical context by distance alone, with no language model.
+      historical context by distance, and on the live page a model panel rules on each analogue's aptness
+      from retrieved records, the design's one agentic step.
     children:
       - id: g_severity
         name: The tail model
@@ -197,8 +198,13 @@ groups:
           The analogue section lists the five past formation dates since 2013 whose state was nearest to
           today's, by Mahalanobis distance on seven dimensions, the six exposures and the trailing sigma, and
           what the book did over the following ten days. The twelve months before today are excluded. An
-          analogue is apt when its bear state matches today's; the theme named on that date is shown beside it.
-        children: [analogue]
+          analogue is apt by the deterministic rule when its bear state matches today's. On the live page a
+          panel of three model roles, advocate, dissent and adjudicator, retrieves the condition records for
+          each analogue date and rules apt, not apt, or cannot be ruled on; a mechanism claim is kept only
+          with a verbatim span from a record, and a date with no record is ruled unrulable rather than argued
+          from memory. This is the design's one agentic step: a model retrieving records, using the
+          extractor's tools and updating an assessment, and it runs live only.
+        children: [analogue, panel]
 
   - id: g_output
     name: 6. What the PM sees and does
@@ -248,8 +254,8 @@ groups:
     brief: "Kept for the record, each with the reason it was replaced."
     synthesis: >
       Components that a later draft replaced or refuted, each kept with the reason: the three-route taxonomy
-      and its detectors, the separate vol model, the labeller, the three-role analogue panel, the referee
+      and its detectors, the separate vol model, the labeller, the referee
       roles, the control sorts, the GARCH baseline, the prose composer, the options feed, and three nodes
       folded into their neighbours.
     hidden: true
-    children: [gathertext, options, drivingseries, pmworries, controls, garch, composer, route1, route3, classify, volmodel, labeller, panel, referees]
+    children: [gathertext, options, drivingseries, pmworries, controls, garch, composer, route1, route3, classify, volmodel, labeller, referees]

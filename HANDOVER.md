@@ -153,6 +153,14 @@ concentration it produces printed; the proof of concept is three artifacts. It a
 before HDBSCAN, which the first theme pass showed is necessary. Numbers from the runs enter the spec only
 as reasons, never as results; results live in the experiments file and the memo.
 
+## 3g. Draft 17, the panel returns
+
+Tim's decision: the analogue panel is the design's one agentic step and a production system would use it
+even though it cannot be backtested, so it comes back as a live-only node with the grounded-span gate
+from exp-082 (three planted claims with a record kept, three without dropped; on 2020-10-31 the gate
+fired on a live dissent claim). Do not retire it again for the look-ahead reason; the answer to that
+reason is the gate and the live-only label. The design is 38 live nodes and 13 retired.
+
 ## 4. Files in this directory
 
 | file | what |

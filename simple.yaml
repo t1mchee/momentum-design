@@ -9,7 +9,7 @@
 
 meta:
   title: Momentum reversal-risk system, simplified map
-  version: v2-draft-16-simple
+  version: v2-draft-17-simple
   updated: "2026-09-07"
   problem:
     exposure: "the 12-1 momentum book: the top and bottom deciles of the Russell 3000 by return from twelve months before to one month before, value-weighted within each leg, dollar-neutral, rebuilt monthly"
@@ -379,17 +379,19 @@ nodes:
     lane: s5
     kind: deterministic
     lookahead: model
-    absorbs: [analogue]
+    absorbs: [analogue, panel]
     inputs:
       - "per reference series: the exposure in hedgeable units and its own-history percentile"
+      - "risk statements per company, on both runs"
       - "the French factor and the reversal record"
       - "six reference series and the bear state"
       - "book returns"
       - "the theme label, with its quotes and news weight"
     outputs:
       - "the five nearest past formation dates, what followed over ten days, and whether each is apt"
+      - "the panel's verdict per analogue, with the spans it cites (live only)"
     rule: |
-      A formation date's state is seven numbers: the six exposures and the trailing ten-day sigma; the bear state is carried beside it and is not in the distance, since it is off on nearly every date since 2013. Candidates are every formation date since December 2013, excluding the last year. The distance is Mahalanobis, with the covariance estimated over the candidates, since the exposures co-move. The five nearest dates are printed with what the book did over the following ten days, whether each fell in the reversal record, and the theme the pipeline named on that date where one exists. An analogue is apt when its bear state matches today's; the theme is annotation and does not decide aptness. No language model is involved.
+      A formation date's state is seven numbers: the six exposures and the trailing ten-day sigma; the bear state is carried beside it and is not in the distance, since it is off on nearly every date since 2013. Candidates are every formation date since December 2013, excluding the last year. The distance is Mahalanobis, with the covariance estimated over the candidates, since the exposures co-move. The five nearest dates are printed with what the book did over the following ten days, whether each fell in the reversal record, and the theme the pipeline named on that date where one exists. An analogue is apt by the deterministic rule when its bear state matches today's; the theme is annotation and does not decide aptness. On the live page a panel of three model roles, advocate, dissent and adjudicator, retrieves the condition records for each analogue date and rules apt, not apt, or cannot be ruled on; a mechanism claim is kept only with a verbatim span from a record, a date with no record is ruled unrulable, and the count of dropped claims is printed. This is the design's one agentic step and it runs live only; the 2020-10-31 run is the demonstration.
     check: "each past date's state is regenerated from inputs public before it"
 
   # ---------------------------------------------------------------- 6. the page
@@ -550,6 +552,8 @@ edges:
   - {from: tail, to: page, sends: "VaR, expected shortfall, the probability line", when: "on event", mode: "backtest and live"}
   - {from: tail, to: scoring, sends: "VaR, ES, the probability line, the ablation lines and the state", when: "monthly", mode: "backtest only"}
   - {from: analogue, to: page, sends: "the five analogues, each marked apt or not", when: "on event", mode: "backtest and live"}
+  - {from: extract, to: analogue, sends: "the condition records for the analogue dates", when: "on event", mode: "live only"}
+  - {from: analogue, to: page, sends: "the panel's verdict per analogue", when: "on event", mode: "live only"}
   # the page
   - {from: trigger, to: page, sends: "the page type, its fields, and each field's change", when: "on event", mode: "backtest and live"}
   - {from: trigger, to: scoring, sends: "page dates and their outcomes", when: "monthly", mode: "backtest only"}

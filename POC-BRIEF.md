@@ -1,6 +1,6 @@
 # Proof-of-concept brief for the executor
 
-Design: `docs/design/spec.yaml`, draft 13. Section 2 lists the corrections made since the executor may have
+Design: `docs/design/spec.yaml`, draft 14. Section 2 lists the corrections made since the executor may have
 started; the spec is the authority where the two differ. House rules of the repo apply
 (`CLAUDE.md` section 9): an experiment is created in `project/experiments.yaml` before it runs, with
 hypothesis, prediction and method frozen; an implausible number is an instrument bug until proven
@@ -34,8 +34,10 @@ in the memo if it fails.
 
 ## 2. Corrections since draft 11 that the executor implements
 
-1. Hedge ratio: the bridge regresses the instrument on the component, $r_{Ht} = a + h_k f_{kt} + e_t$, so
-   the notional per $100m is $100\text{m} \cdot g_k / h_k$ with $g_k = w'v_k$.
+1. Hedge ratio (as amended in draft 14): the candidate instrument is residualised on the market, giving $u_{Ht}$, and the
+   component is regressed on it, $f_{kt} = a + b_k u_{Ht} + e_t$; the notional per $100m is $100\text{m} \cdot g_k b_k$ with
+   $g_k = w'v_k$. This is the minimum-variance hedge. The draft-12 form, $g_k / h_k$ with $h_k$ the slope of $u_H$ on $f_k$,
+   over-hedges by $1/R^2$ and is not used. The hedged return is $R_t - (n/100\text{m})\, u_{Ht}$.
 2. Alignment on the loser leg: a company counts toward a theme when $\ell_i v_{ik} > 0$ (leg sign times
    loading sign), not $v_{ik} > 0$.
 3. Overlap null: the null for $O$ is the crowded set's share of the leg's gross weight that month,
@@ -55,8 +57,18 @@ in the memo if it fails.
    cluster with fewer than 25 news members is company-specific. There is no BM25 run.
 10. The excess weight $E_e$ is a share of the component set's total absolute loading. The pre/post-cutoff split
     of the labels, the wrong-theme control and the breach sort are dropped; coverage is scored by state.
-11. The calendar state of a start is whether its ten-day span contains a window catalyst (FOMC, heavy earnings
-    day above the registered floor, or an approved catalyst); CPI and payrolls do not open windows.
+11. The calendar state of a start $t$ is whether the sessions $t+1$ to $t+10$ contain a window catalyst (FOMC, heavy earnings
+    day at or above 10% of gross book weight, or an approved catalyst); CPI and payrolls do not open windows.
+12. The ablation has four lines: unconditional (no scaling, no state); calendar (state only); scaled (scaling only,
+    $\sigma_t q$ with $q$ the pooled 5% quantile of $z$); model (both). E1 reports the pinball ratio of the model to each.
+13. Scored beside the coverage test, with counts and no threshold: the mean realised return on breach months against the
+    ES line, by state; the share of months below the unconditional VaR against the mean $P_t$, by state. The bear state
+    is not used for any split; print the count of bear months in the sample once.
+14. The threshold trigger reads the largest $\mathrm{VS}_k$ among components above noise, not the named component. If E5
+    renders a threshold page, this is the statistic.
+15. Theme companies $T$ are the component-set members whose nearest statement is within $d^*$ plus the propagated
+    companies; the overlap $O$ is computed on $T$, not on the whole component set.
+16. The unexplained-share line is gone; the page prints instrument, notional and the VaR before and after the hedge.
 
 ## 3. The experiments, in order
 
@@ -73,10 +85,10 @@ bootstrap interval excluding one; coverage passes Kupiec at the 10% level (3 to 
 months) for all three lines.
 
 Method: for every formation month from 2015-12, on daily starts $u \le t-10$ since 2013-12: unconditional
-5% quantile of $R_{u,u+10}$; the same within calendar state; the same on $z_u = R_{u,u+10}/\sigma_u$ within
-state, times $\sigma_t$. Breach and pinball on the realised ten-day return from the formation date. Block
-bootstrap in blocks of six months. Also: the count of starts in each state per year, the breach rate by
-bear state, the ES line, and the probability line of correction 7.
+5% quantile of $R_{u,u+10}$; the same within calendar state; the 5% quantile of $z_u = R_{u,u+10}/\sigma_u$ over all
+starts, times $\sigma_t$; the same within state, times $\sigma_t$ (the model). Breach and pinball on the realised ten-day return from the formation date. Block
+bootstrap in blocks of six months. Also: the count of starts in each state per year, the ES and
+probability checks of correction 13, and the probability line of correction 7.
 
 Inputs: the reconstructed book's daily returns (`factor/`), FOMC dates (`data/fedcal`), earnings dates
 (`data/earnings`), weights for the 10% floor.
@@ -166,7 +178,7 @@ theme, sizes the hedge, and prints a VaR that the November 2020 reversal breache
 
 Method: render the nine items from E1, E2 and the exposure panel (conferred exposures, driving series; the
 overlap from 13F and short interest with the corrected null). The hedge line from the bridge with
-corrections 1 and 8, with the VaR before and after the hedge; no premium. The
+corrections 1, 8 and 16, with the VaR before and after the hedge; no premium. The
 memo-date page uses the live worry list, labelled as written with hindsight, and the latest filings; its
 news window is whatever GDELT GKG holds for the trailing twelve months, and if that is thin the footer
 says the theme rests on filings.

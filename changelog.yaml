@@ -3,10 +3,29 @@
 # summary, changes (what), reasoning (why), status (done | current | planned).
 
 entries:
+  - version: v2-draft-14
+    date: "2026-09-07"
+    file: versions/v2-draft-14.yaml
+    status: current
+    summary: "Thirty-six corrections and five decisions from the triage of the draft-13 read (triage-draft13-review.md); the hedge ratio, the trigger, the analogue distance, a second radius, one node folded."
+    changes:
+      - "The hedge is sized by the minimum-variance ratio, the slope of the component on the instrument's market-residual return, so it removes the share of the component's variance the instrument explains and no more; the unexplained-share line is gone, and the hedged return is written in returns with the instrument's market beta sent to the index line."
+      - "The threshold trigger reads the largest variance share among the components above noise, not the named component, so the trigger and the hit-rate test are clean. The page count per year is printed, not asserted."
+      - "The page node decides its own order from the bridge R-squared and the named component; the bridge no longer names a component it does not receive. Theme companies are the set members that state the theme plus the propagated companies, in the overlap and the synthesis alike."
+      - "The ablation has four lines, adding scaling without state. Expected shortfall, the probability line and the silence rate are scored or printed; the catalyst window is on sessions t+1 to t+10; the pinball argument has its own symbol; the loser-leg null sentence is corrected; the bear state is out of the analogue distance and out of the breach split."
+      - "The residual is carried by an edge from the exposures node; the market reaches the squeeze state; window catalyst days are computed once; c-TF-IDF labels are computed once; the random draw, the coverage gate, the earnings floor, the worry-list reference point and the catalyst comparator are stated so they can be run. A second radius, the centroid distance, serves the worry list and the theme log."
+      - "The gather-text node is folded into the assignment node. The premise share has a demotion threshold and no detection floor; the 100 labels are scored once, not by stratum; the GARCH retirement reason no longer indicts the surviving model. Three synthesis paragraphs are brought back to their nodes."
+    reasoning: >
+      A fresh design-only read of draft 13 scored it as draft 12 was scored and found the hedge over-sized
+      by the inverse of its R-squared, a trigger that inherited the encoder look-ahead, three syntheses that
+      contradicted their nodes and a set of counts and cross-references that a walk through one page would
+      have caught. Each finding was classified as before; the decisions were taken toward the mechanism a
+      builder would write, and the ten findings left are recorded with their reasons.
+
   - version: v2-draft-13
     date: "2026-09-07"
     file: versions/v2-draft-13.yaml
-    status: current
+    status: done
     summary: "Fifty-one corrections and nine decisions from the triage of the draft-12 read (triage-draft12-review.md), every decision taken toward the simpler mechanism; three nodes retired, none added."
     changes:
       - "The hedge line is a short in the instrument, residualised on the market like the companies, sized as the book's loading over the instrument's slope, with the VaR before and after the hedge printed; the options feed is retired."

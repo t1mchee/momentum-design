@@ -44,8 +44,9 @@ groups:
         synthesis: >
           The positioning score has one input per leg: 13F crowding on the winner leg, short interest on the
           loser leg, each ranked within its leg. A 13F count on a short would measure the wrong side, which is
-          why the loser leg has its own input. Neither input is computed from returns, so the overlap's null
-          is valid. Because the inputs arrive with different lags, the longest of those lags is shown next to
+          why the loser leg has its own input. Neither input is a function of the residual covariance, so under
+          no crowding the crowded set is independent of the loadings, which is what the overlap's null relies
+          on. Because the inputs arrive with different lags, the longest of those lags is shown next to
           the score wherever the score appears.
         children: [posdata]
 
@@ -95,8 +96,8 @@ groups:
           percentile. Regress each component's return on the five non-market reference series: a high
           R-squared means a named macro series already explains the component and the text pipeline will
           only confirm it. Each candidate hedge instrument (eleven sector ETFs, four macro futures or ETFs, the mega-cap pair)
-          is residualised on the market and regressed on the component; the one with the highest R-squared is
-          the instrument, and its slope sizes the hedge line.
+          is residualised on the market and the component is regressed on it; the one with the highest
+          R-squared is the instrument, and its slope, the minimum-variance hedge ratio, sizes the hedge line.
         children: [covariance, pca, bridge]
       - id: g_context
         name: Build the embedding space
@@ -119,7 +120,7 @@ groups:
           larger than random books reach, and the excess is a share of the component's loading, from zero to
           one. Then label it: a list entry's name where an entry reaches the cluster, or a model's label
           printed beside a keyword label so the reader can check one against the other.
-        children: [gathertext, riskextract, cluster, namecluster]
+        children: [riskextract, cluster, namecluster]
       - id: g_propagate
         name: Search other companies, and the two theme statistics
         short: Propagate
@@ -129,7 +130,7 @@ groups:
           two statistics and the hedge line: the share of the book's variance explained by the theme
           component, beside its random-book comparison; the loss in basis points of book, by leg, if the
           component returns minus two standard deviations over ten days; and a short in the instrument that
-          best tracks the component, sized to offset that loss, with the VaR before and after it.
+          best tracks the component, sized by the minimum-variance hedge ratio, with the VaR before and after it.
         children: [propagate, themescore]
 
   - id: g_crowding
@@ -137,7 +138,8 @@ groups:
     short: Crowding
     brief: "Element 3, positioning and crowding information integrated with the text reading."
     synthesis: >
-      Compare the list of theme companies with the list of crowded companies. The overlap is the share of
+      Compare the list of theme companies, the component companies that state the theme plus those found by
+      propagation, with the list of crowded companies. The overlap is the share of
       theme companies' book weight that is crowded, per leg, printed beside its null, the crowded set's share
       of the leg's weight.
       Two vulnerable-name lists are drawn from the crowded theme companies: the pre-catalyst list, companies
@@ -157,8 +159,9 @@ groups:
       today (whether the ten days it covers contain an FOMC decision, a heavy earnings day or an approved
       catalyst) and multiplied by today's volatility. Its outputs are a ten-day 5% VaR and expected shortfall in basis points of book, the
       probability of a return at or below the long-run threshold, and how much worse the VaR is inside a
-      catalyst window. It is scored against two baselines, the same quantile with no volatility scaling and
-      with no calendar state, so the ablation is three lines a reader can compute by hand. Text and
+      catalyst window. It is scored against three baseline lines, the same quantile with neither ingredient, with the state
+      only and with the scaling only, so the ablation is four lines a reader can compute by hand and what each
+      ingredient adds is visible. Text and
       positioning do not enter the model; whether they sort the breaches is measured in the scoring group.
       Scheduled catalysts come from calendars; company-specific and off-universe catalysts are proposed live
       by a model from news, beside a term-list comparator, and approved by the PM. Analogues supply
@@ -170,9 +173,9 @@ groups:
         synthesis: >
           The tail model uses prices and the calendar only: the book's own return history, its trailing
           volatility and the catalyst windows. There are no fitted parameters. Every run prints the VaR, the
-          expected shortfall, the VaR inside a catalyst window and its increase, and the three ablation lines:
-          the unconditional quantile, the calendar-state quantile and the volatility-scaled calendar-state
-          quantile, which is the model.
+          expected shortfall, the VaR inside a catalyst window and its increase, and the four ablation lines:
+          the unconditional quantile, the calendar-state quantile, the volatility-scaled quantile and the
+          volatility-scaled calendar-state quantile, which is the model.
         children: [severity, baselines]
       - id: g_catalysts
         name: Catalysts
@@ -181,7 +184,7 @@ groups:
           Scheduled catalysts (FOMC, CPI, payrolls, index rebalances, the component companies' earnings) are
           taken from calendars with no model. Company-specific and off-universe catalysts are proposed by a
           language model, each with a date and a source quote, beside a term-list extractor over the same news,
-          and approved by the PM. That model runs only on live data and is excluded from the backtest; an
+          and approved by the PM as they arrive. That model runs only on live data and is excluded from the backtest; an
           approved catalyst opens a window in the tail model.
         children: [catagent, catapprove]
       - id: g_analogue
@@ -189,9 +192,9 @@ groups:
         short: Analogues
         synthesis: >
           The analogue section lists the five past formation dates since 2013 whose state was nearest to
-          today's, by Euclidean distance on ten standardised dimensions, and what the book did over the
-          following ten days. The twelve months before today are excluded. An analogue is apt when its bear
-          state and its theme match today's.
+          today's, by Mahalanobis distance on seven dimensions, the six exposures and the trailing sigma, and
+          what the book did over the following ten days. The twelve months before today are excluded. An
+          analogue is apt when its bear state matches today's; the theme named on that date is shown beside it.
         children: [analogue]
 
   - id: g_output
@@ -200,7 +203,8 @@ groups:
     brief: "Element 6, the example output; element 3, which parts require human review; element 7, the production path."
     synthesis: >
       A page is produced five sessions before a window catalyst, or on the day the maximum of the book's
-      monitored percentiles crosses the 95th percentile of its own history; about thirty pages a year. The page is a template of nine fixed items
+      monitored percentiles crosses the 95th percentile of its own history; the count of pages per year, by
+      trigger, is printed. The page is a template of nine fixed items
       rendered from stored outputs; the only free text is the quotes and the theme label. It reports the theme
       and its variance share; the loss in basis points if the theme reverses, by leg; the VaR beside the hedge
       line, which names the instrument, its notional per $100m and the VaR before and after the hedge; the positioning
@@ -225,10 +229,12 @@ groups:
       scored on coverage, where Kupiec's test at 130 months accepts 3 to 10 breaches, and on the ratio of its
       pinball loss to each baseline's, with a bootstrap interval; the model beats a baseline only when the
       interval excludes one. Coverage is also scored inside and outside catalyst windows, which is the test of the calendar
-      state. The vulnerable-name lists are tested in an event study over the recorded unwinds, and print only
+      state. Threshold pages are scored by their hit rate against the 5% base rate, with the silence rate
+      beside it. The vulnerable-name lists are tested in an event study over the recorded unwinds, and print only
       if it passes. Extraction error is measured on hand-labelled sentences, for the classifier and the
       keyword rule side by side. The premise, that a theme is visible before a reversal,
-      is measured over the recorded episodes and printed as a share beside the same share on calm months. Only the first design's severity test on
+      is measured over the recorded episodes and printed as a share beside the same share on calm months,
+      with the demotion threshold set in advance. Only the first design's severity test on
       held-out years has run, with a model that had no text: 2 breaches in 42 forecasts. The v2 scoring, the
       labels and the event study have not run, and the worry-list comparison can only be made in production.
     children: [register, labels, volvalidation, bombtest, themevalidation]
@@ -240,7 +246,7 @@ groups:
     synthesis: >
       Components that a later draft replaced or refuted, each kept with the reason: the three-route taxonomy
       and its detectors, the separate vol model, the labeller, the three-role analogue panel, the referee
-      roles, the control sorts, the GARCH baseline, the prose composer, the options feed, and two nodes folded
-      into their neighbours.
+      roles, the control sorts, the GARCH baseline, the prose composer, the options feed, and three nodes
+      folded into their neighbours.
     hidden: true
-    children: [options, drivingseries, pmworries, controls, garch, composer, route1, route3, classify, volmodel, labeller, panel, referees]
+    children: [gathertext, options, drivingseries, pmworries, controls, garch, composer, route1, route3, classify, volmodel, labeller, panel, referees]

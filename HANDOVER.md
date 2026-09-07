@@ -118,6 +118,18 @@ distance; the worry list labels clusters; the calendar state on the ten-day span
 pages; the excess weight as a share; every printed diagnostic gates something or is gone. The spec's
 header no longer narrates its review history; the change log holds it.
 
+## 3d. Draft 14
+
+Draft 14 applied the triage of the design-only read of draft 13 (`triage-draft13-review.md`): 36 fixes, 5
+decisions, 10 findings left with reasons. The design is 37 live nodes and 14 retired. The main changes: the
+hedge is sized by the slope of the component on the instrument's market-residual return (the minimum-variance
+ratio; the previous instrument-on-component slope over-hedged by the inverse of its R-squared); the threshold
+trigger reads the largest variance share among components above noise, so the trigger is clean; the page
+decides its own order; theme companies are the set members that state the theme plus the propagated ones;
+four ablation lines; a centroid distance beside the assignment distance; the gather-text node folded into
+the assignment node. Lesson from this round: when a node is rewritten, rewrite the synthesis paragraph in
+`groups.yaml` in the same patch; three stale paragraphs cost more in the read than any single error.
+
 ## 4. Files in this directory
 
 | file | what |

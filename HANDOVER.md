@@ -15,11 +15,10 @@ Three views render the same design, all from YAML polled once a second, so edits
 
 | view | file | data | role |
 |---|---|---|---|
-| full | `index.html` | `spec.yaml` (51 nodes, 110 edges) | the record; every component, edge, check and fallback |
-| by level | `levels.html` | `groups.yaml` over `spec.yaml` | the seven reading-order steps with drill-down and a one-paragraph synthesis per step |
-| simplified | `simple.html` | `simple.yaml` (22 boxes, 68 edges) | the memo's section and paragraph plan; each box absorbs named full-view nodes |
+| full | `index.html` | `groups.yaml` over `spec.yaml` (38 live nodes) | the record, drawn as seven step bands in reading order; each band collapses to a summary card and its header opens the step's explanation |
+| simplified | `simple.html` | `simple.yaml` (22 boxes) over the same bands | the memo's section and paragraph plan; the same engine, the same key |
 
-Live copies: https://t1mchee.github.io/momentum-design/ (index), `/levels.html`, `/simple.html`. Repo
+Live copies: https://t1mchee.github.io/momentum-design/ (index) and `/simple.html`; `/levels.html` redirects to the index. Repo
 `t1mchee/momentum-design`, public, main branch, a plain copy of this directory.
 
 ## 2. Decisions that govern the next pass
@@ -161,6 +160,19 @@ from exp-082 (three planted claims with a record kept, three without dropped; on
 fired on a live dissent claim). Do not retire it again for the look-ahead reason; the answer to that
 reason is the gate and the live-only label. The design is 38 live nodes and 13 retired.
 
+## 3h. The canvas engine (canvas.js), what each visual means
+
+One engine draws both views. Steps are bands stacked in reading order; inside a band the components flow left
+to right (dagre), or sit in a grid when nothing flows between them; sub-steps are dashed sub-bands. Shape and
+colour encode kind (pill data, blue-edged box rule, orange rounded LLM, tan hexagon human, green double page,
+purple notched validation); the chip encodes look-ahead; line style encodes mode (solid backtest and live,
+dashed live-only, dotted backtest-only, amber arc feedback). Data feeds are not drawn as lines: each consumer
+carries a "from" tag row, hovering a feed lights its consumers, and the "data lines" button draws them. Clicking
+a component traces upstream (blue) and downstream (green) over the whole spec and opens its rule on the right;
+clicking a band header opens the step's explanation on the left (synthesis, sub-steps, what it receives from
+and sends to other steps, its components, prev/next). Keys 1 to 7 open steps, Esc clears, F fits (width first,
+then all). Edges that skip a band are drawn lighter; edges that go back up run as arcs on the left.
+
 ## 4. Files in this directory
 
 | file | what |
@@ -170,7 +182,7 @@ reason is the gate and the live-only label. The design is 38 live nodes and 13 r
 | `simple.yaml` | the 22-box map; `absorbs` lists per box; `sends` on edges |
 | `changelog.yaml` | one entry per draft, newest first: summary, changes, reasoning, status |
 | `versions/` | a snapshot per draft; `v1-baseline.yaml` is the first design as populated from the memo |
-| `index.html`, `levels.html`, `simple.html` | the viewers; CDN-loaded dagre, js-yaml and KaTeX; no build step |
+| `index.html`, `simple.html`, `canvas.js`, `canvas.css` | the viewers, one shared engine (`canvas.js`) and one stylesheet; `levels.html` redirects; CDN-loaded dagre, js-yaml and KaTeX; no build step |
 | `math.js` | typesets the LaTeX formulas in the panels (`$$...$$` display, `$...$` inline); without KaTeX the raw text stands |
 | `eval-rubric.md` | the nine-category rubric with caps, procedure, sheet, calibration anchors and the writing standard |
 | `decisions-for-draft4.md`, `fixes-for-draft5.md`, `fixes-for-draft7.md`, `fixes-for-draft8.md` | the decision and fix lists that produced each draft; draft 8's header says what was and was not applied |
@@ -199,7 +211,7 @@ statistic. Do not invent these.
 ## 6. How to work and publish
 
 - Dev server: `~/.claude/launch.json` has an entry `design` that serves this directory on port 8766
-  (`python3 -m http.server 8766 --directory docs/design`). Open `index.html`, `levels.html`, `simple.html`.
+  (`python3 -m http.server 8766 --directory docs/design`). Open `index.html` or `simple.html`.
 - Edge labels show on hover and pin on click; the header note is dismissable; "fit" and "flip" are in
   the top bar; "history" (full view) and "about" (simplified) open the legend, problem block and
   proof-of-concept path.

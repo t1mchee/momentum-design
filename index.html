@@ -9,263 +9,37 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.18.5/katex.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.18.5/katex.min.js"></script>
 <script src="math.js"></script>
-<style>
-  :root{--bg:#f6f5f1;--ink:#1f2328;--muted:#6b7280;--line:#c9c6bd;--card:#fff;
-        --det:#4e7698;--model:#b5651d;--human:#9c8355;--data:#7a7a7a;--output:#2f7d5a;--open:#c62828;--placeholder:#9aa0a6;--edge:#9a9a9a}
-  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
-  #top{position:fixed;top:0;left:0;right:0;height:44px;display:flex;align-items:center;gap:12px;padding:0 12px;white-space:nowrap;overflow:hidden;background:#fff;border-bottom:1px solid var(--line);z-index:5}
-  #top b{font-size:14px;overflow:hidden;text-overflow:ellipsis;max-width:40vw}
-  #top .meta{color:var(--muted);font-size:12px}
-  #top button{font-size:11px;padding:2px 8px;border:1px solid var(--line);background:#fff;border-radius:4px;cursor:pointer}
-  #top .legend{margin-left:auto;display:flex;gap:10px;font-size:12px;color:var(--muted)}
-  @media (max-width:1000px){#top .legend{display:none}}
-  .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle}
-  #stage{position:absolute;top:44px;left:0;right:0;bottom:0;overflow:hidden;cursor:grab}
-  #stage.drag{cursor:grabbing}
-  #world{position:absolute;left:0;top:0;transform-origin:0 0}
-  #edges{position:absolute;left:0;top:0;overflow:visible}
-  #edges path.e{fill:none;stroke:var(--edge);stroke-width:1.3;transition:opacity .12s,stroke .12s}
-  #edges path.e.soft{stroke-dasharray:4 4}
-  #edges path.e.retired{stroke-dasharray:2 4;opacity:.35}
-  #edges path.hit{fill:none;stroke:transparent;stroke-width:14;pointer-events:stroke;cursor:default}
-  #edges.focus path.e{opacity:.12}
-  #edges.focus path.e.on{opacity:1;stroke:var(--ink);stroke-width:2}
-  .elabel{position:absolute;font-size:10.5px;color:var(--ink);background:#fffdf5;border:1px solid #e3dcc2;border-radius:3px;padding:1px 5px;pointer-events:none;white-space:nowrap;transform:translate(-50%,-50%);display:none;z-index:3}
-  .elabel.show{display:block}
-  .elabel.pin{border-color:var(--ink);box-shadow:0 2px 6px rgba(0,0,0,.15);pointer-events:auto}
-  .node{position:absolute;width:200px;background:var(--card);border:1.5px solid var(--line);border-radius:4px;padding:7px 10px 8px;box-shadow:0 1px 2px rgba(0,0,0,.06);cursor:pointer;user-select:none;transition:opacity .12s;box-sizing:border-box}
-  .node.kind-data{background:#ececea;border-radius:18px;border-color:#a9a9a6;border-style:double;border-width:3px}
-  .node.kind-deterministic{background:#fff;border-radius:3px;border-left:5px solid var(--det)}
-  .node.kind-model{background:#fdf1e6;border-radius:12px;border-color:var(--model);border-width:2px}
-  .node.kind-human{background:#f7f0e2;border-color:var(--human);border-width:2px;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%);padding-left:18px;padding-right:18px}
-  .node.kind-output{background:#e9f4ee;border:3px double var(--output);border-radius:3px}
-  .node.val{background:#f3eefa !important;border:2px dashed #6b4e9b !important;border-radius:4px !important;padding-left:10px !important;padding-right:10px !important;clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px) !important}
-  .node.val .nm{color:#3f2a66}
-  .chip.val{background:#6b4e9b;color:#fff}
-  .node.status-placeholder{border-style:dashed;color:var(--placeholder)}
-  .node.status-draft{outline:2px dashed #d9b36a;outline-offset:-2px}
-  .node.status-retired{opacity:.45;background:#f3f3f1;border-color:#bbb}
-  .node.status-retired .nm{text-decoration:line-through}
-  .chip{display:inline-block;font-size:9px;letter-spacing:.04em;padding:1px 5px;border-radius:3px;margin-right:4px;margin-top:4px;text-transform:uppercase;font-weight:600}
-  .chip.kind-model{background:var(--model);color:#fff}
-  .chip.kind-human{background:var(--human);color:#fff}
-  .chip.kind-output{background:var(--output);color:#fff}
-  .chip.kind-data{background:#6b6b68;color:#fff}
-  .chip.la-clean{background:#dcefe3;color:#1f5c3a}
-  .chip.la-as-of{background:#dde8f3;color:#24476b}
-  .chip.la-model{background:#f6dfc8;color:#7a3f0a}
-  .chip.la-live-only{background:#f3cdcd;color:#8a1c1c}
-  .chip.la-human{background:#efe4c9;color:#6b5322}
-  .chip.ac-public{background:#dcefe3;color:#1f5c3a}
-  .chip.ac-mixed{background:#f3e7c2;color:#6b5322}
-  .chip.ac-licensed{background:#f3cdcd;color:#8a1c1c}
-  .chip.ac-desk{background:#f3cdcd;color:#8a1c1c}
-  .node.sel{outline:2px solid var(--ink)}
-  #panel .rule{font-variant-ligatures:none}
-  #panel code,#history code{font-size:12px;background:#f3f2ee;padding:0 3px;border-radius:3px}
-  .node.dim{opacity:.25}
-  .node .nm{font-weight:600;font-size:13px;line-height:1.25}
-  .node .kd{font-size:10.5px;color:var(--muted);margin-top:3px}
-  .node .lane{display:inline-block;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:4px}
-  .badge{position:absolute;top:-8px;right:-8px;min-width:18px;height:18px;border-radius:9px;background:var(--open);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px}
-  #panel{position:fixed;top:44px;right:0;bottom:0;width:min(400px,100vw);box-sizing:border-box;background:#fff;border-left:1px solid var(--line);overflow:auto;padding:14px 16px;transform:translateX(100%);transition:transform .15s;z-index:4}
-  #panel.open{transform:none}
-  #panel h2{margin:0 0 2px;font-size:16px}
-  #panel .k{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:12px 0 3px}
-  #panel ul{margin:0;padding-left:18px}
-  #panel .rule{white-space:pre-wrap}
-  #panel .open li{color:var(--open)}
-  #panel .io b{font-weight:600}
-  #panel .close{position:absolute;top:10px;right:12px;border:0;background:none;font-size:18px;cursor:pointer;color:var(--muted)}
-  #history{position:fixed;top:44px;left:0;bottom:0;width:min(440px,100vw);box-sizing:border-box;background:#fff;border-right:1px solid var(--line);overflow:auto;padding:14px 16px;transform:translateX(-100%);transition:transform .15s;z-index:4}
-  #history.open{transform:none}
-  #history h2{margin:0 0 2px;font-size:16px}
-  #history .ce{border-top:1px solid var(--line);padding:10px 0}
-  #history .ce.cur{background:#f3f8f4;margin:0 -16px;padding:10px 16px}
-  #history .cv{font-weight:600}
-  #history .cd{font-size:11px;color:var(--muted)}
-  #history .cs{margin:2px 0 4px}
-  #history .cr{font-size:12.5px;color:#333;white-space:pre-wrap}
-  #history ul{margin:0;padding-left:18px;font-size:12.5px}
-  #history .k{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:8px 0 2px}
-  #history .close{position:absolute;top:10px;right:12px;border:0;background:none;font-size:18px;cursor:pointer;color:var(--muted)}
-  #status{position:fixed;left:14px;bottom:10px;font-size:11px;color:var(--muted);background:#fff;padding:3px 8px;border:1px solid var(--line);border-radius:4px;z-index:5}
-  #note{position:fixed;left:14px;top:54px;max-width:min(420px,calc(100vw - 40px));font-size:12px;color:var(--muted);background:#fffbe6;border:1px solid #e8d99a;padding:6px 10px;border-radius:4px;z-index:3;cursor:pointer}
-  /* formulas (KaTeX); a display formula is a left-aligned block inside the pre-wrap rule text */
-  .katex{font-size:1.06em}
-  .math-inline,.math-display{white-space:normal}
-  .math-inline{display:inline-block}
-  .node .math-inline{display:inline}
-  .math-display{display:block;padding:.3em 0 .3em 1.2em;overflow-x:auto;overflow-y:hidden}
-  .math-display .katex-display{margin:0;text-align:left}
-  .math-display .katex-display>.katex{text-align:left}
-  .node .katex{font-size:1em}
-</style>
+<link rel="stylesheet" href="canvas.css">
 </head>
 <body>
-<div id="top"><b id="title">System design</b><span class="meta" id="version"></span><button onclick="fit()">fit</button><button onclick="setDir()">flip</button><button onclick="toggleHistory()">history</button><a href="?spec=spec.yaml" style="font-size:11px">live</a><a href="levels.html" style="font-size:11px;font-weight:600">by level</a><a href="simple.html" style="font-size:11px;font-weight:600">simplified</a>
-  <div class="legend">
-    <span><i class="sw" style="background:#ececea;border:2px double #a9a9a6;border-radius:6px"></i>pill = data in</span>
-    <span><i class="sw" style="background:#fff;border-left:3px solid var(--det)"></i>box = deterministic</span>
-    <span><i class="sw" style="background:#fdf1e6;border:1.5px solid var(--model);border-radius:4px"></i>rounded = LLM</span>
-    <span><i class="sw" style="background:#f7f0e2;border:1.5px solid var(--human);clip-path:polygon(3px 0,7px 0,10px 50%,7px 100%,3px 100%,0 50%)"></i>hexagon = human</span>
-    <span><i class="sw" style="background:#e9f4ee;border:2px double var(--output)"></i>double = output</span>
-    <span><i class="sw" style="background:#f3eefa;border:1.5px dashed #6b4e9b;clip-path:polygon(3px 0,10px 0,10px 7px,7px 10px,0 10px,0 3px)"></i>notched = validation</span>
-    <span><i class="sw" style="background:var(--open)"></i>open</span>
-    <span>chips: clean / as-of / model / live only / human · public / mixed / licensed · faded = retired</span>
-  </div>
+<div id="top"><b id="title">System design</b><span class="meta" id="version"></span>
+  <span class="steps" id="stepbtns"></span>
+  <span class="sp"></span>
+  <button id="b_fit" title="F">fit</button><button id="b_open">all open</button><button id="b_close">all closed</button><button id="b_data" title="draw the data feeds as lines">data lines</button><button id="b_ret">retired</button>
+  <button id="b_story">story</button><button id="b_key">key</button><button id="b_hist">history</button>
+  <a class="btn" href="simple.html">simplified map</a>
 </div>
-<div id="note" hidden title="click to dismiss"></div>
 <div id="stage"><div id="world"><svg id="edges"></svg></div></div>
-<div id="panel"><button class="close" onclick="closePanel()">×</button><div id="pbody"></div></div>
-<div id="history"><button class="close" onclick="toggleHistory()">×</button><div id="hbody"></div></div>
-<div id="status">loading spec…</div>
-<script>
-const NODE_W=200;
-const SPEC=new URLSearchParams(location.search).get('spec')||'spec.yaml';
-let spec=null, lastText='', sel=null, view={x:20,y:20,k:1}, rankdir='TB', layoutCache=null;
-const world=document.getElementById('world'), stage=document.getElementById('stage'), svg=document.getElementById('edges');
-const SOFT=/unrun|refuted|never done|registered|join|live only|backtest only/i;
-const softEdge=(e)=>SOFT.test((e.when||'')+' '+(e.mode||''));
-
-async function loadSpec(path){
-  const r=await fetch(path+'?t='+Date.now(),{cache:'no-store'}); const t=await r.text(); return {text:t, doc:jsyaml.load(t)};
-}
-function mergeSpec(over, base){
-  if(!base) return over;
-  const dropN=new Set(over.drop_nodes||[]);
-  const dropE=new Set((over.drop_edges||[]).map(e=>e.from+'>'+e.to));
-  const nodes=(base.nodes||[]).filter(n=>!dropN.has(n.id)).map(n=>({...n, status:n.status==='memo'?'memo':n.status}));
-  const byId=Object.fromEntries(nodes.map(n=>[n.id,n]));
-  (over.nodes||[]).forEach(n=>{ if(byId[n.id]){Object.assign(byId[n.id],n);} else {nodes.push(n); byId[n.id]=n;} });
-  const ids=new Set(nodes.map(n=>n.id));
-  const edges=(base.edges||[]).filter(e=>ids.has(e.from)&&ids.has(e.to)&&!dropE.has(e.from+'>'+e.to)).concat(over.edges||[]);
-  return {meta:over.meta||base.meta, lanes:over.lanes||base.lanes, nodes, edges};
-}
-let changelog=null, lastClText='';
-async function poll(){
-  try{
-    const o=await loadSpec(SPEC);
-    let key=o.text; let doc=o.doc;
-    if(doc&&doc.base){ const b=await loadSpec(doc.base); key+=b.text; doc=mergeSpec(doc,b.doc); }
-    if(key!==lastText){ lastText=key; spec=doc; layoutCache=null; render(); document.getElementById('status').textContent='spec updated '+new Date().toLocaleTimeString(); }
-    const c=await fetch('changelog.yaml?t='+Date.now(),{cache:'no-store'}); const ct=await c.text();
-    if(ct!==lastClText){ lastClText=ct; changelog=jsyaml.load(ct); renderHistory(); }
-  }catch(e){ document.getElementById('status').textContent='spec error: '+e.message; }
-  setTimeout(poll,1000);
-}
-function renderHistory(){
-  if(!changelog) return;
-  const cur=(spec&&spec.meta&&spec.meta.version)||'';
-  const ent=(changelog.entries||[]).map(e=>`<div class="ce${e.version===cur?' cur':''}"><div class="cv"><a href="?spec=${esc(e.file)}">${esc(e.version)}</a> <span class="cd">${esc(e.date)}${e.commit?' · '+esc(e.commit):''}${e.status==='current'?' · current':''}</span></div><div class="cs">${esc(e.summary)}</div><div class="k">What changed</div>${list(e.changes)}<div class="k">Why</div><div class="cr">${esc(e.reasoning)}</div></div>`).join('');
-  const pl=(changelog.planned||[]).length?`<div class="k" style="margin-top:18px">Planned</div>${list(changelog.planned)}`:'';
-  document.getElementById('hbody').innerHTML=`<h2>History</h2><div class="cd">Click a version to load that snapshot. The live spec is spec.yaml.</div>${legendHTML()}${ent}${pl}`;
-  renderMath(document.getElementById('hbody'));
-}
-function toggleHistory(){document.getElementById('history').classList.toggle('open');}
-function esc(s){return String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
-function laneName(id){const l=(spec.lanes||[]).find(l=>l.id===id);return l?l.name:id;}
-function cardHTML(n){
-  const nopen=(n.open||[]).length;
-  const kindLabel={data:'DATA IN',deterministic:'',model:'LLM',human:'HUMAN',output:'OUTPUT'}[n.kind||'deterministic']||'';
-  const laText=n.lookahead;
-  const laHide=(n.kind==='human'&&n.lookahead==='human')||(n.kind==='model'&&n.lookahead==='model')||n.status==='retired';
-  const la=(n.lookahead&&!laHide)?`<span class="chip la-${esc(n.lookahead)}" title="${esc(n.mitigation||'')}">${esc(laText)}</span>`:'';
-  const ac=n.access?`<span class="chip ac-${esc(n.access)}">${esc(n.access)}</span>`:'';
-  const kc=(n.validation?`<span class="chip val">VALIDATION</span>`:'')+(kindLabel?`<span class="chip kind-${esc(n.kind)}">${kindLabel}</span>`:'');
-  return `<div class="nm">${esc(n.name)}</div><div class="kd">${n.status==='retired'?'retired':esc(laneName(n.lane))}${n.row?' · row '+esc(n.row):''}</div><div>${kc}${la}${ac}</div>`+(nopen?`<div class="badge">${nopen}</div>`:'');
-}
-function render(){
-  const m=spec.meta||{}; document.getElementById('title').textContent=m.title||'System design';
-  const upd=m.updated instanceof Date?m.updated.toISOString().slice(0,10):m.updated; document.getElementById('version').textContent=[m.version,upd].filter(Boolean).join(' · ');
-  const note=document.getElementById('note'); if(m.note&&!note.dataset.dismissed){note.textContent=m.note;note.hidden=false;} else note.hidden=true;
-  world.querySelectorAll('.node,.elabel').forEach(e=>e.remove());
-  const nodes=spec.nodes||[], edges=(spec.edges||[]);
-  const byIdN=Object.fromEntries(nodes.map(n=>[n.id,n]));
-  const els={};
-  nodes.forEach(n=>{
-    const d=document.createElement('div'); d.className=`node kind-${n.kind||'data'} status-${n.status||'draft'}`; d.dataset.id=n.id;
-    d.innerHTML=cardHTML(n); d.style.left='0px'; d.style.top='0px'; world.appendChild(d); els[n.id]=d;
-    d.onclick=(e)=>{e.stopPropagation();sel=n.id;showPanel(n);focus();};
-    d.onmouseenter=()=>{if(!sel)focus(n.id);}; d.onmouseleave=()=>{if(!sel)focus();};
-  });
-  const g=new dagre.graphlib.Graph({multigraph:true});
-  g.setGraph({rankdir, nodesep:28, ranksep:54, edgesep:12, marginx:30, marginy:30, ranker:'network-simplex'});
-  g.setDefaultEdgeLabel(()=>({}));
-  nodes.forEach(n=>g.setNode(n.id,{width:NODE_W,height:els[n.id].offsetHeight}));
-  // pin sources (no incoming drawn edge) to the top rank via a hidden root
-  const hasIn=new Set(edges.filter(e=>!e.hidden&&!e.feedback).map(e=>e.to));
-  g.setNode('__root',{width:1,height:1});
-  nodes.forEach(n=>{ if(n.status==='retired'){ if(byIdN.thepage) g.setEdge('thepage',n.id,{weight:1,minlen:1},'sink_'+n.id); } else if(!hasIn.has(n.id)) g.setEdge('__root',n.id,{weight:30,minlen:1},'root_'+n.id); });
-  edges.forEach((e,i)=>{ if(els[e.from]&&els[e.to]&&!e.feedback) g.setEdge(e.from,e.to,{weight:e.hidden?1:(softEdge(e)?1:3), minlen:1},'e'+i); });
-  dagre.layout(g);
-  const gw=g.graph().width, gh=g.graph().height;
-  nodes.forEach(n=>{const p=g.node(n.id); els[n.id].style.left=(p.x-p.width/2)+'px'; els[n.id].style.top=(p.y-p.height/2)+'px';});
-  svg.setAttribute('width',gw); svg.setAttribute('height',gh);
-  svg.innerHTML=`<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L8,4 L0,8 z" fill="#8a8a8a"/></marker><marker id="ahd" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L8,4 L0,8 z" fill="#1f2328"/></marker></defs>`;
-  edges.forEach((e,i)=>{
-    if(e.hidden) return;
-    let pts;
-    if(e.feedback){ const a=g.node(e.from), b=g.node(e.to); const x0=a.x-a.width/2, y0=a.y, x1=b.x-b.width/2, y1=b.y; const bulge=Math.max(60,Math.abs(y1-y0)/4); pts=[{x:x0,y:y0},{x:x0-bulge,y:y0},{x:x1-bulge,y:y1},{x:x1,y:y1}]; }
-    else { const ge=g.edge(e.from,e.to,'e'+i); if(!ge) return; pts=ge.points; }
-    const d=e.feedback?`M${pts[0].x},${pts[0].y} C${pts[1].x},${pts[1].y} ${pts[2].x},${pts[2].y} ${pts[3].x},${pts[3].y}`:smooth(pts);
-    const p=document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d',d); const retiredEdge=(byIdN[e.from]&&byIdN[e.from].status==='retired')||(byIdN[e.to]&&byIdN[e.to].status==='retired'); p.setAttribute('class','e'+((e.feedback||softEdge(e))?' soft':'')+(retiredEdge?' retired':'')); p.setAttribute('marker-end','url(#ah)'); p.dataset.from=e.from; p.dataset.to=e.to; p.dataset.i=i; svg.appendChild(p);
-    const h=document.createElementNS('http://www.w3.org/2000/svg','path'); h.setAttribute('d',d); h.setAttribute('class','hit'); svg.appendChild(h);
-    const mid=e.feedback?{x:(pts[1].x+pts[2].x)/2,y:(pts[1].y+pts[2].y)/2}:pts[Math.floor(pts.length/2)];
-    const lab=document.createElement('div'); lab.className='elabel'; lab.id='lab'+i; lab.textContent=[e.carries,e.when,e.mode].filter(Boolean).join(' · '); lab.style.left=mid.x+'px'; lab.style.top=mid.y+'px'; world.appendChild(lab);
-    h.onmouseenter=()=>{lab.classList.add('show');p.classList.add('on');svg.classList.add('focus');};
-    h.onmouseleave=()=>{if(!lab.classList.contains('pin')) lab.classList.remove('show'); if(!sel){p.classList.remove('on');svg.classList.remove('focus');}else focus();};
-    h.onclick=(ev)=>{ev.stopPropagation(); const was=lab.classList.contains('pin'); world.querySelectorAll('.elabel.pin').forEach(l=>l.classList.remove('pin','show')); if(!was){lab.classList.add('pin','show');}};
-  });
-  layoutCache={gw,gh};
-  if(sel) focus();
-  applyView();
-}
-function smooth(pts){
-  if(pts.length<3) return `M${pts[0].x},${pts[0].y} L${pts[pts.length-1].x},${pts[pts.length-1].y}`;
-  let d=`M${pts[0].x},${pts[0].y}`;
-  for(let i=1;i<pts.length-1;i++){const a=pts[i],b=pts[i+1];const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;d+=` Q${a.x},${a.y} ${mx},${my}`;}
-  const l=pts[pts.length-1]; d+=` L${l.x},${l.y}`; return d;
-}
-function focus(id){
-  id=id||sel;
-  const paths=svg.querySelectorAll('path.e'), labs=world.querySelectorAll('.elabel'), cards=world.querySelectorAll('.node');
-  if(!id){svg.classList.remove('focus');paths.forEach(p=>{p.classList.remove('on');p.setAttribute('marker-end','url(#ah)');});labs.forEach(l=>l.classList.remove('show'));cards.forEach(c=>{c.classList.remove('dim','sel');});return;}
-  const nb=new Set([id]);
-  svg.classList.add('focus');
-  paths.forEach(p=>{const on=p.dataset.from===id||p.dataset.to===id; p.classList.toggle('on',on); p.setAttribute('marker-end',on?'url(#ahd)':'url(#ah)'); if(on){nb.add(p.dataset.from);nb.add(p.dataset.to);} document.getElementById('lab'+p.dataset.i).classList.toggle('show',false);});
-  cards.forEach(c=>{c.classList.toggle('dim',!nb.has(c.dataset.id)); c.classList.toggle('sel',c.dataset.id===sel);});
-}
-function legendHTML(){ const L=(spec&&spec.meta&&spec.meta.legend)||null; const P=(spec&&spec.meta&&spec.meta.proof_of_concept)||null; const Q=(spec&&spec.meta&&spec.meta.problem)||null; let h=''; if(Q) h+='<div class="k" style="margin-top:14px">Problem</div><ul>'+Object.entries(Q).map(([k,v])=>'<li><b>'+esc(k)+'</b>: '+esc(String(v))+'</li>').join('')+'</ul>'; if(L) h+='<div class="k" style="margin-top:14px">Legend</div><ul>'+Object.entries(L).map(([k,v])=>'<li><b>'+esc(k)+'</b>: '+esc(String(v))+'</li>').join('')+'</ul>'; const SY=(spec&&spec.meta&&spec.meta.symbols)||null; if(SY) h+='<div class="k" style="margin-top:14px">Symbols</div><ul>'+Object.entries(SY).map(([k,v])=>'<li><span class="sym">'+esc(k)+'</span>: '+esc(String(v))+'</li>').join('')+'</ul>'; if(P){ const notes=P.path_notes||{}; const pathTxt=(P.path||[]).map(id=>notes[id]?esc(id)+' <span style="color:var(--muted)">('+esc(notes[id])+')</span>':esc(id)).join(', '); h+='<div class="k" style="margin-top:14px">Proof of concept</div><div>'+esc(P.hours||'')+'</div>'+(P.status?'<div style="margin-top:4px"><b>Status:</b> '+esc(P.status)+'</div>':'')+'<div style="margin-top:4px"><b>Path:</b> '+pathTxt+'</div><div style="margin-top:4px"><b>Produces:</b> '+esc(P.produces||'')+'</div><div style="margin-top:4px"><b>Deferred:</b> '+esc((P.deferred||[]).join(', '))+'</div>'+(P.described_only?'<div style="margin-top:4px"><b>Described only:</b> '+esc(P.described_only.join(', '))+'</div>':'')+'<div style="margin-top:4px"><b>Retired:</b> '+esc(spec.nodes.filter(n=>n.status==="retired").map(n=>n.id).join(', '))+'</div>'; } return h; }
-function list(a){return (a&&a.length)?'<ul>'+a.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'<span style="color:var(--muted)">none</span>';}
-function showPanel(n){
-  const ins=(spec.edges||[]).filter(e=>e.to===n.id&&!e.hidden), outs=(spec.edges||[]).filter(e=>e.from===n.id&&!e.hidden);
-  const byId=Object.fromEntries(spec.nodes.map(x=>[x.id,x]));
-  const io=(arr,dir)=>arr.length?'<ul class="io">'+arr.map(e=>`<li><b>${esc((byId[dir==='in'?e.from:e.to]||{}).name||'')}</b>: ${esc(e.carries||'')}${(e.when||e.mode)?' <span style="color:var(--muted)">('+esc([e.when,e.mode].filter(Boolean).join(', '))+')</span>':''}</li>`).join('')+'</ul>':'<span style="color:var(--muted)">none</span>';
-  document.getElementById('pbody').innerHTML=`<h2>${esc(n.name)}</h2><div class="kd">${esc(n.kind||'')} · ${esc(n.status||'')}${n.origin?' · '+esc(n.origin):''} · ${esc(laneName(n.lane))}${n.role?' · role '+esc(n.role):''}${n.row?' · row '+esc(n.row):''}${n.memo?' · memo '+esc(n.memo):''}</div>
-  ${n.lookahead?`<div class="k">Look-ahead</div><div><span class="chip la-${esc(n.lookahead)}">${esc(n.lookahead)}</span> ${esc(n.mitigation||'')}</div>`:''}
-  ${n.access?`<div class="k">Access</div><div><span class="chip ac-${esc(n.access)}">${esc(n.access)}</span> feeds labelled PUBLIC / LICENSED / DESK-ONLY in the rule</div>`:''}
-  ${n.v1?`<div class="k">Replaces (v1)</div><div>${esc(n.v1)}</div>`:''}
-  <div class="k">Rule</div><div class="rule">${esc(n.rule)}</div>
-  <div class="k">Receives</div>${io(ins,'in')}<div class="k">Sends</div>${io(outs,'out')}
-  <div class="k">Inputs</div>${list(n.inputs)}<div class="k">Outputs</div>${list(n.outputs)}
-  <div class="k">Checks</div>${list(n.checks)}<div class="k">On failure</div><div>${esc(n.on_failure||'')}</div>
-  <div class="k">Open questions</div><div class="open">${list(n.open)}</div>`;
-  renderMath(document.getElementById('pbody'));
-  document.getElementById('panel').classList.add('open');
-}
-function closePanel(){document.getElementById('panel').classList.remove('open');sel=null;focus();}
-function setDir(){rankdir=rankdir==='TB'?'LR':'TB';render();fit();}
-function fit(){if(!layoutCache)return;const r=stage.getBoundingClientRect();view.k=Math.min(1.2,(r.width-20)/layoutCache.gw,(r.height-20)/layoutCache.gh);view.x=10;view.y=10;applyView();}
-function applyView(){world.style.transform=`translate(${view.x}px,${view.y}px) scale(${view.k})`;}
-let drag=null;
-stage.addEventListener('mousedown',e=>{drag={x:e.clientX-view.x,y:e.clientY-view.y};stage.classList.add('drag');});
-window.addEventListener('mousemove',e=>{if(drag){view.x=e.clientX-drag.x;view.y=e.clientY-drag.y;applyView();}});
-window.addEventListener('mouseup',()=>{drag=null;stage.classList.remove('drag');});
-stage.addEventListener('wheel',e=>{e.preventDefault();const k=Math.min(3,Math.max(.15,view.k*(e.deltaY<0?1.1:0.9)));const r=stage.getBoundingClientRect();const mx=e.clientX-r.left,my=e.clientY-r.top;view.x=mx-(mx-view.x)*k/view.k;view.y=my-(my-view.y)*k/view.k;view.k=k;applyView();},{passive:false});
-stage.addEventListener('click',()=>{world.querySelectorAll('.elabel.pin').forEach(l=>l.classList.remove('pin','show')); if(sel)closePanel();});
-document.getElementById('note').addEventListener('click',function(){this.dataset.dismissed='1';this.hidden=true;});
-poll();
-</script>
+<div id="left" class="drawer"><button class="close" id="left_close">×</button>
+  <div class="tabs"><button id="tab_step">step</button><button id="tab_story">story</button><button id="tab_key">key</button><button id="tab_history">history</button></div>
+  <div id="pane_step" hidden><div class="muted">Click a step header on the canvas, or a number in the top bar.</div></div>
+  <div id="pane_story" hidden></div>
+  <div id="pane_key" hidden></div>
+  <div id="pane_history" hidden></div>
+</div>
+<div id="right" class="drawer"><button class="close" id="right_close">×</button><div id="rbody"></div></div>
+<div id="key">
+  <span><i class="sw" style="background:#ececea;border:2px double #a9a9a6;border-radius:6px"></i>data in</span>
+  <span><i class="sw" style="background:#fff;border:1px solid #c9c6bd;border-left:3px solid #4e7698"></i>rule</span>
+  <span><i class="sw" style="background:#fdf1e6;border:1.5px solid #b5651d;border-radius:4px"></i>LLM</span>
+  <span><i class="sw" style="background:#f7f0e2;border:1.5px solid #9c8355;clip-path:polygon(3px 0,8px 0,11px 50%,8px 100%,3px 100%,0 50%)"></i>human</span>
+  <span><i class="sw" style="background:#e9f4ee;border:2px double #2f7d5a"></i>page</span>
+  <span><i class="sw" style="background:#f3eefa;border:1.5px dashed #6b4e9b;clip-path:polygon(3px 0,11px 0,11px 8px,8px 11px,0 11px,0 3px)"></i>validation</span>
+  <span><i class="ln"></i>backtest and live</span><span><i class="ln live"></i>live only</span><span><i class="ln bt"></i>backtest only</span><span><i class="ln fb"></i>feedback</span>
+  <span><i class="ln up"></i>upstream of the selection</span><span><i class="ln down"></i>downstream</span>
+</div>
+<div id="status">loading…</div>
+<script>window.CANVAS={spec:'spec.yaml',groups:'groups.yaml',changelog:'changelog.yaml',simple:false};</script>
+<script src="canvas.js"></script>
 </body>
 </html>

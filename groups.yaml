@@ -94,8 +94,9 @@ groups:
           statistic on random books; a component is above noise when it beats the random books' 95th
           percentile. Regress each component's return on the five non-market reference series: a high
           R-squared means a named macro series already explains the component and the text pipeline will
-          only confirm it. The same regression, one instrument at a time over sector ETFs and macro futures,
-          chooses the hedge instrument and its slope, which sizes the hedge line.
+          only confirm it. Each candidate hedge instrument (eleven sector ETFs, four macro futures or ETFs, the mega-cap pair)
+          is residualised on the market and regressed on the component; the one with the highest R-squared is
+          the instrument, and its slope sizes the hedge line.
         children: [covariance, pca, bridge]
       - id: g_context
         name: Build the embedding space
@@ -202,7 +203,7 @@ groups:
       monitored percentiles crosses the 95th percentile of its own history; about thirty pages a year. The page is a template of nine fixed items
       rendered from stored outputs; the only free text is the quotes and the theme label. It reports the theme
       and its variance share; the loss in basis points if the theme reverses, by leg; the VaR beside the hedge
-      line, which names the instrument, its notional sized from the component and its premium; the positioning
+      line, which names the instrument, its notional per $100m and the VaR before and after the hedge; the positioning
       overlap; the two vulnerable-name lists, once their event study has run; the catalysts; and what changed
       since the last page. It gives the direction of the risk and the sized hedge and leaves the decision to
       exit with the reader, and its numbers describe the paper 12-1 book, to be scaled by the reader's beta

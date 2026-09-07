@@ -36,7 +36,7 @@ in the memo if it fails.
 
 1. Hedge ratio: the bridge regresses the instrument on the component, $r_{Ht} = a + h_k f_{kt} + e_t$, so
    the notional per $100m is $100\text{m} \cdot g_k / h_k$ with $g_k = w'v_k$.
-2. Alignment on the loser leg: a company counts toward a theme when $s_i v_{ik} > 0$ (leg sign times
+2. Alignment on the loser leg: a company counts toward a theme when $\ell_i v_{ik} > 0$ (leg sign times
    loading sign), not $v_{ik} > 0$.
 3. Overlap null: the null for $O$ is the crowded set's share of the leg's gross weight that month,
    $\sum_{i \in C} |w_i| / \sum_{i \in \text{leg}} |w_i|$, not a constant 0.2.
@@ -44,8 +44,10 @@ in the memo if it fails.
    of gross book weight open a window; CPI and payrolls are catalysts on the page but do not define the
    state. The counts of starts in each state are an output.
 5. Theme identity across dates: two dates share a theme when their cluster centroids are within $d^*$.
-6. BM25 assignment: a statement is assigned to the cluster whose top-20 c-TF-IDF terms score highest.
-7. Probability line: $P(R_{t,t+10} \le -432\text{bp}) = \text{share of } z_u \text{ in today's state below } -432\text{bp}/\sigma_t$.
+6. Superseded by correction 9: there is no BM25 or c-TF-IDF assignment; a statement belongs to a cluster when it lies
+   within $d^*$ of its centroid.
+7. Probability line: $P_t$ is the share of past scaled returns $z_u$ in today's calendar state at or below the
+   unconditional 5% VaR divided by today's sigma, $\mathrm{VaR}^{\text{unc}}_t / \sigma_t$. No fixed bp threshold.
 8. The implied-move comparison and the options feed are dropped; the hedge line is a short in the instrument,
    sized $100\text{m} \cdot g_k / h_k$ with the instrument residualised on the market first, and the page prints the
    VaR before and after the hedge (the hedged sigma over the current window times the state quantile).
@@ -106,7 +108,7 @@ Method: on each of the eleven dates, build the book, the 200 sector-matched rand
 three components, the sets; gather Item 1A sentences for set companies and random-set companies; run the
 classifier (E3's, trained on 2,000 language-model labels) and the keyword rule; embed news headlines of
 the window's prior twelve months (only the episode windows have them; for calm windows use the calm
-files), cluster with HDBSCAN at 25, set $d^*$; compute $Q_e, P_e, E_e$ with alignment $s_i v_{ik} > 0$,
+files), cluster with HDBSCAN at 25, set $d^*$; compute $Q_e, P_e, E_e$ with alignment $\ell_i v_{ik} > 0$,
 one company one vote; theme, runner-up, quotes, on both runs; the leg-mean loadings; $\mathrm{VS}_k$ with
 its percentile.
 

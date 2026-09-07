@@ -152,6 +152,9 @@ three_changes_that_would_raise_the_total_most: [ , , ]
 
 ## 6. Writing standard, from the draft-6 LLM-pattern report
 
+The register is plain, unemotive, precise and sober. A sentence that would read as salesmanship, drama
+or jargon to a risk manager fails on that ground alone.
+
 Every draft is checked against these ten rules before it is scored. A rule broken in a rule or synthesis
 counts against C7.
 

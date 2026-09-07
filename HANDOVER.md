@@ -60,6 +60,9 @@ Live copies: https://t1mchee.github.io/momentum-design/ (index), `/levels.html`,
 
 ## 3. Writing rules and anti-examples
 
+- The register is plain, unemotive, precise and sober. The first language pass (draft 9) met the checker
+  but introduced nominalisations (comprise, categorize, protocol, feature vector) and changed meaning in
+  eight places; a second pass undid both. Check meaning against the previous snapshot, not only the checker.
 - The standard: `eval-rubric.md` section 6 (ten rules). The twelve further rules are in
   `docs/reviews/slop-v2-draft-7.md` section 7; apply them too.
 - Anti-examples, quoted with rewrites, are in the two pattern reports: `docs/reviews/slop-v2-draft-6.md`

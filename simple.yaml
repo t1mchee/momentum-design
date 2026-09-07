@@ -9,7 +9,7 @@
 
 meta:
   title: Momentum reversal-risk system, simplified map
-  version: v2-draft-8-simple
+  version: v2-draft-9-simple
   updated: "2026-09-07"
   problem:
     exposure: "the 12-1 momentum book: the top and bottom deciles of the Russell 3000 by return from twelve months before to one month before, value-weighted within each leg, dollar-neutral, rebuilt monthly"
@@ -21,14 +21,14 @@ meta:
     The design assumes that the theme behind a reversal has been building in the news for some time and that
     the PM can put a label on it. The system measures how much of the book depends on that theme, where it has
     spread, who is positioned on it, and how much worse the book's tail becomes around the next catalyst. When
-    a reversal comes from a theme that nobody had labelled and that the news had not covered, the page shows no
-    theme or the wrong one, and the tail model falls back to its price-and-calendar form.
+    a reversal comes from a theme that nobody had labelled and that the news had not covered, the page shows no theme
+    or the wrong one, and the tail model falls back to its price-and-calendar form.
   legend:
     box: "one box here absorbs one or more components of the full view; the panel lists them. The full view (index.html) is the record; this map is the reading order."
-    kind: "data = a feed (grey pill); deterministic = a rule with no model (white box, blue band); model = a language-model step (orange); human = a person's task (tan hexagon); output = the page (green double border)."
+    kind: "data = a feed (grey pill); deterministic = a rule with no model (white box, blue band); model = a language-model component (orange); human = a person's task (tan hexagon); output = the page (green double border)."
     lookahead: "clean = uses only values that were public on the date; as-of = the values exist historically but are taken at their release date; model = a model trained after the date reads text from inside it; live-only = no mitigation exists and the box is excluded from every backtest; human = a person's input that a backtest runs without. A box's label is at least the strongest label among its backtest inputs."
     access: "public = every feed is public today; mixed = public feeds today, with licensed or desk-only feeds named for production."
-    comparator: "a method that does the same job as a model step without a language model, printed beside it."
+    comparator: "a method that does the same job as a model component without a language model, printed beside it."
     quote gate: "every span a model extracts must appear verbatim in its source document, or the record is dropped and counted."
     two runs: "every text statistic is computed twice, once on the keyword run (the comparators end to end) and once on the model run (the language-model steps end to end); the tail model's ablation compares the two."
     DV01: "the dollar change in a position's value for a one basis point move in yield."
@@ -147,7 +147,7 @@ nodes:
     outputs:
       - "200 random portfolios per date, cap-matched and cap-and-sector-matched"
     rule: |
-      For each date the rule draws 200 portfolios from the same universe with the same leg sizes and capitalisation deciles, so that the only difference from the book is that they were not ranked on past returns. The cap-matched set is the null for the exposure statistics. A second set, also matched on sector, is the null for the text statistics, since a macro bet is usually expressed through a sector tilt. Both percentiles are printed for the exposures. Every statistic the page prints for the book is computed on each random portfolio by the box that computes it for the book, and the book's percentile among them is what the page shows. Two other return sorts, 6-1 and 24-13, and the book ranked 24 months earlier are computed as controls for the appendix.
+      For each date the rule draws 200 portfolios from the same universe with the same leg sizes and capitalisation deciles, so that the only difference from the book is that they were not ranked on past returns. The cap-matched set is the null for the exposure statistics. A second set, also matched on sector, is the null for the text statistics, since a macro bet is usually expressed through a sector tilt. Both percentiles are printed for the exposures. Every statistic the page prints for the book is computed on each random portfolio by the box that computes it for the book, and the book's percentile among them appears on the page. Two other return sorts, 6-1 and 24-13, and the book ranked 24 months earlier are computed as controls for the appendix.
     check: "the construction parameters are hashed and stored with each run"
     open: []
 
@@ -355,7 +355,7 @@ nodes:
       - "the ablation sequence"
     rule: |
       A linear quantile regression of the book's ten-day forward return at the 5% quantile, fitted on every day up to the formation date. The price regressors are trailing volatility, the bear state and its interaction with market variance, the case flag, the variance share and the price-correlated weight share. The text regressors are the theme's excess quote weight and the in-book theme-company share, by leg. The positioning overlap and a catalyst-window indicator with days to the nearest catalyst complete the set. A GARCH forecast and a calendar baseline enter as controls. The catalyst window is the ten trading days beginning five sessions before the catalyst. The ablation is reported on every run. Step 0 uses prices and the calendar only. Step 1 adds the variance share and the price-correlated share. Step 2a adds the two text regressors on the keyword run. Step 2b replaces them with the model run. Step 3 adds the overlap and is the full model. The comparison of 2b with 2a tests whether the language model's extraction, labelling and ranking add anything beyond a keyword rule in the same embedding space. If 2b does not beat 2a by the registered margin, the memo reports that and the keyword extractor takes the model's place in production.
-    check: "breach rate by state (bear on or off, factor or theme, inside or outside a window); expected shortfall no milder than the VaR; the prior v1 result of 2 breaches in 42 held-out forecasts, from a model with no text"
+    check: "breach rate by state (bear on or off, factor or theme, inside or outside a catalyst window); expected shortfall no milder than the VaR; the prior v1 result of 2 breaches in 42 held-out forecasts, from a model with no text"
     open: []
 
   - id: catalysts

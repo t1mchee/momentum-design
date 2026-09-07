@@ -3,10 +3,25 @@
 # summary, changes (what), reasoning (why), status (done | current | planned).
 
 entries:
+  - version: v2-draft-9
+    date: "2026-09-07"
+    file: versions/v2-draft-9.yaml
+    status: current
+    summary: "Language only. No node, edge, input, output, number, label or fallback changed on purpose; the eight places where the first pass changed meaning were restored."
+    changes:
+      - "One meaning per word: company for a stock (name survives only in vulnerable names), theme label for the words given to a theme, keyword run and model run for the two text pipelines, node and group for parts of the pipeline, and carry only in the conferred and carried pair."
+      - "Sentences over 45 words split; speech verbs for the page and the rule removed; the announced count in the filings node removed. The checker reports no writing warnings."
+      - "A second pass restored meaning the first had changed: the carried exposure's 126-day window, the PM's approval rule (date and relevance, not outcome), the two VaR series that the scoring covers, the conditional beta footer, the response log's three outcomes and its base rate, the hedge notional's 126-day beta, the production-path sentences in the output synthesis, and the look-ahead paragraph in the inputs synthesis."
+      - "The second pass also replaced the nominalisations the first had introduced (comprise, categorize, protocol, feature vector, provided on the page) with plain verbs, and rewrote the one sentence both pattern reports ranked first, so that the named component is labelled rather than named."
+    reasoning: >
+      The register the memo needs is plain, unemotive, precise and sober. The first pass met the checker
+      and removed personification, but it swapped one machine register for another and dropped meaning in
+      eight places. The second pass kept its vocabulary and sentence splits and undid the rest.
+
   - version: v2-draft-8
     date: "2026-09-07"
     file: versions/v2-draft-8.yaml
-    status: current
+    status: done
     summary: The substantive items of the draft-8 fix list, and nothing else. The design is frozen at this draft; the remaining items of the list are memo sentences.
     changes:
       - "One event: a ten-day return of the reconstructed book at or below its own unconditional 5% quantile; the French -432bp is the long-run reference and the pre-2013 record's threshold; the crash-day threshold is retired."

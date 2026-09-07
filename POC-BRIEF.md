@@ -1,6 +1,6 @@
 # Proof-of-concept brief for the executor
 
-Design: `docs/design/spec.yaml`, draft 15. Section 2 lists the corrections made since the executor may have
+Design: `docs/design/spec.yaml`, draft 16. Section 6 supersedes the experiment list where they differ. Section 2 lists the corrections made since the executor may have
 started; the spec is the authority where the two differ. House rules of the repo apply
 (`CLAUDE.md` section 9): an experiment is created in `project/experiments.yaml` before it runs, with
 hypothesis, prediction and method frozen; an implausible number is an instrument bug until proven
@@ -77,6 +77,20 @@ in the memo if it fails.
 19. The placebo compares the book's component $k$ with each random portfolio's component of the same rank. $d^*_c$ is the
     10th percentile of nearest-centroid distance. The premise rule: demote if the episode share is at or below the
     calm-window share, on the model run.
+
+## 6. Draft 16: the three artifacts (supersedes section 3 where they differ)
+
+- The tail model's page line is $\sigma_t\, q$ with no state. E1's final artifact: the unconditional and scaled lines on the
+  reconstructed book with coverage, split by calendar state and volatility tercile; the pinball ratio with the shuffled-volatility
+  control; the fitted-regression tie; the three conditioning ratios (bear, calendar, tercile) in one table. The catalyst-window
+  increase is dropped.
+- The theme on 2020-10-30: exp-091 with UMAP (about ten dimensions, cosine, fixed seed) before HDBSCAN (25, min_samples 5), the
+  boilerplate cluster excluded by rule; the 8-K survival-condition reading on the same date prepared as the fallback and printed
+  beside it either way.
+- The page for 2020-10-30 at `reports/poc/page_2020-10-30`, nine items registered before rendering, every number linked to
+  its stored output. Effective N and $\|w\|_2$ per leg on every date.
+- Not run, stated as such: hand labels (production item), the memo-date page, the premise share, positioning, the lists,
+  analogues, the catalyst agent.
 
 ## 3. The experiments, in order
 

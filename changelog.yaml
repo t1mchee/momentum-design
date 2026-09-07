@@ -3,10 +3,29 @@
 # summary, changes (what), reasoning (why), status (done | current | planned).
 
 entries:
+  - version: v2-draft-16
+    date: "2026-09-07"
+    file: versions/v2-draft-16.yaml
+    status: current
+    summary: "Three decisions from the proof-of-concept runs: the tail model loses its conditioning state, the book stays value-weighted with its concentration printed, and the proof of concept narrows to three artifacts; the embedding space gains its reduction step."
+    changes:
+      - "The tail model is one line, sigma_t times the 5% quantile of past scaled returns, with no state. The bear state (exp-084), the calendar state and the volatility tercile (exp-089) each scored within one of the scaled line, so the model keeps none and the scoring node prints the three ratios beside it. The catalyst-window VaR and its increase leave the page; the calendar state stays as page fields, the trigger's window catalyst days and a scoring split."
+      - "Scoring: coverage split by calendar state and by volatility tercile as checks, since the pooled test passed on the published factor by averaging opposite errors (exp-084); the pinball gain carries a shuffled-volatility negative control (exp-086)."
+      - "The book stays value-weighted within each leg. The effective number of names and the weight norm are printed per leg on every date, and the sort node states the concentration this produces (exp-090, trap 92); no book-level statistic is quoted without the weighting named."
+      - "The embedding space is reduced to about ten dimensions by UMAP before HDBSCAN, with min_samples 5, because the density clusterer on the full space finds no dense region at any population size (exp-091 first pass); a cluster whose keyword label is generic risk-factor vocabulary is not a theme."
+      - "The proof of concept is three artifacts: the tail model with its controls and nulls; the theme on 2020-10-30 with verbatim quotes, from the cluster pipeline where it fires and from the 8-K survival-condition reading beside it; the page for 2020-10-30. Hand labels are recorded as a production item (the author cannot be the annotator, exp-087) and replaced by planted-span tests with constructed ground truth (exp-088)."
+    reasoning: >
+      The executor's runs on the reconstructed book gave the design its first numbers, and three of them
+      change it. Every conditioning variable adds nothing measurable, so the simplest model is also the
+      best-supported one and the easiest to defend. The equal-weighted concentration headline in the
+      package is contingent on an aggregation the design never specified, so the design names its
+      weighting and prints the concentration instead. And a reader who sees three artifacts done carefully
+      will trust the design more than one who sees eight half-built.
+
   - version: v2-draft-15
     date: "2026-09-07"
     file: versions/v2-draft-15.yaml
-    status: current
+    status: done
     summary: "Close-out of the draft-14 read (pm-catchout-v2-draft-14.md): the four errors draft 14 introduced and the cheap pre-existing ones; no fresh read after it."
     changes:
       - "The market line is computed in the theme-statistics node: the book's beta net of the theme hedge's market beta, and the index notional that flattens it; item 6 has a producer. The own-history percentile of the largest variance share is computed in the trigger node, absent when no component is above noise."
@@ -34,6 +53,7 @@ entries:
       - "The ablation has four lines, adding scaling without state. Expected shortfall, the probability line and the silence rate are scored or printed; the catalyst window is on sessions t+1 to t+10; the pinball argument has its own symbol; the loser-leg null sentence is corrected; the bear state is out of the analogue distance and out of the breach split."
       - "The residual is carried by an edge from the exposures node; the market reaches the squeeze state; window catalyst days are computed once; c-TF-IDF labels are computed once; the random draw, the coverage gate, the earnings floor, the worry-list reference point and the catalyst comparator are stated so they can be run. A second radius, the centroid distance, serves the worry list and the theme log."
       - "The gather-text node is folded into the assignment node. The premise share has a demotion threshold and no detection floor; the 100 labels are scored once, not by stratum; the GARCH retirement reason no longer indicts the surviving model. Three synthesis paragraphs are brought back to their nodes."
+      - "Amendment after the snapshot (2026-09-07, decision D1 in docs/drafting/EDITS-ROUND-B.md): the user is a discretionary macro PM whose book carries momentum-type exposure, or the risk manager covering it, not the PM running momentum; the decision line is unchanged, since the page reports exposures scaled by the reader's beta to the paper book."
     reasoning: >
       A fresh design-only read of draft 13 scored it as draft 12 was scored and found the hedge over-sized
       by the inverse of its R-squared, a trigger that inherited the encoder look-ahead, three syntheses that

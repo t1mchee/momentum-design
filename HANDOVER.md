@@ -143,6 +143,16 @@ off and the named component, so the instrument and the notional, change. The rem
 thresholds a run settles (the R-squared gate, the size of the loading, the filer count), which E1 to E5
 produce. Do not run another design-only read before the proof of concept.
 
+## 3f. Draft 16, the first draft shaped by numbers
+
+The executor (session "Execution", experiments exp-084 to exp-091 in `project/experiments.yaml`) ran the
+tail model on the published factor and on the reconstructed book, the extractor comparisons, and the first
+pass of the theme pipeline. Draft 16 takes three decisions from those runs: no conditioning state in the
+tail model (three variables tested, none adds anything measurable); value-weighting stays, with the
+concentration it produces printed; the proof of concept is three artifacts. It also adds the UMAP reduction
+before HDBSCAN, which the first theme pass showed is necessary. Numbers from the runs enter the spec only
+as reasons, never as results; results live in the experiments file and the memo.
+
 ## 4. Files in this directory
 
 | file | what |

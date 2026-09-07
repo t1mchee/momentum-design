@@ -9,13 +9,13 @@
 
 meta:
   title: Momentum reversal-risk system, simplified map
-  version: v2-draft-15-simple
+  version: v2-draft-16-simple
   updated: "2026-09-07"
   problem:
     exposure: "the 12-1 momentum book: the top and bottom deciles of the Russell 3000 by return from twelve months before to one month before, value-weighted within each leg, dollar-neutral, rebuilt monthly"
     event: "a ten-day return of the reconstructed book at or below its own unconditional 5% quantile on the history since December 2013; the French factor's -432bp is the same quantile on the published factor over 1926 to 2022 and is printed as the long-run reference"
     horizon: "ten trading days, for every forecast on the page"
-    user: "the PM running momentum, or the risk manager covering that book"
+    user: "a discretionary macro PM whose book carries momentum-type exposure, or the risk manager covering it"
     decision: "whether and how much to hedge the book's exposure to the named theme before the next catalyst, from the VaR before and after the sized hedge on the page; the reader decides"
   note: >
     The design assumes that the theme behind a reversal has been building in the news for some time and that
@@ -288,7 +288,7 @@ nodes:
       - "book returns"
       - "daily returns, the point-in-time universe and the hedge instruments' returns"
       - "the hedge instrument and its slope"
-      - "the calendar state and the standardised quantile per state"
+      - "the calendar state and the standardised quantile"
       - "window catalyst days"
     outputs:
       - "the book's variance share on the named component, with its percentile"
@@ -336,13 +336,12 @@ nodes:
     outputs:
       - "ten-day 5% VaR and expected shortfall, in bp of book, with the observations behind them"
       - "the probability of the event"
-      - "the catalyst-window VaR and its increase"
-      - "the four ablation lines"
-      - "the calendar state and the standardised quantile per state"
+      - "the unconditional line and the three conditioning ratios"
+      - "the calendar state and the standardised quantile"
       - "window catalyst days"
     rule: |
-      A window catalyst is an FOMC decision, an earnings day on which the reporting companies hold at least 10% of the book's gross weight, a floor kept in the register, or an approved catalyst; a ten-day start is inside a window when the ten sessions it covers contain one. CPI, payrolls and rebalances appear on the page and do not open windows, since windows around every release would cover nearly every day; the count of starts in each state is printed each year. The tail model is the 5% quantile of the book's past ten-day returns, each divided by the book's volatility at the time, taken over past starts in the same state as today and multiplied by today's volatility; the expected shortfall is the mean of the returns at or below that quantile, scaled the same way, and the probability of the event is the share of those standardised returns at or below the unconditional threshold. There are no fitted parameters, and the page prints the non-overlapping observations behind each quantile. The three baseline lines are the same quantile with neither ingredient, with the state only and with the scaling only, so the ablation is four lines a reader can compute by hand. The bear state is not used; since 2013 it is on at almost no month-end. Text and positioning do not enter the model.
-    check: "the four ablation lines; the number of window catalysts and starts in each state, per year"
+      A window catalyst is an FOMC decision, an earnings day on which the reporting companies hold at least 10% of the book's gross weight, a floor kept in the register, or an approved catalyst; a ten-day start is inside a window when the ten sessions it covers contain one. CPI, payrolls and rebalances appear on the page and do not open windows, since windows around every release would cover nearly every day; the count of starts in each state is printed each year. The tail model is one line: the 5% quantile of the book's past ten-day returns, each divided by the book's volatility at the time, multiplied by today's volatility; the expected shortfall is the mean of the returns at or below that quantile, scaled the same way, and the probability of the event is the share of those standardised returns at or below the unconditional threshold. There are no fitted parameters and no state, and the page prints the non-overlapping observations behind the quantile. Three conditioning variables were tested and are not used: the bear state, the calendar state and the volatility tercile each add nothing measurable, and their ratios are printed beside the model. The calendar state is a page field and a scoring split. Text and positioning do not enter the model.
+    check: "the unconditional line and the three conditioning ratios; the number of window catalysts and starts in each state, per year"
 
   - id: catalysts
     name: Catalyst proposal, live only
@@ -427,7 +426,6 @@ nodes:
       - "the loss in basis points of book, by leg, if the component returns minus two sigma"
       - "ten-day 5% VaR and expected shortfall, in bp of book, with the observations behind them"
       - "the probability of the event"
-      - "the catalyst-window VaR and its increase"
       - "the hedge line: instrument, notional, and the VaR before and after the hedge"
       - "the overlap by leg, with its null and its history"
       - "the pre-catalyst list and the post-unwind list, by leg"
@@ -444,7 +442,7 @@ nodes:
       - "list edits after reading the page"
       - "the hand-labelled sample"
     rule: |
-      Every forecast on the page is over ten trading days. The page is a template of nine fixed items rendered from stored outputs; the only free text is the quotes and the theme label, printed beside its keyword label. In order: the theme with its variance share, excess weight, runner-up and news weight; the loss in basis points by leg; the VaR and expected shortfall with the observations behind them, the probability of the event, the catalyst-window VaR, and the hedge line with instrument, notional and the VaR before and after the hedge; the overlap with its null, the bear and squeeze states, and, once their event study has passed, the two lists; the catalysts, window and listed and proposed; the market exposure with its hedge, including the theme hedge's market beta, and the driving-series exposure, printed first when the bridge R-squared is above 0.5; the five analogues; each field's change since the last page; and a footer with text coverage, one line naming any item withheld and what it waits on, and a note that the numbers describe the paper 12-1 book, with the reader's beta to it. The conclusion is a fixed template: the risk, via the named component; the loss at minus two sigma by leg; the hedge, its notional and instrument; the VaR before and after it. It leaves the decision with the reader. The PM acknowledges each page, and the acknowledgement log is the response log's proxy until the PM's positions are an input; a research analyst labels sentences for the scoring box.
+      Every forecast on the page is over ten trading days. The page is a template of nine fixed items rendered from stored outputs; the only free text is the quotes and the theme label, printed beside its keyword label. In order: the theme with its variance share, excess weight, runner-up and news weight; the loss in basis points by leg; the VaR and expected shortfall with the observations behind them, the probability of the event, and the hedge line with instrument, notional and the VaR before and after the hedge; the overlap with its null, the bear and squeeze states, and, once their event study has passed, the two lists; the catalysts, window and listed and proposed; the market exposure with its hedge, including the theme hedge's market beta, and the driving-series exposure, printed first when the bridge R-squared is above 0.5; the five analogues; each field's change since the last page; and a footer with text coverage, one line naming any item withheld and what it waits on, and a note that the numbers describe the paper 12-1 book, with the reader's beta to it. The conclusion is a fixed template: the risk, via the named component; the loss at minus two sigma by leg; the hedge, its notional and instrument; the VaR before and after it. It leaves the decision with the reader. The PM acknowledges each page, and the acknowledgement log is the response log's proxy until the PM's positions are an input; a research analyst labels sentences for the scoring box.
     check: "every quote passes the quote gate"
     open:
       - "The example page with numbers, required by the brief, is in the memo."
@@ -460,8 +458,8 @@ nodes:
     inputs:
       - "ten-day 5% VaR and expected shortfall, in bp of book, with the observations behind them"
       - "the probability of the event"
-      - "the four ablation lines"
-      - "the calendar state and the standardised quantile per state"
+      - "the unconditional line and the three conditioning ratios"
+      - "the calendar state and the standardised quantile"
       - "window catalyst days"
       - "book returns"
       - "page dates and their outcomes"
@@ -549,7 +547,7 @@ edges:
   - {from: catapprove, to: tail, sends: "approved catalysts, which open windows", when: "on change", mode: "live only"}
   - {from: tail, to: trigger, sends: "window catalyst days", when: "daily", mode: "backtest and live"}
   - {from: catapprove, to: page, sends: "approved catalysts", when: "on event", mode: "live only"}
-  - {from: tail, to: page, sends: "VaR, expected shortfall, the probability line, catalyst-window VaR", when: "on event", mode: "backtest and live"}
+  - {from: tail, to: page, sends: "VaR, expected shortfall, the probability line", when: "on event", mode: "backtest and live"}
   - {from: tail, to: scoring, sends: "VaR, ES, the probability line, the ablation lines and the state", when: "monthly", mode: "backtest only"}
   - {from: analogue, to: page, sends: "the five analogues, each marked apt or not", when: "on event", mode: "backtest and live"}
   # the page

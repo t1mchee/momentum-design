@@ -55,7 +55,9 @@ groups:
     short: The book
     brief: "Element 1, problem definition: the exposure monitored is the 12-1 book. The event, horizon, user and decision are stated in the problem block at the top of the spec."
     synthesis: >
-      Rebuild the 12-1 momentum book monthly. Then measure which macro exposures the ranking rule gave the
+      Rebuild the 12-1 momentum book monthly, value-weighted within each leg as the published factor is;
+      inside a decile that is concentrated, and the effective number of names is printed with every book
+      statistic. Then measure which macro exposures the ranking rule gave the
       book, in hedgeable units. One first-stage regression on the market gives the residual return that every
       later statistic uses, and one slope per company and series gives the exposure, over a 126-day window
       that rolls daily. The page prints one percentile per series, of the exposure's size against the book's
@@ -155,15 +157,15 @@ groups:
     short: Tail and catalysts
     brief: "Element 6, horizon and severity; element 3, statistical modelling against conventional baselines."
     synthesis: >
-      One tail model gives the severity estimate. It is the 5% quantile of the book's past ten-day returns,
-      each divided by the book's volatility at the time, taken over past starts in the same calendar state as
-      today (whether the ten days it covers contain an FOMC decision, a heavy earnings day or an approved
-      catalyst) and multiplied by today's volatility. Its outputs are a ten-day 5% VaR and expected shortfall in basis points of book, the
-      probability of a return at or below the book's own unconditional 5% quantile, and how much worse the VaR is inside a
-      catalyst window. It is scored against three baseline lines, the same quantile with neither ingredient, with the state
-      only and with the scaling only, so the ablation is four lines a reader can compute by hand and what each
-      ingredient adds is visible. Text and
-      positioning do not enter the model; whether they sort the breaches is measured in the scoring group.
+      One tail model gives the severity estimate, and it is one line: the 5% quantile of the book's past
+      ten-day returns, each divided by the book's volatility at the time, multiplied by today's volatility.
+      Its outputs are a ten-day 5% VaR and expected shortfall in basis points of book and the probability of a
+      return at or below the book's own unconditional 5% quantile. It is scored against the unconditional
+      quantile, with a shuffled-volatility control on the gain. Three conditioning variables were tested and
+      are not used: the bear state, the calendar state (whether the ten days contain an FOMC decision, a heavy
+      earnings day or an approved catalyst) and the volatility tercile each add nothing measurable, and the
+      three ratios are printed beside the model as the record of why it has no state. The calendar state
+      stays as catalyst dates on the page and as the trigger. Text and positioning do not enter the model.
       Scheduled catalysts come from calendars; company-specific and off-universe catalysts are proposed live
       by a model from news, beside a term-list comparator, and approved by the PM. Analogues supply
       historical context by distance alone, with no language model.
@@ -172,11 +174,11 @@ groups:
         name: The tail model
         short: Tail model
         synthesis: >
-          The tail model uses prices and the calendar only: the book's own return history, its trailing
-          volatility and the catalyst windows. There are no fitted parameters. Every run prints the VaR, the
-          expected shortfall, the VaR inside a catalyst window and its increase, and the four ablation lines:
-          the unconditional quantile, the calendar-state quantile, the volatility-scaled quantile and the
-          volatility-scaled calendar-state quantile, which is the model.
+          The tail model uses prices only: the book's own return history and its trailing volatility.
+          There are no fitted parameters and no state. Every run prints the VaR, the expected shortfall, the
+          probability line, the unconditional line beside the model, and the three conditioning ratios
+          (bear state, calendar state, volatility tercile), each within one of the model. The calendar node
+          supplies the window catalyst days to the trigger and the state to the scoring split.
         children: [severity, baselines]
       - id: g_catalysts
         name: Catalysts
@@ -228,9 +230,9 @@ groups:
       that will go in the memo under each outcome written down in advance; what the register fixes is the
       wording and the thresholds, not the inference, and every v2 result is in-sample. The tail model is
       scored on coverage, where Kupiec's test at 130 months accepts 3 to 10 breaches, and on the ratio of its
-      pinball loss to each baseline's, with a bootstrap interval; the model beats a baseline only when the
-      interval excludes one. Coverage is also scored inside and outside catalyst windows, which is the test of the calendar
-      state. Threshold pages are scored by their hit rate against the 5% base rate, with the silence rate
+      pinball loss to the unconditional line's, with a bootstrap interval and a shuffled-volatility control;
+      the model beats the line only when the interval excludes one. Coverage is also split by calendar state
+      and by volatility tercile, since a pooled test can pass by averaging opposite errors. Threshold pages are scored by their hit rate against the 5% base rate, with the silence rate
       beside it. The vulnerable-name lists are tested in an event study over the recorded unwinds, and print only
       if it passes. Extraction error is measured on hand-labelled sentences, for the classifier and the
       keyword rule side by side. The premise, that a theme is visible before a reversal,

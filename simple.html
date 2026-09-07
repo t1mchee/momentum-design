@@ -9,14 +9,13 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.18.5/katex.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.18.5/katex.min.js"></script>
 <script src="math.js"></script>
-<link rel="stylesheet" href="canvas.css">
+<link rel="stylesheet" href="canvas.css?v=2">
 </head>
 <body>
 <div id="top"><b id="title">System design, simplified</b><span class="meta" id="version"></span>
-  <span class="steps" id="stepbtns"></span>
+  <span class="steps"><span class="lbl">steps</span><span id="stepbtns" style="display:flex;gap:4px"></span></span>
   <span class="sp"></span>
-  <button id="b_fit" title="F">fit</button><button id="b_open">all open</button><button id="b_close">all closed</button><button id="b_data" title="draw the data feeds as lines">data lines</button><button id="b_ret" hidden>retired</button>
-  <button id="b_story">story</button><button id="b_key">key</button><button id="b_hist">history</button>
+  <span class="grp"><button id="b_fit" title="F">fit</button><button id="b_open">all open</button><button id="b_close">all closed</button></span><span class="grp"><button id="b_data" title="draw the data feeds as lines">data lines</button><button id="b_ret" hidden>retired</button></span><span class="grp"><button id="b_story">story</button><button id="b_key">key</button><button id="b_hist">history</button></span>
   <a class="btn" href="index.html">full design</a>
 </div>
 <div id="stage"><div id="world"><svg id="edges"></svg></div></div>
@@ -40,6 +39,6 @@
 </div>
 <div id="status">loading…</div>
 <script>window.CANVAS={spec:'simple.yaml',groups:'groups.yaml',changelog:'changelog.yaml',simple:true};</script>
-<script src="canvas.js"></script>
+<script src="canvas.js?v=2"></script>
 </body>
 </html>

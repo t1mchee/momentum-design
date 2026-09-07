@@ -124,11 +124,14 @@ function render(){
     const blocks=[]; const inSub=new Set();
     b.subs.forEach(s=>{ const ids=s.leaves.filter(id=>els[id]); if(!ids.length) return; ids.forEach(id=>inSub.add(id)); blocks.push({sub:s,ids}); });
     const rest=b.leaves.filter(id=>els[id]&&!inSub.has(id)); if(rest.length) blocks.unshift({sub:null,ids:rest});
-    let bx=LEFT+PAD, bh=0; const placed=[];
-    blocks.forEach(bl=>{ const L=layoutBlock(bl.ids,drawn,byId,els); const top=y+HDR+PAD+(bl.sub?SUB_HDR:0); bl.ids.forEach(id=>{ const p=L.pos[id]; const x=bx+p.x, yy=top+p.y; els[id].style.left=x+'px'; els[id].style.top=yy+'px'; geo[id]={x,y:yy,w:NODE_W,h:els[id].offsetHeight}; });
+    let bx=LEFT+PAD, rowTop=y+HDR+PAD, rowH=0, maxRight=0; const placed=[]; const WRAP=1500;
+    blocks.forEach(bl=>{ const L=layoutBlock(bl.ids,drawn,byId,els); const hh=L.h+(bl.sub?SUB_HDR:0);
+      if(bx>LEFT+PAD && bx+L.w>LEFT+WRAP){ bx=LEFT+PAD; rowTop+=rowH+BLOCK_GAP; rowH=0; }
+      const top=rowTop+(bl.sub?SUB_HDR:0); bl.ids.forEach(id=>{ const p=L.pos[id]; const x=bx+p.x, yy=top+p.y; els[id].style.left=x+'px'; els[id].style.top=yy+'px'; geo[id]={x,y:yy,w:NODE_W,h:els[id].offsetHeight}; });
       L.paths.forEach(pp=>innerPaths.push({...pp,pts:pp.pts.map(q=>({x:bx+q.x,y:top+q.y}))}));
-      placed.push({bl,x:bx,w:L.w,h:L.h+(bl.sub?SUB_HDR:0)}); bh=Math.max(bh,L.h+(bl.sub?SUB_HDR:0)); bx+=L.w+BLOCK_GAP; });
-    const bw=Math.max(bx-BLOCK_GAP+PAD-LEFT, 420), bhh=HDR+PAD*2+bh;
+      placed.push({bl,x:bx,top:rowTop,w:L.w,h:hh}); rowH=Math.max(rowH,hh); maxRight=Math.max(maxRight,bx+L.w); bx+=L.w+BLOCK_GAP; });
+    const bh=rowTop+rowH-(y+HDR+PAD);
+    const bw=Math.max(maxRight+PAD-LEFT, 420), bhh=HDR+PAD*2+bh;
     bandGeo[b.id]={x:LEFT,y,w:bw,h:bhh,placed}; W=Math.max(W,bw+LEFT*2); y+=bhh+BAND_GAP;
   });
   const H=y;
@@ -138,7 +141,7 @@ function render(){
     c.innerHTML=`<div class="bh"><span class="num">${esc(b.num||'R')}</span><span>${esc(b.name.replace(/^\d+\.\s*/,''))}</span><span class="brief">${esc(b.brief||'')}</span><span class="act">explain ▸</span><span class="act" data-act="collapse">collapse ▾</span></div>`;
     c.querySelector('.bh').onclick=ev=>{ev.stopPropagation(); if(ev.target.dataset.act==='collapse'){ expanded.delete(b.id); render(); } else openStep(b.id); };
     world.insertBefore(c,svg.nextSibling);
-    bg.placed.forEach(pl=>{ if(!pl.bl.sub) return; const d=document.createElement('div'); d.className='band sub'; d.style.left=(pl.x-8)+'px'; d.style.top=(bg.y+HDR+PAD-6)+'px'; d.style.width=(pl.w+16)+'px'; d.style.height=(pl.h+12)+'px'; d.innerHTML=`<div class="bh"><span>${esc(pl.bl.sub.name)}</span></div>`; d.querySelector('.bh').onclick=ev=>{ev.stopPropagation(); openStep(b.id,pl.bl.sub.id);}; world.insertBefore(d,svg.nextSibling); });
+    bg.placed.forEach(pl=>{ if(!pl.bl.sub) return; const d=document.createElement('div'); d.className='band sub'; d.style.left=(pl.x-8)+'px'; d.style.top=(pl.top-6)+'px'; d.style.width=(pl.w+16)+'px'; d.style.height=(pl.h+12)+'px'; d.innerHTML=`<div class="bh"><span>${esc(pl.bl.sub.name)}</span></div>`; d.querySelector('.bh').onclick=ev=>{ev.stopPropagation(); openStep(b.id,pl.bl.sub.id);}; world.insertBefore(d,svg.nextSibling); });
   });
   // edges
   svg.setAttribute('width',W); svg.setAttribute('height',H);
@@ -201,7 +204,7 @@ function renderLeft(){
   const m=spec.meta||{};
   // story
   const live=bands.filter(b=>!b.retired);
-  $('pane_story').innerHTML=`<h2>The system in ${live.length} steps</h2><div class="muted">Read top to bottom. Click a step to open it on the canvas.</div>`+live.map(b=>`<div class="stepline" data-band="${esc(b.id)}"><div class="n">${esc(b.num)}. ${esc(b.name.replace(/^\d+\.\s*/,''))}</div><div class="s">${esc(b.synthesis||'')}</div></div>`).join('');
+  $('pane_story').innerHTML=`<h2>The system in ${live.length} steps</h2><div class="muted">Read top to bottom. Click a step to open it on the canvas.</div>`+(m.note?`<div class="k">The assumption the design rests on</div><div class="rule" style="font-size:12.5px">${esc(m.note)}</div>`:'')+live.map(b=>`<div class="stepline" data-band="${esc(b.id)}"><div class="n">${esc(b.num)}. ${esc(b.name.replace(/^\d+\.\s*/,''))}</div><div class="s">${esc(b.synthesis||'')}</div></div>`).join('');
   $('pane_story').querySelectorAll('.stepline').forEach(el=>el.onclick=()=>openStep(el.dataset.band));
   // key
   const L=m.legend||{}, SY=m.symbols||{}, P=m.proof_of_concept||null, Q=m.problem||null;
@@ -254,10 +257,10 @@ function openStep(bandId,subId,quiet){
 function showNode(n){
   const byId=Object.fromEntries(spec.nodes.map(x=>[x.id,x]));
   const ins=(spec.edges||[]).filter(e=>e.to===n.id&&!e.hidden), outs=(spec.edges||[]).filter(e=>e.from===n.id&&!e.hidden);
-  const io=(arr,dir)=>arr.length?'<ul class="io">'+arr.map(e=>`<li><b>${esc((byId[dir==='in'?e.from:e.to]||{}).name||'')}</b>: ${esc(e.sends||e.carries||'')}${(e.when||e.mode)?` <span class="muted">(${esc([e.when,e.mode].filter(Boolean).join(', '))})</span>`:''}</li>`).join('')+'</ul>':'<span class="muted">none</span>';
+  const io=(arr,dir)=>arr.length?'<ul class="io">'+arr.map(e=>{const oid=dir==='in'?e.from:e.to; return `<li><a href="#" class="golink" data-id="${esc(oid)}"><b>${esc((byId[oid]||{}).name||'')}</b></a>: ${esc(e.sends||e.carries||'')}${(e.when||e.mode)?` <span class="muted">(${esc([e.when,e.mode].filter(Boolean).join(', '))})</span>`:''}</li>`;}).join('')+'</ul>':'<span class="muted">none</span>';
   const b=bandOf(n.id); const fullById=fullSpec?Object.fromEntries((fullSpec.nodes||[]).map(x=>[x.id,x])):{};
   const abs=(n.absorbs||[]).map(id=>{const f=fullById[id]; return f?`<li><b>${esc(f.name)}</b> <span class="muted">(${esc(id)})</span></li>`:`<li>${esc(id)}</li>`;}).join('');
-  $('rbody').innerHTML=`<h2>${esc(n.name)}</h2><div class="muted">${b?esc(b.num?b.num+'. '+b.short:b.short)+' · ':''}${esc(n.kind==='model'?'language model':n.kind||'rule')}${n.status==='retired'?' · retired':''}${n.origin?' · '+esc(n.origin):''}</div>
+  $('rbody').innerHTML=`<h2>${esc(n.name)}</h2><div class="muted">${b?esc(b.num?b.num+'. '+b.name.replace(/^\d+\.\s*/,''):b.name)+' · ':''}${esc(n.kind==='model'?'language model':n.kind||'rule')}${n.status==='retired'?' · retired':''}${n.origin?' · '+esc(n.origin):''}</div>
     ${n.lookahead?`<div class="k">Look-ahead</div><div><span class="chip la-${esc(n.lookahead)}">${esc(n.lookahead)}</span> ${esc(n.mitigation||'')}</div>`:''}
     ${n.access?`<div class="k">Access</div><div><span class="chip ac-${esc(n.access)}">${esc(n.access)}</span> feeds are labelled PUBLIC, LICENSED or DESK-ONLY in the rule</div>`:''}
     <div class="k">Rule</div><div class="rule">${esc(n.rule)}</div>
@@ -268,14 +271,16 @@ function showNode(n){
     ${abs?`<div class="k">In the full view</div><ul>${abs}</ul>`:''}
     ${(n.open||[]).length?`<div class="k">Open</div><div class="open">${list(n.open)}</div>`:''}`;
   renderMath($('rbody')); $('right').classList.add('open');
+  $('rbody').querySelectorAll('.golink').forEach(a=>a.onclick=ev=>{ev.preventDefault(); const id=a.dataset.id; const bb=bandOf(id); if(bb&&!expanded.has(bb.id)){expanded.add(bb.id); render();} select(id); scrollTo(id);});
 }
 
 // ---------- view
 function applyView(){ world.style.transform=`translate(${view.x}px,${view.y}px) scale(${view.k})`; }
-function fit(){ if(!layout) return; const r=stage.getBoundingClientRect(); view.k=Math.min(1.0,(r.width-24)/layout.gw); view.x=(r.width-layout.gw*view.k)/2; view.y=12; applyView(); }
+function fit(){ if(!layout) return; const r=stage.getBoundingClientRect(); if(r.width<50||r.height<50){ needFit=true; return; } needFit=false; view.k=Math.min(1.0,(r.width-24)/layout.gw); view.x=(r.width-layout.gw*view.k)/2; view.y=12; applyView(); }
 function fitAll(){ if(!layout) return; const r=stage.getBoundingClientRect(); view.k=Math.min(1.0,(r.width-24)/layout.gw,(r.height-24)/layout.gh); view.x=(r.width-layout.gw*view.k)/2; view.y=12; applyView(); }
 function scrollToEl(el){ const r=stage.getBoundingClientRect(); const x=parseFloat(el.style.left), y=parseFloat(el.style.top), w=el.offsetWidth, h=el.offsetHeight; const k=Math.min(1,Math.max(view.k,(r.height-80)/Math.max(h,1)*0.9)); view.k=Math.min(k,1); view.x=(r.width-w*view.k)/2-x*view.k; view.y=40-y*view.k; applyView(); }
 function scrollTo(id){ const el=world.querySelector(`.node[data-id="${id}"]`); if(el) scrollToEl(el); }
+let needFit=false; window.addEventListener('resize',()=>{ if(needFit||!isFinite(view.k)) fit(); });
 let drag=null;
 stage.addEventListener('mousedown',e=>{drag={x:e.clientX-view.x,y:e.clientY-view.y,moved:false}; stage.classList.add('drag');});
 window.addEventListener('mousemove',e=>{ if(drag){ view.x=e.clientX-drag.x; view.y=e.clientY-drag.y; drag.moved=true; applyView(); } });

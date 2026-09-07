@@ -101,7 +101,7 @@ function layoutBlock(ids,edges,byId,els){ // dagre LR over one block of componen
 }
 function render(){
   if(!spec) return;
-  const m=spec.meta||{}; $('title').textContent=m.title||'System design';
+  const m=spec.meta||{}; $('title').textContent=String(m.title||'System design').replace(/,?\s*v2\s*draft\s*\d+.*$/i,'').replace(/\s*draft\s*\d+.*$/i,'');
   $('version').textContent=String(m.version||'').replace(/-draft-\d+.*$/,'');
   world.querySelectorAll('.node,.elabel,.band').forEach(e=>e.remove());
   const byId=Object.fromEntries(spec.nodes.map(n=>[n.id,n]));

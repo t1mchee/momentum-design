@@ -3,10 +3,29 @@
 # summary, changes (what), reasoning (why), status (done | current | planned).
 
 entries:
+  - version: v2-draft-12
+    date: "2026-09-07"
+    file: versions/v2-draft-12.yaml
+    status: current
+    summary: "Corrections from the draft-11 catch-out read: the hedge ratio, the loser-leg sign, the overlap null, the calendar state, theme identity across dates, the BM25 assignment; a probability line added; the implied-move comparison dropped; asserted counts replaced by printed ones; worked examples in the two nodes that lacked them; the proof-of-concept scope stated against the news on disk."
+    changes:
+      - "The bridge regresses each instrument on the component, so the notional per $100m is the book's loading over the instrument's slope as written; a worked example with a loading of 0.5 and a slope of 2 gives a $25m short."
+      - "A company counts toward a theme when a reversal of the component costs the book on it, leg sign times loading sign positive; a loser-leg company with a positive loading is excluded, with the example written out. The same sign rule gives the bp loss, so the two lines agree."
+      - "The overlap's null is the crowded set's share of the leg's gross weight, printed each month; it is above one fifth because large companies have more 13F holders."
+      - "Only FOMC decisions and heavy earnings days open catalyst windows; CPI, payrolls and rebalances are catalysts on the page but do not define the state. The count of starts in each state is printed, not assumed."
+      - "Two dates share a theme when their cluster centroids are within the assignment distance. The BM25 run assigns a statement to the cluster whose top terms score highest."
+      - "The page prints the probability of a ten-day return at or below the long-run threshold, from the same standardised returns as the VaR, and the number of observations behind each quantile. The VaR leaves the threshold-trigger set, so a page it triggers is not scored against losses it already predicts."
+      - "The implied-move comparison is dropped; options price the hedge line only. The 3-to-8-point simulation figure and the five unwind dates are replaced by the register's floor and the record's dates."
+      - "The proof-of-concept block states that news on disk is eight episode windows and three calm windows, and that the theme pipeline runs on those dates and the memo date; the premise share gets the calm windows as its base rate."
+    reasoning: >
+      A fresh catch-out read of draft 11 found the arithmetic errors listed above and scored the author's
+      understanding at 2 of 5 on their strength. Each is corrected with the worked example that would have
+      caught it, and no decision is reopened.
+
   - version: v2-draft-11
     date: "2026-09-07"
     file: versions/v2-draft-11.yaml
-    status: current
+    status: done
     summary: "The simplification. Every decision the PM catch-out read exposed was taken in the direction of the mechanism that can be walked through with one example; three nodes retired, the tail model replaced, the text pipeline reduced to one object and one distance."
     changes:
       - "The tail model is the 5% quantile of the book's own volatility-standardised ten-day returns, conditioned on the calendar state; no fitted parameters, twelve observations below the line on the first scored date rather than one. The two baselines are the same quantile without scaling and without state, so the ablation is three lines. GARCH is retired. Text and positioning do not enter the model."

@@ -26,8 +26,7 @@ groups:
           stood on each date. It also covers six reference series, none of which is revised, with the bear
           state computed from the first of them, and the French factor file, which gives a long history and
           the reversal record. The earnings and macro calendars supply the catalyst dates, with earnings
-          dates projected from the prior year. Options give the component companies' implied moves and the
-          premium on the hedge line.
+          dates projected from the prior year. Options give the premium on the hedge line and nothing else.
         children: [prices, refseries, french, options]
       - id: g_text
         name: Text, in layers
@@ -138,8 +137,9 @@ groups:
     brief: "Element 3, positioning and crowding information integrated with the text reading."
     synthesis: >
       Compare the list of theme companies with the list of crowded companies. The overlap is the share of
-      theme companies' book weight that is crowded, per leg; random assignment gives one fifth, and the claim
-      that funds are positioned on one theme is supported when the overlap's median since 2014 is above it.
+      theme companies' book weight that is crowded, per leg; its null is the crowded set's share of the leg's weight, printed
+      beside it, and the claim that funds are positioned on one theme is supported when the median gap since
+      2014 is above zero.
       Two vulnerable-name lists are drawn from the crowded theme companies: the pre-catalyst list, companies
       that rose with the component and have the most recent gain at risk, and the post-unwind list,
       companies that have not yet moved after the component has fallen. On the loser leg the post-unwind
@@ -154,8 +154,9 @@ groups:
     synthesis: >
       One tail model gives the severity estimate. It is the 5% quantile of the book's past ten-day returns,
       each divided by the book's volatility at the time, taken over past starts in the same calendar state as
-      today (inside or outside a catalyst window) and multiplied by today's volatility. Its outputs are a
-      ten-day 5% VaR and expected shortfall in basis points of book, and how much worse both are inside a
+      today (inside or outside a window around an FOMC decision or a heavy earnings day) and multiplied by
+      today's volatility. Its outputs are a ten-day 5% VaR and expected shortfall in basis points of book, the
+      probability of a return at or below the long-run threshold, and how much worse the VaR is inside a
       catalyst window. It is scored against two baselines, the same quantile with no volatility scaling and
       with no calendar state, so the ablation is three lines a reader can compute by hand. Text and
       positioning do not enter the model; whether they sort the breaches is measured in the scoring group.
@@ -228,7 +229,7 @@ groups:
       lists are tested in an event study over five recorded unwinds. Extraction error is measured on
       hand-labelled sentences, for the classifier and the keyword rule side by side, split by whether the
       document predates the labelling model's cutoff. The premise, that a theme is visible before a reversal,
-      is measured over the recorded episodes and printed as a share. Only the first design's severity test on
+      is measured over the recorded episodes and printed as a share beside the same share on calm months. Only the first design's severity test on
       held-out years has run, with a model that had no text: 2 breaches in 42 forecasts. The v2 scoring, the
       labels and the event study have not run, and the worry-list comparison can only be made in production.
     children: [register, labels, volvalidation, bombtest, themevalidation]

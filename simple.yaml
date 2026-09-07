@@ -9,7 +9,7 @@
 
 meta:
   title: Momentum reversal-risk system, simplified map
-  version: v2-draft-11-simple
+  version: v2-draft-12-simple
   updated: "2026-09-07"
   problem:
     exposure: "the 12-1 momentum book: the top and bottom deciles of the Russell 3000 by return from twelve months before to one month before, value-weighted within each leg, dollar-neutral, rebuilt monthly"
@@ -57,9 +57,9 @@ nodes:
       - "six reference series and the bear state"
       - "earnings and macro calendars"
       - "the French factor and the reversal record"
-      - "implied earnings moves and option premia"
+      - "option premia"
     rule: |
-      The universe is the Russell 3000 ETF's archived daily holdings, taken at the effective date of each change (PUBLIC). Daily prices come from Stooq or Tiingo (PUBLIC; CRSP in production, LICENSED). Six reference series give the macro exposures: the S&P 500, the ten-year yield, WTI, the broad dollar, the investment-grade spread, and the ten largest index companies against the equal-weighted index (PUBLIC). The bear state is an indicator that the trailing 24-month market return is negative. The earnings calendar in the backtest projects each company's date from its 8-K one year earlier; macro releases come from the published calendars. The French factor file gives the long history and the reversal record, 195 episodes since 1926. Options give each company's implied earnings move and the ten-day put premium on each hedge instrument (LICENSED for history; PUBLIC delayed data live); these feeds are as-of, taken from surfaces as they stood on the date, and the theme-statistics box turns them into the implied move and the hedge line.
+      The universe is the Russell 3000 ETF's archived daily holdings, taken at the effective date of each change (PUBLIC). Daily prices come from Stooq or Tiingo (PUBLIC; CRSP in production, LICENSED). Six reference series give the macro exposures: the S&P 500, the ten-year yield, WTI, the broad dollar, the investment-grade spread, and the ten largest index companies against the equal-weighted index (PUBLIC). The bear state is an indicator that the trailing 24-month market return is negative. The earnings calendar in the backtest projects each company's date from its 8-K one year earlier; macro releases come from the published calendars. The French factor file gives the long history and the reversal record, 195 episodes since 1926. Options give the ten-day put premium on each hedge instrument (LICENSED for history; PUBLIC delayed data live), taken from surfaces as they stood on the date; it prices the hedge line and nothing else.
     check: "monthly correlation of the reconstructed book with the French factor, reported"
     open:
       - "EMPIRICS: the French correlation."
@@ -255,7 +255,7 @@ nodes:
       - "the theme label, with its quotes and the nearest news cluster"
       - "the named component"
     rule: |
-      A company counts toward a theme when one of its risk statements lies within the assignment distance of the theme's reference point and its loading has the component's sign, and it counts once, whatever the length of its filing; the quote kept for it is its nearest statement. The theme's weight is the sum of those companies' absolute loadings, by leg; the placebo weight is the same on the random portfolios' sets; the excess is the difference. The theme is the reference point with the largest excess, provided that excess is larger than random sets reach on 95% of draws; otherwise the component has no theme above placebo, which is what keeps the sort's own axis from being named. The named component is the highest-variance component above noise with a theme. In the backtest the reference points are the news clusters; on the live page the worry-list entries are added. A list entry's label is its name. A residual cluster is labelled by a language model from its 20 central statements, with a keyword label printed beside it, and is marked company-specific when fewer than 25 news statements lie within the distance of its centroid. Everything is computed on both runs, and the two themes are printed together.
+      A company counts toward a theme when one of its risk statements lies within the assignment distance of the theme's reference point and a reversal of the component would cost the book on that company (a winner with a positive loading, or a loser with a negative loading), and it counts once, whatever the length of its filing; the quote kept for it is its nearest statement. The theme's weight is the sum of those companies' absolute loadings, by leg; the placebo weight is the same on the random portfolios' sets; the excess is the difference. The theme is the reference point with the largest excess, provided that excess is larger than random sets reach on 95% of draws; otherwise the component has no theme above placebo, which is what keeps the sort's own axis from being named. The named component is the highest-variance component above noise with a theme. In the backtest the reference points are the news clusters; on the live page the worry-list entries are added. A list entry's label is its name. A residual cluster is labelled by a language model from its 20 central statements, with a keyword label printed beside it, and is marked company-specific when fewer than 25 news statements lie within the distance of its centroid. Everything is computed on both runs, and the two themes are printed together.
     comparator: "the keyword label from the cluster's distinguishing terms, printed beside the model's label; the keyword run's theme beside the model run's"
     check: "placebo weight per entry; month-to-month stability of the assignment; agreement of the theme between the two runs"
 
@@ -287,13 +287,13 @@ nodes:
       - "the named component"
       - "the two legs and the position weights"
       - "the hedge instrument and its slope"
-      - "implied earnings moves and option premia"
+      - "option premia"
     outputs:
       - "the book's variance share on the named component, with its percentile"
       - "the loss in basis points of book, by leg, if the component returns minus two sigma"
-      - "the implied move and the hedge line"
+      - "the hedge line"
     rule: |
-      Two statistics are printed for the named component. The first is the book's variance share on it, with its percentile against the random portfolios. The second is the loss in basis points of book if the component returns minus two of its ten-day sigmas, by leg: minus two sigma times the sum over the leg's companies of weight times loading. It is net, so companies that gain on a reversal offset those that lose, and the two legs sum to the book's loss. The hedge line hedges that loss. The instrument and its slope on the component come from the decomposition, and the notional is the short position that offsets the book's loading on the component. The line prints the put premium for that notional in bp of book and the share of the component the instrument does not explain. The component set's implied ten-day move, from each set company's earnings move restated over ten days, is the comparison for the catalyst-window increase in VaR.
+      Two statistics are printed for the named component. The first is the book's variance share on it, with its percentile against the random portfolios. The second is the loss in basis points of book if the component returns minus two of its ten-day sigmas, by leg: minus two sigma times the sum over the leg's companies of weight times loading. It is net, so companies that gain on a reversal offset those that lose, and the two legs sum to the book's loss. The hedge line hedges that loss. The instrument and its slope on the component come from the decomposition, and the notional is the short position that offsets the book's loading on the component. The line prints the put premium for that notional in bp of book and the share of the component the instrument does not explain. With a loading of 0.5 and an instrument slope of 2, the short is $25m per $100m of book.
     check: "the random-portfolio comparison; a February-against-August check that filing season does not drive the statistics"
 
   # ---------------------------------------------------------------- 4. crowding
@@ -314,7 +314,7 @@ nodes:
       - "the overlap of crowded companies with theme companies, by leg, with its history since 2014"
       - "the pre-catalyst list and the post-unwind list, by leg"
     rule: |
-      The theme companies are the component set plus the companies found by the search; the crowded companies are the top quintile of the positioning score within each leg. The overlap is the share of theme companies' book weight that is crowded, by leg, with its history since 2014. Neither positioning input comes from returns, so under no crowding the overlap is one fifth; the claim that funds are positioned on one theme holds if its median since 2014 is above that. From the crowded theme companies come two lists. The pre-catalyst list holds companies that rose with the component by more than one twenty-day standard deviation, the ones with the most recent gain at risk. The post-unwind list holds companies that have not yet moved after the component has fallen by more than one twenty-day standard deviation; on the loser leg these are the heavily shorted companies that have not yet rallied, and a squeeze state line is printed when the loser leg's 20-day return exceeds its standard deviation with the market up. Neither list is printed until its event study has run.
+      The theme companies are the component set plus the companies found by the search; the crowded companies are the top quintile of the positioning score within each leg. The overlap is the share of theme companies' book weight that is crowded, by leg, with its history since 2014. Neither positioning input comes from returns, so under no crowding the overlap equals the crowded set's share of the leg's weight, which is above one fifth because large companies have more 13F holders; that null is printed beside the overlap, and the claim that funds are positioned on one theme holds if the median gap since 2014 is above zero. From the crowded theme companies come two lists. The pre-catalyst list holds companies that rose with the component by more than one twenty-day standard deviation, the ones with the most recent gain at risk. The post-unwind list holds companies that have not yet moved after the component has fallen by more than one twenty-day standard deviation; on the loser leg these are the heavily shorted companies that have not yet rallied, and a squeeze state line is printed when the loser leg's 20-day return exceeds its standard deviation with the market up. Neither list is printed until its event study has run.
     check: "the count and weight of each list, with their history"
 
   # ---------------------------------------------------------------- 5. severity and timing
@@ -332,10 +332,11 @@ nodes:
       - "approved catalysts, with dates and types"
     outputs:
       - "ten-day 5% VaR and expected shortfall, in bp of book"
+      - "the probability of a return at or below the long-run threshold"
       - "the catalyst-window VaR and its increase"
       - "the three ablation lines"
     rule: |
-      A catalyst window is the ten sessions from five before a scheduled macro release, or a day on which the companies reporting earnings hold at least a tenth of the book's gross weight; each day is inside or outside a window. The tail model is the 5% quantile of the book's past ten-day returns, each divided by the book's volatility at the time, taken over past starts in the same state as today and multiplied by today's volatility; the expected shortfall is the mean of the returns at or below that quantile, scaled the same way. There are no fitted parameters. On the first scored date, December 2015, the quantile inside windows rests on twelve observations, and by the memo date on about 80. The two baselines are the same quantile with no scaling and no state, and with the state but no scaling, so the ablation is three lines a reader can compute by hand. Text and positioning do not enter the model; whether they sort the breaches is measured in the scoring box. Live, an approved catalyst opens a window like a scheduled one.
+      A catalyst window is the ten sessions from five before an FOMC decision, or a day on which the companies reporting earnings hold at least a tenth of the book's gross weight; other releases are catalysts on the page but do not open windows, since windows around every release would cover nearly every day. Each day is inside or outside a window, and the count in each state is printed each year. The tail model is the 5% quantile of the book's past ten-day returns, each divided by the book's volatility at the time, taken over past starts in the same state as today and multiplied by today's volatility; the expected shortfall is the mean of the returns at or below that quantile, scaled the same way. There are no fitted parameters. The page prints the number of observations behind each quantile, and the probability that the ten-day return is at or below the long-run threshold, from the same standardised returns. The two baselines are the same quantile with no scaling and no state, and with the state but no scaling, so the ablation is three lines a reader can compute by hand. Text and positioning do not enter the model; whether they sort the breaches is measured in the scoring box. Live, an approved catalyst opens a window like a scheduled one.
     check: "the three ablation lines; breach rate by bear state"
 
   - id: catalysts
@@ -386,7 +387,7 @@ nodes:
     outputs:
       - "the five nearest past formation dates, what followed over ten days, and whether each is apt"
     rule: |
-      A formation date's state is ten numbers: the six exposures, the variance share, the overlap, the trailing ten-day sigma and the bear state. Candidates are every formation date since December 2013, excluding the last year. Each dimension is standardised by its own history, and the five nearest dates by Euclidean distance are printed with what the book did over the following ten days and whether each fell in the reversal record. An analogue is apt when its bear state and its theme match today's. No language model is involved.
+      A formation date's state is ten numbers: the six exposures, the variance share, the overlap, the trailing ten-day sigma and the bear state. Candidates are every formation date since December 2013, excluding the last year. Each dimension is standardised by its own history, and the five nearest dates by Euclidean distance are printed with what the book did over the following ten days and whether each fell in the reversal record. An analogue is apt when its bear state matches today's and its theme centroid is within the assignment distance of today's. No language model is involved.
     check: "each past date's state is regenerated from inputs public before it"
 
   # ---------------------------------------------------------------- 6. the page
@@ -399,7 +400,6 @@ nodes:
     inputs:
       - "approved catalysts, with dates and types"
       - "earnings and macro calendars"
-      - "ten-day 5% VaR and expected shortfall, in bp of book"
       - "the book's variance share on the named component, with its percentile"
       - "per reference series: the exposure in hedgeable units and its own-history percentile"
       - "book returns"
@@ -407,7 +407,7 @@ nodes:
       - "the page type and its fields, with each field's change since the last page"
       - "page dates and their outcomes"
     rule: |
-      A calendar page is produced five sessions before each catalyst, scheduled or approved. A threshold page is produced when the maximum of eight own-history percentiles, the VaR, the variance share and the six exposures, crosses its own 95th percentile, which happens on about one day a month by construction. Otherwise a weekly summary is produced. A hit is a loss beyond the unconditional 5% quantile after a page; a miss is a page with no such loss; a silence is such a loss with no page. The page dates and their outcomes go to the scoring box, where the hit rate on threshold-page days is tested against the 5% base rate.
+      A calendar page is produced five sessions before each catalyst, scheduled or approved. A threshold page is produced when the maximum of seven own-history percentiles, the variance share and the six exposures, crosses its own 95th percentile, which happens on about one day a month by construction. Otherwise a weekly summary is produced. A hit is a loss beyond the unconditional 5% quantile after a page; a miss is a page with no such loss; a silence is such a loss with no page. The page dates and their outcomes go to the scoring box, where the hit rate on threshold-page days is tested against the 5% base rate.
     check: "the measured false-page rate"
 
   - id: page
@@ -423,8 +423,9 @@ nodes:
       - "the book's variance share on the named component, with its percentile"
       - "the loss in basis points of book, by leg, if the component returns minus two sigma"
       - "ten-day 5% VaR and expected shortfall, in bp of book"
+      - "the probability of a return at or below the long-run threshold"
       - "the catalyst-window VaR and its increase"
-      - "the implied move and the hedge line"
+      - "the hedge line"
       - "the overlap of crowded companies with theme companies, by leg, with its history since 2014"
       - "the pre-catalyst list and the post-unwind list, by leg"
       - "the positioning score per company, with its lag"
@@ -438,7 +439,7 @@ nodes:
       - "list edits after reading the page"
       - "the hand-labelled sample"
     rule: |
-      Every forecast on the page is over ten trading days. The page is a template of nine fixed items rendered from stored outputs; the only free text is the quotes and the theme label, printed beside its keyword label. In order: the theme with its variance share, excess weight and runner-up; the loss in basis points by leg; the VaR and expected shortfall, the catalyst-window VaR beside the implied move, and the hedge line with instrument, notional and premium; the overlap, the bear and squeeze states, and, once their event study has run, the two lists; the catalysts, approved and proposed; the driving-series exposure, first when the bridge R-squared is above 0.5; the five analogues; each field's change since the last page; and a footer with text coverage, one line naming any item not on this page and what it waits on, and a note that the numbers describe the paper 12-1 book, with the reader's beta to it. The conclusion gives the direction of the risk and the sized hedge and leaves the decision with the reader. The PM acknowledges each page, edits the worry list, and approves catalysts; a research analyst labels sentences for the scoring box. Until the PM's positions are an input, the proxy for whether a page changed a decision is the acknowledgement and the two logged actions within five sessions of a page.
+      Every forecast on the page is over ten trading days. The page is a template of nine fixed items rendered from stored outputs; the only free text is the quotes and the theme label, printed beside its keyword label. In order: the theme with its variance share, excess weight and runner-up; the loss in basis points by leg; the VaR and expected shortfall with the observations behind them, the probability of a return at or below the long-run threshold, the catalyst-window VaR, and the hedge line with instrument, notional and premium; the overlap, the bear and squeeze states, and, once their event study has run, the two lists; the catalysts, approved and proposed; the driving-series exposure, first when the bridge R-squared is above 0.5; the five analogues; each field's change since the last page; and a footer with text coverage, one line naming any item not on this page and what it waits on, and a note that the numbers describe the paper 12-1 book, with the reader's beta to it. The conclusion gives the direction of the risk and the sized hedge and leaves the decision with the reader. The PM acknowledges each page, edits the worry list, and approves catalysts; a research analyst labels sentences for the scoring box. Until the PM's positions are an input, the proxy for whether a page changed a decision is the acknowledgement and the two logged actions within five sessions of a page.
     check: "every quote passes the quote gate"
     open:
       - "The example page with numbers, required by the brief, is in the memo."
@@ -455,7 +456,6 @@ nodes:
       - "ten-day 5% VaR and expected shortfall, in bp of book"
       - "the catalyst-window VaR and its increase"
       - "the three ablation lines"
-      - "the implied move and the hedge line"
       - "book returns"
       - "page dates and their outcomes"
       - "the theme per component: its reference point or none, its excess weight by leg, its runner-up, and one quote per company, on both runs"
@@ -471,7 +471,7 @@ nodes:
       - "each list's excess move over sector-matched companies, per unwind"
       - "the premise share"
     rule: |
-      Before each test runs, the author writes its pass threshold, its detection floor and the sentence the memo will hold under each outcome; the register fixes the wording and the thresholds, not the inference, and every v2 result is in-sample. The tail model is scored every formation month from December 2015, about 130 by the memo date: Kupiec's coverage test at that count accepts 3 to 10 breaches, and the ratio of the model's pinball loss to each baseline's is reported with a bootstrap interval, the model beating a baseline only when the interval excludes one. Text is tested as a sort of the breach record by the theme's excess weight, and the register labels it illustrative if fewer than five of the six or seven breaches fall on the high side. The classifier and the keyword rule are scored on hand-labelled sentences, split by the labelling model's cutoff. The two lists are tested on the five recorded unwinds since 2020 against sector-matched companies over ten sessions, with a data-derived margin. The premise, that a theme is visible before a reversal, is measured over the recorded episodes and printed as a share. In production, a quarterly reading measures whether the pipeline surfaces themes before the PM adds them. The only test that has run is v1's severity breach test, 2 in 42 forecasts, from a model with no text.
+      Before each test runs, the author writes its pass threshold, its detection floor and the sentence the memo will hold under each outcome; the register fixes the wording and the thresholds, not the inference, and every v2 result is in-sample. The tail model is scored every formation month from December 2015, about 130 by the memo date: Kupiec's coverage test at that count accepts 3 to 10 breaches, and the ratio of the model's pinball loss to each baseline's is reported with a bootstrap interval, the model beating a baseline only when the interval excludes one. Text is tested as a sort of the breach record by the theme's excess weight, and the register labels it illustrative if fewer than five of the six or seven breaches fall on the high side. The classifier and the keyword rule are scored on hand-labelled sentences, split by the labelling model's cutoff. The two lists are tested on the five recorded unwinds since 2020 against sector-matched companies over ten sessions, with a data-derived margin. The premise, that a theme is visible before a reversal, is measured over the recorded episodes and printed as a share beside the same share on calm months. In production, a quarterly reading measures whether the pipeline surfaces themes before the PM adds them. The only test that has run is v1's severity breach test, 2 in 42 forecasts, from a model with no text.
     check: "the smallest effect each test could detect is found by simulation before it runs, and a null is a finding only if that floor is below the effect of interest"
     open:
       - "EMPIRICS: the simulated floors; the five unwind dates."
@@ -485,7 +485,7 @@ edges:
   - {from: market, to: tail, sends: "the calendars and the bear state", when: "daily", mode: "backtest and live"}
   - {from: market, to: analogue, sends: "the reversal record and the bear state", when: "at rebalance", mode: "backtest and live"}
   - {from: market, to: trigger, sends: "calendar catalyst dates", when: "daily", mode: "backtest and live"}
-  - {from: market, to: themescore, sends: "implied earnings moves and option premia", when: "daily", mode: "backtest and live"}
+  - {from: market, to: themescore, sends: "option premia", when: "daily", mode: "backtest and live"}
   - {from: market, to: scoring, sends: "realised returns and the record", when: "monthly", mode: "backtest only"}
   - {from: market, to: crowding, sends: "daily returns", when: "daily", mode: "backtest and live"}
   - {from: filings, to: extract, sends: "risk-section and event sentences", when: "weekly", mode: "backtest and live"}
@@ -534,8 +534,7 @@ edges:
   - {from: propagate, to: crowding, sends: "companies found with the theme", when: "weekly", mode: "backtest and live"}
   - {from: themescore, to: trigger, sends: "variance share percentile", when: "weekly", mode: "backtest and live"}
   - {from: themescore, to: analogue, sends: "variance share", when: "at rebalance", mode: "backtest and live"}
-  - {from: themescore, to: page, sends: "variance share, the bp loss, the implied move and the hedge line", when: "on event", mode: "backtest and live"}
-  - {from: themescore, to: scoring, sends: "the implied move, where history exists", when: "monthly", mode: "backtest only"}
+  - {from: themescore, to: page, sends: "variance share, the bp loss and the hedge line", when: "on event", mode: "backtest and live"}
   # crowding
   - {from: crowding, to: analogue, sends: "the positioning overlap", when: "at rebalance", mode: "backtest and live"}
   - {from: crowding, to: page, sends: "overlap and the two lists once tested", when: "on event", mode: "backtest and live"}
@@ -545,8 +544,7 @@ edges:
   - {from: catapprove, to: tail, sends: "approved catalysts, which open windows", when: "on change", mode: "live only"}
   - {from: catapprove, to: trigger, sends: "approved catalyst dates", when: "on change", mode: "live only"}
   - {from: catapprove, to: page, sends: "approved catalysts", when: "on event", mode: "live only"}
-  - {from: tail, to: trigger, sends: "VaR", when: "daily", mode: "backtest and live"}
-  - {from: tail, to: page, sends: "VaR, expected shortfall, catalyst-window VaR", when: "on event", mode: "backtest and live"}
+  - {from: tail, to: page, sends: "VaR, expected shortfall, the probability line, catalyst-window VaR", when: "on event", mode: "backtest and live"}
   - {from: tail, to: scoring, sends: "VaR, ES and the three ablation lines", when: "monthly", mode: "backtest only"}
   - {from: analogue, to: page, sends: "the five analogues, each marked apt or not", when: "on event", mode: "backtest and live"}
   # the page

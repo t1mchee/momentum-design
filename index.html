@@ -6,6 +6,9 @@
 <title>System design v2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.18.5/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.18.5/katex.min.js"></script>
+<script src="math.js"></script>
 <style>
   :root{--bg:#f6f5f1;--ink:#1f2328;--muted:#6b7280;--line:#c9c6bd;--card:#fff;
         --det:#4e7698;--model:#b5651d;--human:#9c8355;--data:#7a7a7a;--output:#2f7d5a;--open:#c62828;--placeholder:#9aa0a6;--edge:#9a9a9a}
@@ -88,6 +91,15 @@
   #history .close{position:absolute;top:10px;right:12px;border:0;background:none;font-size:18px;cursor:pointer;color:var(--muted)}
   #status{position:fixed;left:14px;bottom:10px;font-size:11px;color:var(--muted);background:#fff;padding:3px 8px;border:1px solid var(--line);border-radius:4px;z-index:5}
   #note{position:fixed;left:14px;top:54px;max-width:min(420px,calc(100vw - 40px));font-size:12px;color:var(--muted);background:#fffbe6;border:1px solid #e8d99a;padding:6px 10px;border-radius:4px;z-index:3;cursor:pointer}
+  /* formulas (KaTeX); a display formula is a left-aligned block inside the pre-wrap rule text */
+  .katex{font-size:1.06em}
+  .math-inline,.math-display{white-space:normal}
+  .math-inline{display:inline-block}
+  .node .math-inline{display:inline}
+  .math-display{display:block;padding:.3em 0 .3em 1.2em;overflow-x:auto;overflow-y:hidden}
+  .math-display .katex-display{margin:0;text-align:left}
+  .math-display .katex-display>.katex{text-align:left}
+  .node .katex{font-size:1em}
 </style>
 </head>
 <body>
@@ -148,6 +160,7 @@ function renderHistory(){
   const ent=(changelog.entries||[]).map(e=>`<div class="ce${e.version===cur?' cur':''}"><div class="cv"><a href="?spec=${esc(e.file)}">${esc(e.version)}</a> <span class="cd">${esc(e.date)}${e.commit?' · '+esc(e.commit):''}${e.status==='current'?' · current':''}</span></div><div class="cs">${esc(e.summary)}</div><div class="k">What changed</div>${list(e.changes)}<div class="k">Why</div><div class="cr">${esc(e.reasoning)}</div></div>`).join('');
   const pl=(changelog.planned||[]).length?`<div class="k" style="margin-top:18px">Planned</div>${list(changelog.planned)}`:'';
   document.getElementById('hbody').innerHTML=`<h2>History</h2><div class="cd">Click a version to load that snapshot. The live spec is spec.yaml.</div>${legendHTML()}${ent}${pl}`;
+  renderMath(document.getElementById('hbody'));
 }
 function toggleHistory(){document.getElementById('history').classList.toggle('open');}
 function esc(s){return String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
@@ -223,7 +236,7 @@ function focus(id){
   paths.forEach(p=>{const on=p.dataset.from===id||p.dataset.to===id; p.classList.toggle('on',on); p.setAttribute('marker-end',on?'url(#ahd)':'url(#ah)'); if(on){nb.add(p.dataset.from);nb.add(p.dataset.to);} document.getElementById('lab'+p.dataset.i).classList.toggle('show',false);});
   cards.forEach(c=>{c.classList.toggle('dim',!nb.has(c.dataset.id)); c.classList.toggle('sel',c.dataset.id===sel);});
 }
-function legendHTML(){ const L=(spec&&spec.meta&&spec.meta.legend)||null; const P=(spec&&spec.meta&&spec.meta.proof_of_concept)||null; const Q=(spec&&spec.meta&&spec.meta.problem)||null; let h=''; if(Q) h+='<div class="k" style="margin-top:14px">Problem</div><ul>'+Object.entries(Q).map(([k,v])=>'<li><b>'+esc(k)+'</b>: '+esc(String(v))+'</li>').join('')+'</ul>'; if(L) h+='<div class="k" style="margin-top:14px">Legend</div><ul>'+Object.entries(L).map(([k,v])=>'<li><b>'+esc(k)+'</b>: '+esc(String(v))+'</li>').join('')+'</ul>'; const SY=(spec&&spec.meta&&spec.meta.symbols)||null; if(SY) h+='<div class="k" style="margin-top:14px">Symbols</div><ul>'+Object.entries(SY).map(([k,v])=>'<li><code>'+esc(k)+'</code>: '+esc(String(v))+'</li>').join('')+'</ul>'; if(P){ const notes=P.path_notes||{}; const pathTxt=(P.path||[]).map(id=>notes[id]?esc(id)+' <span style="color:var(--muted)">('+esc(notes[id])+')</span>':esc(id)).join(', '); h+='<div class="k" style="margin-top:14px">Proof of concept</div><div>'+esc(P.hours||'')+'</div>'+(P.status?'<div style="margin-top:4px"><b>Status:</b> '+esc(P.status)+'</div>':'')+'<div style="margin-top:4px"><b>Path:</b> '+pathTxt+'</div><div style="margin-top:4px"><b>Produces:</b> '+esc(P.produces||'')+'</div><div style="margin-top:4px"><b>Deferred:</b> '+esc((P.deferred||[]).join(', '))+'</div>'+(P.described_only?'<div style="margin-top:4px"><b>Described only:</b> '+esc(P.described_only.join(', '))+'</div>':'')+'<div style="margin-top:4px"><b>Retired:</b> '+esc(spec.nodes.filter(n=>n.status==="retired").map(n=>n.id).join(', '))+'</div>'; } return h; }
+function legendHTML(){ const L=(spec&&spec.meta&&spec.meta.legend)||null; const P=(spec&&spec.meta&&spec.meta.proof_of_concept)||null; const Q=(spec&&spec.meta&&spec.meta.problem)||null; let h=''; if(Q) h+='<div class="k" style="margin-top:14px">Problem</div><ul>'+Object.entries(Q).map(([k,v])=>'<li><b>'+esc(k)+'</b>: '+esc(String(v))+'</li>').join('')+'</ul>'; if(L) h+='<div class="k" style="margin-top:14px">Legend</div><ul>'+Object.entries(L).map(([k,v])=>'<li><b>'+esc(k)+'</b>: '+esc(String(v))+'</li>').join('')+'</ul>'; const SY=(spec&&spec.meta&&spec.meta.symbols)||null; if(SY) h+='<div class="k" style="margin-top:14px">Symbols</div><ul>'+Object.entries(SY).map(([k,v])=>'<li><span class="sym">'+esc(k)+'</span>: '+esc(String(v))+'</li>').join('')+'</ul>'; if(P){ const notes=P.path_notes||{}; const pathTxt=(P.path||[]).map(id=>notes[id]?esc(id)+' <span style="color:var(--muted)">('+esc(notes[id])+')</span>':esc(id)).join(', '); h+='<div class="k" style="margin-top:14px">Proof of concept</div><div>'+esc(P.hours||'')+'</div>'+(P.status?'<div style="margin-top:4px"><b>Status:</b> '+esc(P.status)+'</div>':'')+'<div style="margin-top:4px"><b>Path:</b> '+pathTxt+'</div><div style="margin-top:4px"><b>Produces:</b> '+esc(P.produces||'')+'</div><div style="margin-top:4px"><b>Deferred:</b> '+esc((P.deferred||[]).join(', '))+'</div>'+(P.described_only?'<div style="margin-top:4px"><b>Described only:</b> '+esc(P.described_only.join(', '))+'</div>':'')+'<div style="margin-top:4px"><b>Retired:</b> '+esc(spec.nodes.filter(n=>n.status==="retired").map(n=>n.id).join(', '))+'</div>'; } return h; }
 function list(a){return (a&&a.length)?'<ul>'+a.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'<span style="color:var(--muted)">none</span>';}
 function showPanel(n){
   const ins=(spec.edges||[]).filter(e=>e.to===n.id&&!e.hidden), outs=(spec.edges||[]).filter(e=>e.from===n.id&&!e.hidden);
@@ -238,6 +251,7 @@ function showPanel(n){
   <div class="k">Inputs</div>${list(n.inputs)}<div class="k">Outputs</div>${list(n.outputs)}
   <div class="k">Checks</div>${list(n.checks)}<div class="k">On failure</div><div>${esc(n.on_failure||'')}</div>
   <div class="k">Open questions</div><div class="open">${list(n.open)}</div>`;
+  renderMath(document.getElementById('pbody'));
   document.getElementById('panel').classList.add('open');
 }
 function closePanel(){document.getElementById('panel').classList.remove('open');sel=null;focus();}

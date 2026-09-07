@@ -172,7 +172,7 @@ counts against C7.
 
 ### Notation
 
-Notation is plain ASCII in the spec and typeset in the memo. A line is added only where prose was
+Notation is LaTeX in the spec, rendered by KaTeX in the viewers, and typeset in the memo. A line is added only where prose was
 carrying a sum over a set, a product of signs, a regression, or a threshold built from other numbers.
 Every regression is written once, stating what is regressed on what, over which observations, and what
 is reported. A forward-return target is fitted only on observations whose target is realised on the

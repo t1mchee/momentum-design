@@ -1,7 +1,8 @@
 # System design v2, draft 10. Standalone (no base file). Draft 9 plus notation: a symbol table in the
 # legend, one line per regression, sum and sign rule where prose was carrying one, and four rule
-# corrections the lines exposed (see changelog). Formulas are plain ASCII: abs, sum, sign, 1[.] for an
-# indicator, corr, q95 for a 95th percentile.
+# corrections the lines exposed (see changelog). Formulas are LaTeX, rendered by KaTeX in the viewers:
+# $$...$$ on a line of its own for a display formula, $...$ inline; |x| for abs, \sum, \operatorname{sign},
+# \mathrm{corr}, \mathbf{1}[.] for an indicator, q_{95} for a 95th percentile.
 #
 # Fields per node: id, name, lane, kind (data | deterministic | model | human | output), status (settled |
 # retired), origin (v1 | v2), lookahead (clean | as-of | model | live-only | human), mitigation, access
@@ -16,7 +17,8 @@ meta:
   updated: "2026-09-07"
   problem:
     exposure: "the 12-1 momentum book: the top and bottom deciles of the Russell 3000 by return from twelve months before to one month before, value-weighted within each leg, dollar-neutral, rebuilt monthly"
-    event: "a ten-day return of the reconstructed book at or below its own unconditional 5% quantile on the history since December 2013: event_t = 1[R_{t,t+10} <= Q_0.05(R_{u,u+10}, Dec 2013 <= u <= t-10)]. The tail model forecasts that quantile conditionally; a page is scored against the unconditional one. The French factor's -432bp is the same quantile on the published factor over 1926 to 2022, printed as the long-run reference and used for the reversal record before December 2013, where no reconstructed book exists"
+    event: >-
+      a ten-day return of the reconstructed book at or below its own unconditional 5% quantile on the history since December 2013: $\text{event}_t = \mathbf{1}[R_{t,t+10} \le Q_{0.05}(R_{u,u+10},\ \text{Dec 2013} \le u \le t-10)]$. The tail model forecasts that quantile conditionally; a page is scored against the unconditional one. The French factor's -432bp is the same quantile on the published factor over 1926 to 2022, printed as the long-run reference and used for the reversal record before December 2013, where no reconstructed book exists
     horizon: "ten trading days, for every forecast on the page"
     user: "the PM running momentum, or the risk manager covering that book"
     decision: "whether and how much to hedge the book's exposure to the named theme before the next catalyst, and, once the event study on the vulnerable-name lists has run, which names to trim; the page gives the direction of the risk and the hedge, and the reader decides"
@@ -55,22 +57,33 @@ meta:
     seal: "a block of dates held back from all design work and opened once for a confirmatory test; the 2023-onward seal was opened in v1, so no unopened seal exists today."
     design tier: "a result measured on dates that were used to build the design; it is reported as in-sample and does not count as confirmatory."
     validation: "a component that scores another component and feeds nothing to the page; marked with its own shape on the canvas."
-    notation: "plain ASCII: abs, sum, sign, corr, 1[.] for an indicator, q95 for a 95th percentile of a history. Every regression is written once, stating what is regressed on what, over which observations, and what is reported; a forward-return target is fitted only on observations whose target is realised. The system has one residualisation, u, and named estimators and tests are named, not derived."
+    notation: >-
+      LaTeX, rendered by KaTeX in the viewers; a display formula stands on a line of its own. Conventions: $|x|$ for the absolute value, $\sum$, $\operatorname{sign}$, $\mathrm{corr}$, $\mathbf{1}[\cdot]$ for an indicator, $q_{95}$ for a 95th percentile of a history. Every regression is written once, stating what is regressed on what, over which observations, and what is reported; a forward-return target is fitted only on observations whose target is realised. The system has one residualisation, $u$, and named estimators and tests are named, not derived.
   symbols:
-    W, L: "the winner and loser legs"
-    w_i: "company i's position weight: cap_i / sum_W cap for i in W, and -cap_i / sum_L cap for i in L, so sum_W w_i = 1 and sum_L w_i = -1"
-    s_i: "the leg sign of company i: +1 in W, -1 in L"
-    m_t, x_st: "the market (S&P 500) return, and reference series s = 2..6 (ten-year yield change, WTI, the dollar, the credit spread, the mega-cap spread); 'the six reference series' means m and x_2..x_6"
-    r_it, u_it: "company i's daily return, and its residual from the one first-stage regression on the market, r_it = a_i + b_i m_t + u_it over the trailing 126 days"
-    Sigma, lambda_k, v_k, v_ik: "the Ledoit-Wolf covariance of u over the book's companies; its k-th eigenvalue and eigenvector; company i's loading on component k"
-    f_kt, sigma_k: "component k's daily return, f_kt = sum_i v_ik u_it, and its ten-day sigma, sqrt(10) times the sd of f_k over the window"
-    beta_ik: "the 126-day beta of u_i on f_k for a company outside the component set; for a set company the loading v_ik is the same beta under Sigma, which is why set companies use v and found companies use beta"
-    S_s: "the book's spread exposure to series s, sum_i w_i beta_is, with beta_is the slope of u_i on x_st (or of r_i on m_t for the market)"
-    VS_k: "the book's variance share on component k, lambda_k (w'v_k)^2 / (w' Sigma w)"
-    E_e: "the excess quote weight of worry-list entry e, the book's aligned quote weight on e minus the placebo weight from the random portfolios"
-    O: "the positioning overlap: the share of theme companies' book weight that is in the crowded quintile, per leg"
-    B_t: "the bear state: 1 if the trailing 24-month market return is negative"
-    R_{t,t+10}, Q_tau, VaR_t: "the book's ten-day forward return; its tau-quantile; the tail model's conditional 5% quantile forecast on day t, a return, so negative"
+    '$W, L$': "the winner and loser legs"
+    '$w_i$': >-
+      company $i$'s position weight: $\mathrm{cap}_i / \sum_W \mathrm{cap}$ for $i$ in $W$, and $-\mathrm{cap}_i / \sum_L \mathrm{cap}$ for $i$ in $L$, so $\sum_W w_i = 1$ and $\sum_L w_i = -1$
+    '$s_i$': "the leg sign of company $i$: +1 in $W$, -1 in $L$"
+    '$m_t, x_{st}$': >-
+      the market (S&P 500) return, and reference series $s = 2, \dots, 6$ (ten-year yield change, WTI, the dollar, the credit spread, the mega-cap spread); 'the six reference series' means $m$ and $x_2, \dots, x_6$
+    '$r_{it}, u_{it}$': >-
+      company $i$'s daily return, and its residual from the one first-stage regression on the market, $r_{it} = a_i + b_i m_t + u_{it}$ over the trailing 126 days
+    '$\Sigma, \lambda_k, v_k, v_{ik}$': >-
+      the Ledoit-Wolf covariance of $u$ over the book's companies; its $k$-th eigenvalue and eigenvector; company $i$'s loading on component $k$
+    '$f_{kt}, \sigma_k$': >-
+      component $k$'s daily return, $f_{kt} = \sum_i v_{ik} u_{it}$, and its ten-day sigma, $\sqrt{10}$ times the sd of $f_k$ over the window
+    '$\beta_{ik}$': >-
+      the 126-day beta of $u_i$ on $f_k$ for a company outside the component set; for a set company the loading $v_{ik}$ is the same beta under $\Sigma$, which is why set companies use $v$ and found companies use $\beta$
+    '$S_s$': >-
+      the book's spread exposure to series $s$, $\sum_i w_i \beta_{is}$, with $\beta_{is}$ the slope of $u_i$ on $x_{st}$ (or of $r_i$ on $m_t$ for the market)
+    '$\mathrm{VS}_k$': >-
+      the book's variance share on component $k$, $\lambda_k (w'v_k)^2 / (w' \Sigma w)$
+    '$E_e$': >-
+      the excess quote weight of worry-list entry $e$, the book's aligned quote weight on $e$ minus the placebo weight from the random portfolios
+    '$O$': "the positioning overlap: the share of theme companies' book weight that is in the crowded quintile, per leg"
+    '$B_t$': "the bear state: 1 if the trailing 24-month market return is negative"
+    '$R_{t,t+10}, Q_\tau, \mathrm{VaR}_t$': >-
+      the book's ten-day forward return; its $\tau$-quantile; the tail model's conditional 5% quantile forecast on day $t$, a return, so negative
   proof_of_concept:
     hours: "about twenty for the whole project. The path below is the part of the design that runs today on public, as-of data."
     status: "planned; as of the memo date no v2 component has run"
@@ -142,7 +155,7 @@ nodes:
       - "six daily series"
       - "the bear state"
     rule: |
-      The six reference series, with units: the S&P 500 return; the change in the ten-year Treasury yield in basis points; the front-month WTI return; the return of the Fed's broad dollar index (FRED); the change in the ICE BofA US corporate option-adjusted spread in basis points (FRED); and the return of the ten largest Russell 3000 companies minus the return of the equal-weighted Russell 3000, constructed from Russell 3000 holdings. The six are fixed. Its six percentiles are one family: a series is called unusual only above the 99.2nd percentile of its own history (1 - 0.05/6 = 0.992), which is the 95th adjusted for six series. Adding a series requires re-registering the family. The bear state, after Daniel and Moskowitz, is B_t = 1[trailing 24-month S&P 500 return < 0], printed with the trailing 126-day market variance. Two cross-asset principal components are retired because their moves lacked clear economic meaning on the page.
+      The six reference series, with units: the S&P 500 return; the change in the ten-year Treasury yield in basis points; the front-month WTI return; the return of the Fed's broad dollar index (FRED); the change in the ICE BofA US corporate option-adjusted spread in basis points (FRED); and the return of the ten largest Russell 3000 companies minus the return of the equal-weighted Russell 3000, constructed from Russell 3000 holdings. The six are fixed. Its six percentiles are one family: a series is called unusual only above the 99.2nd percentile of its own history (\(1 - 0.05/6 = 0.992\)), which is the 95th adjusted for six series. Adding a series requires re-registering the family. The bear state, after Daniel and Moskowitz, is $B_t = \mathbf{1}[\text{trailing 24-month S\&P 500 return} < 0]$, printed with the trailing 126-day market variance. Two cross-asset principal components are retired because their moves lacked clear economic meaning on the page.
     checks:
       - "the family adjustment is applied to every percentile printed for the six"
     on_failure: the series is left off the page, with a note naming it
@@ -207,7 +220,7 @@ nodes:
       - "positioning score per name, with the longest input lag"
       - "short interest per name"
     rule: |
-      Each company in the book gets a positioning score from two inputs, each converted to a rank within the company's leg. The first is comomentum: the mean over the other companies j in i's leg of corr(u_i, u_j) over the trailing 126 trading days, on the market-residual returns u (PUBLIC, from returns). The second is 13F crowding: the number of momentum-style filers holding the company, where a momentum-style filer is one whose holdings, value-weighted, have an average 12-1 rank in the universe's top decile as of the filing quarter (PUBLIC, 45-day lag). The score is the mean of the two ranks. Heavily positioned means the top quintile of the score within each leg of the book. For companies outside the book the same two inputs are ranked within the universe, and the universe's top quintile by that score is the second search scope for propagation. On the loser leg 13F crowding counts long holders, so it measures long crowding in a short; short interest (PUBLIC, two-week lag) is the short-side measure and is printed beside the score without entering it. Because of the 45-day lag, the score understates crowding while it is building and overstates it after the unwind has begun, so both vulnerable-name lists lag: companies join them late and leave them late. Production feeds, each printed as a separate line when present: securities-lending utilisation (LICENSED), options open interest (PUBLIC, delayed), ETF flows (PUBLIC), prime-broker aggregate colour and per-company positioning (DESK-ONLY, not available to us now). Because the inputs arrive with different lags, the longest of those lags is shown next to the score wherever the score appears.
+      Each company in the book gets a positioning score from two inputs, each converted to a rank within the company's leg. The first is comomentum: the mean over the other companies $j$ in $i$'s leg of $\mathrm{corr}(u_i, u_j)$ over the trailing 126 trading days, on the market-residual returns $u$ (PUBLIC, from returns). The second is 13F crowding: the number of momentum-style filers holding the company, where a momentum-style filer is one whose holdings, value-weighted, have an average 12-1 rank in the universe's top decile as of the filing quarter (PUBLIC, 45-day lag). The score is the mean of the two ranks. Heavily positioned means the top quintile of the score within each leg of the book. For companies outside the book the same two inputs are ranked within the universe, and the universe's top quintile by that score is the second search scope for propagation. On the loser leg 13F crowding counts long holders, so it measures long crowding in a short; short interest (PUBLIC, two-week lag) is the short-side measure and is printed beside the score without entering it. Because of the 45-day lag, the score understates crowding while it is building and overstates it after the unwind has begun, so both vulnerable-name lists lag: companies join them late and leave them late. Production feeds, each printed as a separate line when present: securities-lending utilisation (LICENSED), options open interest (PUBLIC, delayed), ETF flows (PUBLIC), prime-broker aggregate colour and per-company positioning (DESK-ONLY, not available to us now). Because the inputs arrive with different lags, the longest of those lags is shown next to the score wherever the score appears.
     checks:
       - "longest input lag printed"
     on_failure: the score and the two lists of vulnerable names are omitted, with a note on the page
@@ -230,9 +243,10 @@ nodes:
       - "sector ETF implied move, in per cent"
       - "the hedge line: instrument, notional per $100m of book, and ten-day premium in bp of book"
     rule: |
-      The comparison for the catalyst-window increase in VaR is the component set's implied ten-day move. Each component company's implied earnings move m_e,i (LICENSED for history through OptionMetrics; PUBLIC delayed data for the live date) is a one-day move; it is restated over ten days by adding the company's implied variance over the other nine days, with sigma30 the annualised 30-day implied volatility:
-        m10_i = sqrt(m_e,i^2 + 9 sigma30_i^2 / 252)
-        set move = sum_{i in set} abs(v_ik) m10_i / sum_{i in set} abs(v_ik) The implied ten-day move of the sector ETF that holds the largest share of the component set's weight is printed beside it as the implied move of the hedge instrument (PUBLIC, delayed). The hedge line names the instrument: the sector ETF, or the driving series' instrument when the bridge puts macro exposure first. It gives the notional per $100m of book, from the book's 126-day beta to the instrument, and the ten-day at-the-money put premium in bp of book (PUBLIC, delayed; illustrative where no history exists). The comparison is for the component companies only; there is no book-level implied volatility. Where the history is missing, the comparison is marked illustrative and the hedge line is left off. The VaR itself is unchanged, so nothing is biased.
+      The comparison for the catalyst-window increase in VaR is the component set's implied ten-day move. Each component company's implied earnings move $m_{e,i}$ (LICENSED for history through OptionMetrics; PUBLIC delayed data for the live date) is a one-day move; it is restated over ten days by adding the company's implied variance over the other nine days, with $\sigma_{30}$ the annualised 30-day implied volatility:
+        $$m_{10,i} = \sqrt{m_{e,i}^2 + 9\,\sigma_{30,i}^2 / 252}$$
+        $$\text{set move} = \frac{\sum_{i \in \text{set}} |v_{ik}|\, m_{10,i}}{\sum_{i \in \text{set}} |v_{ik}|}$$
+      The implied ten-day move of the sector ETF that holds the largest share of the component set's weight is printed beside it as the implied move of the hedge instrument (PUBLIC, delayed). The hedge line names the instrument: the sector ETF, or the driving series' instrument when the bridge puts macro exposure first. It gives the notional per $100m of book, from the book's 126-day beta to the instrument, and the ten-day at-the-money put premium in bp of book (PUBLIC, delayed; illustrative where no history exists). The comparison is for the component companies only; there is no book-level implied volatility. Where the history is missing, the comparison is marked illustrative and the hedge line is left off. The VaR itself is unchanged, so nothing is biased.
     checks: []
     on_failure: the comparison is marked illustrative
     open: []
@@ -276,7 +290,7 @@ nodes:
       - "leg sizes and cap profile"
       - "book returns"
     rule: |
-      On each formation date, the last trading day of the month, the rule ranks every company on its return from twelve months before to one month before, skipping the latest month; the top decile is held long and the bottom decile short. Within each leg companies are value-weighted, the legs are dollar-neutral, and the book return is the winner return minus the loser return: w_i = cap_i / sum_W cap for i in W and -cap_i / sum_L cap for i in L, so sum_W w_i = 1 and sum_L w_i = -1, and R_t = sum_i w_i r_it. Formation and rebalance coincide; the book is rebuilt monthly and measured daily. The position-weight vector w, positive for winners and negative for losers, is the input to every book-level statistic. The page prints value-weighted numbers, because mega-cap concentration is the theme most often monitored; equal-weighted versions are computed and kept in the appendix. The decomposition runs on both legs together, and every statistic is also reported for each leg separately.
+      On each formation date, the last trading day of the month, the rule ranks every company on its return from twelve months before to one month before, skipping the latest month; the top decile is held long and the bottom decile short. Within each leg companies are value-weighted, the legs are dollar-neutral, and the book return is the winner return minus the loser return: $w_i = \mathrm{cap}_i / \sum_W \mathrm{cap}$ for $i$ in $W$ and $-\mathrm{cap}_i / \sum_L \mathrm{cap}$ for $i$ in $L$, so $\sum_W w_i = 1$ and $\sum_L w_i = -1$, and $R_t = \sum_i w_i r_{it}$. Formation and rebalance coincide; the book is rebuilt monthly and measured daily. The position-weight vector $w$, positive for winners and negative for losers, is the input to every book-level statistic. The page prints value-weighted numbers, because mega-cap concentration is the theme most often monitored; equal-weighted versions are computed and kept in the appendix. The decomposition runs on both legs together, and every statistic is also reported for each leg separately.
     checks:
       - "leg sizes and the cap profile are logged"
     on_failure: the previous month's book is used, with a note at the top of the page
@@ -345,10 +359,11 @@ nodes:
       - "the same spreads on each random portfolio"
     rule: |
       One first-stage regression gives the residual used throughout the design, and one slope per company and series gives the exposure, both over the trailing 126 trading days:
-        r_it = a_i + b_i m_t + u_it
-        u_it = a + beta_is x_st + e_it   for s = 2..6;   r_it = a + beta_i1 m_t + e_it   for the market
-        S_s = sum_i w_i beta_is
-      The raw slope of r_it on x_st is kept in the appendix. S_s is measured twice: over the window ending at formation (the conferred exposure) and over the same window ending at the next formation, on the same companies (the carried exposure). If an exposure is conferred but not carried, the ranking selected it and the book lost it during the holding period. The same spreads are computed on each random portfolio and on the book ranked 24 months earlier, which is printed beside the book's as the control for persistent company characteristics.
+        $$r_{it} = a_i + b_i m_t + u_{it}$$
+        $$u_{it} = a + \beta_{is} x_{st} + e_{it} \quad \text{for } s = 2, \dots, 6$$
+        $$r_{it} = a + \beta_{i1} m_t + e_{it} \quad \text{for the market}$$
+        $$S_s = \sum_i w_i \beta_{is}$$
+      The raw slope of $r_{it}$ on $x_{st}$ is kept in the appendix. $S_s$ is measured twice: over the window ending at formation (the conferred exposure) and over the same window ending at the next formation, on the same companies (the carried exposure). If an exposure is conferred but not carried, the ranking selected it and the book lost it during the holding period. The same spreads are computed on each random portfolio and on the book ranked 24 months earlier, which is printed beside the book's as the control for persistent company characteristics.
     checks:
       - "sign stability across weighting, rebalance date, universe and window is reported in the appendix"
     on_failure: the series is left off the page
@@ -411,7 +426,7 @@ nodes:
       - "shrunk covariance matrix over the book's names"
       - "shrunk covariance matrix over each random portfolio's names"
     rule: |
-      Sigma = LedoitWolf(u) over the book's companies, with u the first-stage residual from the sensitivities node over the 126 days ending at formation, and the constant-correlation target. Shrinkage is needed because about 600 companies against 126 days would otherwise give a rank-deficient matrix. Sector returns are not removed, because a theme is often expressed through a sector and removing it would hide, for example, a memory-chip theme inside the semiconductor sector. The same matrix is estimated for each random portfolio.
+      $\Sigma = \operatorname{LedoitWolf}(u)$ over the book's companies, with $u$ the first-stage residual from the sensitivities node over the 126 days ending at formation, and the constant-correlation target. Shrinkage is needed because about 600 companies against 126 days would otherwise give a rank-deficient matrix. Sector returns are not removed, because a theme is often expressed through a sector and removing it would hide, for example, a memory-chip theme inside the semiconductor sector. The same matrix is estimated for each random portfolio.
     checks:
       - "the condition number is printed"
     on_failure: the decomposition is not run this period, with a note on the page
@@ -440,12 +455,12 @@ nodes:
       - "price-correlated names"
       - "per random portfolio: its component set with loadings"
     rule: |
-      The number of components kept, K <= 3, is the number of eigenvalues of the sample correlation matrix of u that exceed the Marchenko-Pastur edge (1 + sqrt(N/T))^2, with N companies and T = 126 days; the components are the first K eigenvectors v_k of Sigma. If K = 0, naming does not run, with a note on the page that no co-movement rises above noise.
-        VS_k = lambda_k (w'v_k)^2 / (w' Sigma w)
-      VS_k is the share of the position-weighted book's variance due to the component, as distinct from the share of company-level variance. It is printed with its percentile against the same statistic on the random portfolios, each decomposed the same way. The sign of v_k is fixed so that w'v_k > 0: the component's position-weighted return is positive and a reversal is a negative f_k. The component set is the top quartile of companies by abs(v_ik), each keeping the sign of its loading. The case flag uses each leg's weighted mean loading:
-        m_W = sum_W abs(w_i) v_ik / sum_W abs(w_i),   m_L likewise
-        factor  iff  sign(m_W) != sign(m_L)  and  min(abs(m_W), abs(m_L)) > 0.5 rms(v_k)
-      A factor component enters the tail model as a state indicator; otherwise the component is a theme. A theme the sort has fully aligned with, where the winners are its beneficiaries and the losers its victims, has the same loading pattern as the factor and is treated as the factor. The flag decides only how the component enters the tail model; naming still runs on it, and its label is printed as a diagnostic. The named component is the highest-variance component flagged as a theme, or the first component if all are flagged factor. Price-correlated companies are companies outside the component set with abs(corr(u_i, f_k)) > min over j in the set of abs(corr(u_j, f_k)) over the window; the share of book weight in them is a regressor in the tail model. As a diagnostic, each leg is decomposed separately and its first component printed beside the joint one. Each random portfolio's component set and loadings are kept for the text placebo.
+      The number of components kept, $K \le 3$, is the number of eigenvalues of the sample correlation matrix of $u$ that exceed the Marchenko-Pastur edge $(1 + \sqrt{N/T})^2$, with $N$ companies and $T = 126$ days; the components are the first $K$ eigenvectors $v_k$ of $\Sigma$. If $K = 0$, naming does not run, with a note on the page that no co-movement rises above noise.
+        $$\mathrm{VS}_k = \frac{\lambda_k (w' v_k)^2}{w' \Sigma w}$$
+      $\mathrm{VS}_k$ is the share of the position-weighted book's variance due to the component, as distinct from the share of company-level variance. It is printed with its percentile against the same statistic on the random portfolios, each decomposed the same way. The sign of $v_k$ is fixed so that $w'v_k > 0$: the component's position-weighted return is positive and a reversal is a negative $f_k$. The component set is the top quartile of companies by $|v_{ik}|$, each keeping the sign of its loading. The case flag uses each leg's weighted mean loading:
+        $m_W = \sum_W |w_i|\, v_{ik} / \sum_W |w_i|$,   $m_L$ likewise
+        factor  iff  $\operatorname{sign}(m_W) \ne \operatorname{sign}(m_L)$  and  $\min(|m_W|, |m_L|) > 0.5\,\operatorname{rms}(v_k)$
+      A factor component enters the tail model as a state indicator; otherwise the component is a theme. A theme the sort has fully aligned with, where the winners are its beneficiaries and the losers its victims, has the same loading pattern as the factor and is treated as the factor. The flag decides only how the component enters the tail model; naming still runs on it, and its label is printed as a diagnostic. The named component is the highest-variance component flagged as a theme, or the first component if all are flagged factor. Price-correlated companies are companies outside the component set with $|\mathrm{corr}(u_i, f_k)| > \min_{j \in \text{set}} |\mathrm{corr}(u_j, f_k)|$ over the window; the share of book weight in them is a regressor in the tail model. As a diagnostic, each leg is decomposed separately and its first component printed beside the joint one. Each random portfolio's component set and loadings are kept for the text placebo.
     checks:
       - "the Jaccard overlap of the component set with the previous month's set is printed; below 0.5 the component is flagged unstable"
       - "percentile against random portfolios"
@@ -469,8 +484,8 @@ nodes:
       - "which statistic is printed first"
     rule: |
       The bridge regression, over the 126 days ending at formation:
-        f_kt = a + sum_{s=2..6} g_ks x_st + e_t
-      The market is not a regressor, because f_k is built from market residuals and its market coefficient would be zero by construction; R2_k is this regression's R-squared. If R2_k of the named component is high, a named macro series (rates, oil) already explains the component and the text pipeline can only confirm it. If it is low, only the text pipeline can supply a label. When R2_k of the named component is above 0.5, the page opens with the driving-series exposure and prints the theme label as confirmation; below 0.5 it opens with the theme. The same regression on each random portfolio's named component gives the reference distribution of R2.
+        $$f_{kt} = a + \sum_{s=2}^{6} g_{ks} x_{st} + e_t$$
+      The market is not a regressor, because $f_k$ is built from market residuals and its market coefficient would be zero by construction; $R^2_k$ is this regression's R-squared. If $R^2_k$ of the named component is high, a named macro series (rates, oil) already explains the component and the text pipeline can only confirm it. If it is low, only the text pipeline can supply a label. When $R^2_k$ of the named component is above 0.5, the page opens with the driving-series exposure and prints the theme label as confirmation; below 0.5 it opens with the theme. The same regression on each random portfolio's named component gives the reference distribution of $R^2$.
     checks:
       - "the reference distribution of R-squared from the random portfolios"
     on_failure: the theme is printed first by default
@@ -533,7 +548,7 @@ nodes:
       - "embedding space with a reference point per list entry, news clusters, and an assignment distance"
       - "news weight per entry"
     rule: |
-      The encoder is a masked language model with one version per calendar year, each trained only on text before that year, mean-pooled over tokens to give sentence vectors and fine-tuned for sentence similarity on pre-cutoff text; the current model is used for the live date. The bias is one-sided. Because the current model has learned associations unavailable to historical encoders, it assigns more live quotes to entries. Live theme statistics are therefore higher than the backtest's for the same text. The news paraphrases over the rolling twelve-month window are embedded and clustered with HDBSCAN at a minimum cluster size of 25, so that each dense cluster is a macro topic under discussion; each cluster is labelled with its top keywords. Each list entry gets a reference point: the entry's phrase embedding seeds a search for its 50 nearest news statements, and their centroid replaces it, because a three-word phrase and a forty-word sentence do not embed on the same scale. The assignment distance d* is the 90th percentile of member-to-centroid distance across the news clusters, and the news weight of entry e is NW_e = #{news statements q : d(q, ref_e) <= d*}. The space is rebuilt weekly and every quote in the window is re-assigned at each rebuild. An entry with no news within the distance is printed as having no news weight. The whole procedure is run once more with no list, and if the largest cluster by quote weight differs from the leading entry, both are printed. The comparator is BM25 retrieval: each entry's phrase plus its top 20 c-TF-IDF terms as the query, over the paraphrases; agreement is the share of quotes both methods assign to the same entry.
+      The encoder is a masked language model with one version per calendar year, each trained only on text before that year, mean-pooled over tokens to give sentence vectors and fine-tuned for sentence similarity on pre-cutoff text; the current model is used for the live date. The bias is one-sided. Because the current model has learned associations unavailable to historical encoders, it assigns more live quotes to entries. Live theme statistics are therefore higher than the backtest's for the same text. The news paraphrases over the rolling twelve-month window are embedded and clustered with HDBSCAN at a minimum cluster size of 25, so that each dense cluster is a macro topic under discussion; each cluster is labelled with its top keywords. Each list entry gets a reference point: the entry's phrase embedding seeds a search for its 50 nearest news statements, and their centroid replaces it, because a three-word phrase and a forty-word sentence do not embed on the same scale. The assignment distance $d^*$ is the 90th percentile of member-to-centroid distance across the news clusters, and the news weight of entry $e$ is $\mathrm{NW}_e = \#\{\text{news statements } q : d(q, \mathrm{ref}_e) \le d^*\}$. The space is rebuilt weekly and every quote in the window is re-assigned at each rebuild. An entry with no news within the distance is printed as having no news weight. The whole procedure is run once more with no list, and if the largest cluster by quote weight differs from the leading entry, both are printed. The comparator is BM25 retrieval: each entry's phrase plus its top 20 c-TF-IDF terms as the query, over the paraphrases; agreement is the share of quotes both methods assign to the same entry.
     checks:
       - "news weight per entry is printed"
       - "the share of quotes beyond the distance from every entry is printed"
@@ -630,15 +645,15 @@ nodes:
       - "the theme's excess quote weight by leg, on both series"
       - "the book-effect split of the theme's quotes"
     rule: |
-      Each paraphrase is embedded with the pre-date encoder and assigned to the nearest list entry within the assignment distance d*. Quotes beyond d* from every entry are clustered among themselves with the same HDBSCAN settings, and each of those residual clusters is labelled separately. A document's quotes stay current until the same company files the next document on the same layer; there is no time decay. Each quote q from company i(q), with company sign c_q (-1 if the company loses when the risk hits, +1 if it gains), gets two tags:
-        book effect  b_q = s_i(q) c_q          (-1: the book loses if the risk materialises)
-        aligned      iff  c_q sign(v_i(q)k) = -1   (the risk moves the company the same way a reversal would)
+      Each paraphrase is embedded with the pre-date encoder and assigned to the nearest list entry within the assignment distance $d^*$. Quotes beyond $d^*$ from every entry are clustered among themselves with the same HDBSCAN settings, and each of those residual clusters is labelled separately. A document's quotes stay current until the same company files the next document on the same layer; there is no time decay. Each quote $q$ from company $i(q)$, with company sign $c_q$ (-1 if the company loses when the risk hits, +1 if it gains), gets two tags:
+        book effect  $b_q = s_{i(q)}\, c_q$          (-1: the book loses if the risk materialises)
+        aligned      iff  $c_q \operatorname{sign}(v_{i(q)k}) = -1$   (the risk moves the company the same way a reversal would)
       Only aligned quotes count toward a component's theme weight; an unaligned quote is evidence of a different theme. The weights on both sides use the distilled classifier's records:
-        Q_e = sum of abs(v_i(q)k) over aligned quotes q assigned to e, by leg
-        P_e = the mean of the same over the random portfolios' component sets, each weighted by its own loadings
-        E_e = Q_e - P_e
-        theme = argmax_e E_e   if  E_e > q95(max_e E_e over the random sets),  else none
-      A boilerplate risk that every company lists therefore shows zero excess weight. The top three entries are printed with their excess weights, and if the runner-up's E_e is within 10% of the first's, both are printed and the first is treated as the theme. A residual cluster competes on the same footing, with its placebo weight being the weight of random-set quotes that fall into the same cluster. The book-effect split, the share of the theme's quote weight with b_q = -1, is printed beside the theme. Everything in this node is computed on both text runs.
+        $Q_e = \sum |v_{i(q)k}|$ over aligned quotes $q$ assigned to $e$, by leg
+        $P_e$ = the mean of the same over the random portfolios' component sets, each weighted by its own loadings
+        $E_e = Q_e - P_e$
+        theme $= \arg\max_e E_e$   if  $E_e > q_{95}(\max_e E_e \text{ over the random sets})$,  else none
+      A boilerplate risk that every company lists therefore shows zero excess weight. The top three entries are printed with their excess weights, and if the runner-up's $E_e$ is within 10% of the first's, both are printed and the first is treated as the theme. A residual cluster competes on the same footing, with its placebo weight being the weight of random-set quotes that fall into the same cluster. The book-effect split, the share of the theme's quote weight with $b_q = -1$, is printed beside the theme. Everything in this node is computed on both text runs.
     checks:
       - "placebo weight per entry"
       - "the share of quotes in residual clusters"
@@ -719,9 +734,9 @@ nodes:
       - "the loss in basis points if the component returns minus two sigma over ten days"
       - "the agreement line"
     rule: |
-      Two statistics are printed, each beside its random-portfolio comparison. The first is VS_k for the named component, with its percentile. The second is the loss share, the share of book weight in companies that lose if the theme reverses, and its value in basis points of book:
-        L_leg = sum abs(w_i) over set companies with s_i sign(v_ik) > 0, plus found in-book companies j with s_j sign(beta_jk) > 0
-        bp loss = -2 sigma_k ( sum_{i in set} w_i v_ik + sum_{j found} w_j beta_jk )
+      Two statistics are printed, each beside its random-portfolio comparison. The first is $\mathrm{VS}_k$ for the named component, with its percentile. The second is the loss share, the share of book weight in companies that lose if the theme reverses, and its value in basis points of book:
+        $L_{\text{leg}} = \sum |w_i|$ over set companies with $s_i \operatorname{sign}(v_{ik}) > 0$, plus found in-book companies $j$ with $s_j \operatorname{sign}(\beta_{jk}) > 0$
+        bp loss $= -2\sigma_k \big( \sum_{i \in \text{set}} w_i v_{ik} + \sum_{j\ \text{found}} w_j \beta_{jk} \big)$
       The bp loss is net: set companies that gain on a reversal offset those that lose. Theme companies outside the book have no weight in the book and do not enter either line; they appear only in the positioning overlap. The loss share is a page statistic and not a tail-model regressor, because once the theme is fixed it is price arithmetic. What the tail model takes from this node is the share of book weight, by leg, in in-book companies outside the component set that propagation found with the theme, computed on both text runs. The agreement line records whether the list entry with the most news weight and the component's theme label match. For a list entry this is a string match; for a residual cluster the second reader decides. The statistics are recomputed weekly from the event stream and monthly from the decomposition.
     checks:
       - "both placebo comparisons"
@@ -748,10 +763,10 @@ nodes:
       - "the non-overlap"
       - "off-book theme names in the universe's top positioning quintile"
     rule: |
-      T is the set of theme companies, the component set plus the companies found by propagation, and C is the crowded set, the top quintile of the positioning score within each leg of the book. Per leg:
-        O = sum_{i in T and C} abs(w_i) / sum_{i in T} abs(w_i)
-        N = sum_{i in C not T} abs(w_i) / sum_{i in C} abs(w_i)
-      Both are reported with their history since January 2014, when the reconstructed book begins. Theme companies outside the book have no leg; they are listed separately, with their universe positioning quintile. Whether hedge funds are mostly positioned on one theme is a claim, and the overlap history is the evidence for or against it: random assignment gives O = 0.2, and the claim is supported if the median of O since 2014 is above it.
+      $T$ is the set of theme companies, the component set plus the companies found by propagation, and $C$ is the crowded set, the top quintile of the positioning score within each leg of the book. Per leg:
+        $$O = \frac{\sum_{i \in T \cap C} |w_i|}{\sum_{i \in T} |w_i|}$$
+        $$N = \frac{\sum_{i \in C \setminus T} |w_i|}{\sum_{i \in C} |w_i|}$$
+      Both are reported with their history since January 2014, when the reconstructed book begins. Theme companies outside the book have no leg; they are listed separately, with their universe positioning quintile. Whether hedge funds are mostly positioned on one theme is a claim, and the overlap history is the evidence for or against it: random assignment gives $O = 0.2$, and the claim is supported if the median of $O$ since 2014 is above it.
     checks:
       - "the overlap history is printed"
       - "the history of the overlap statistic is kept"
@@ -775,9 +790,9 @@ nodes:
       - "the pre-catalyst list, by leg"
       - "the post-unwind list, by leg"
     rule: |
-      Two lists are produced, both drawn from companies that are heavily positioned and on the theme. With r_i,20 the company's trailing 20-day return, f_k,20 the component's, and sd20 the standard deviation of rolling 20-day returns over the trailing year (a different quantity from sigma_k):
-        pre-catalyst list:  r_i,20 sign(v_ik) sign(f_k,20) > sd20_i
-        post-unwind list:   abs(r_i,20) < sd20_i  and  abs(f_k,20) > sd20_k
+      Two lists are produced, both drawn from companies that are heavily positioned and on the theme. With $r_{i,20}$ the company's trailing 20-day return, $f_{k,20}$ the component's, and $\mathrm{sd}_{20}$ the standard deviation of rolling 20-day returns over the trailing year (a different quantity from $\sigma_k$):
+        pre-catalyst list:  $r_{i,20}\, \operatorname{sign}(v_{ik})\, \operatorname{sign}(f_{k,20}) > \mathrm{sd}_{20,i}$
+        post-unwind list:   $|r_{i,20}| < \mathrm{sd}_{20,i}$  and  $|f_{k,20}| > \mathrm{sd}_{20,k}$
       The first are the companies with the largest recent gain at risk; the second are the companies that have not yet fallen. Both lists are split by leg, because a crowded short that has not yet rallied during a squeeze is the most likely target of the next one. Neither list is printed until its event study in the validation lane has run.
     checks:
       - "the count and weight of each list are printed with their history"
@@ -813,14 +828,14 @@ nodes:
       - "the ablation sequence"
     rule: |
       The tail model is a quantile regression for the 5% quantile of the book's ten-day forward return:
-        Q_0.05(R_{t,t+10} | x_t) = x_t' theta
-      theta is fitted by quantile regression on formation days u <= t - 10, so that every target in the fit is realised. The regressors x_t enter by ablation step, and every step is reported on every run:
-        step 0   trailing volatility; B_t and B_t times market variance; the case flag; the catalyst-window indicator and days to the nearest catalyst; the GARCH forecast and the calendar baseline as controls
-        step 1   adds VS_k and the share of book weight in price-correlated companies
-        step 2a  adds E_e by leg and the found in-book company weight share, on the keyword run
+        $$Q_{0.05}(R_{t,t+10} \mid x_t) = x_t' \theta$$
+      $\theta$ is fitted by quantile regression on formation days $u \le t - 10$, so that every target in the fit is realised. The regressors $x_t$ enter by ablation step, and every step is reported on every run:
+        step 0   trailing volatility; $B_t$ and $B_t$ times market variance; the case flag; the catalyst-window indicator and days to the nearest catalyst; the GARCH forecast and the calendar baseline as controls
+        step 1   adds $\mathrm{VS}_k$ and the share of book weight in price-correlated companies
+        step 2a  adds $E_e$ by leg and the found in-book company weight share, on the keyword run
         step 2b  the same two on the model run, in place of 2a
-        step 3   adds O; this is the full model
-      The catalyst window is the ten sessions [T-5, T+5) around catalyst date T. In the backtest the catalysts are the scheduled macro releases and the component companies' earnings, where a company's earnings count only when the companies reporting inside the window together hold at least 10% of the component set's weight; live, the PM's approved catalysts are added. Outputs are the ten-day VaR and expected shortfall in bp of book, and the catalyst-window VaR with its increase, VaR(x_t) - VaR(x_t with the window indicator set to 0), which is the additional risk attributed to the catalyst. The comparison of 2b with 2a tests whether the language model's extraction, labelling and reranking add anything beyond a keyword rule run through the same embedding space; it does not test a rule against a model, since both runs are embedded by the same encoder. If step 2b does not beat step 2a by the registered margin, the memo reports that the language model adds nothing to identification beyond a keyword rule, and the keyword extractor takes its place in production. To show whether the quantile responds to the state variables, the breach rate is reported separately for each state: B_t on or off, case flag factor or theme, inside or outside a catalyst window.
+        step 3   adds $O$; this is the full model
+      The catalyst window is the ten sessions $[T-5, T+5)$ around catalyst date $T$. In the backtest the catalysts are the scheduled macro releases and the component companies' earnings, where a company's earnings count only when the companies reporting inside the window together hold at least 10% of the component set's weight; live, the PM's approved catalysts are added. Outputs are the ten-day VaR and expected shortfall in bp of book, and the catalyst-window VaR with its increase, $\mathrm{VaR}(x_t) - \mathrm{VaR}(x_t \text{ with the window indicator set to } 0)$, which is the additional risk attributed to the catalyst. The comparison of 2b with 2a tests whether the language model's extraction, labelling and reranking add anything beyond a keyword rule run through the same embedding space; it does not test a rule against a model, since both runs are embedded by the same encoder. If step 2b does not beat step 2a by the registered margin, the memo reports that the language model adds nothing to identification beyond a keyword rule, and the keyword extractor takes its place in production. To show whether the quantile responds to the state variables, the breach rate is reported separately for each state: $B_t$ on or off, case flag factor or theme, inside or outside a catalyst window.
     checks:
       - "prior result: v1's tail model, without the text regressors, breached 2 of 42 held-out forecasts"
       - "breach rate by state"
@@ -863,8 +878,8 @@ nodes:
     outputs:
       - "calendar baseline VaR"
     rule: |
-      This is the baseline that uses the calendar. For each catalyst window it makes 1,000 draws d of the book's window return:
-        R^(d) = sum_{i reporting} w_i r_i^ann,(d) + sum_{i other} w_i r_i^10,(d)
+      This is the baseline that uses the calendar. For each catalyst window it makes 1,000 draws $d$ of the book's window return:
+        $$R^{(d)} = \sum_{i\ \text{reporting}} w_i\, r_i^{\mathrm{ann},(d)} + \sum_{i\ \text{other}} w_i\, r_i^{10,(d)}$$
       where a reporting company contributes one of its last eight announcement returns, drawn at random, and every other company contributes one of its ten-day returns from the trailing year. When the window contains a macro release, the other companies' ten-day returns are drawn from the ten-day windows around the last eight releases of that type, not from the trailing year. The release therefore enters through the company returns and is not added a second time at book level. The 5th percentile of the draws is the baseline VaR. Outside a catalyst window the baseline is the 5th percentile of the book's ten-day returns over the trailing year. Any model given the earnings calendar will beat GARCH around scheduled events, so the tail model is required to beat this baseline as well.
     checks: []
     on_failure: n/a
@@ -958,9 +973,9 @@ nodes:
       - "the page type and its fields, with each field's change since the last page"
       - "hit, miss and silence counts"
     rule: |
-      A page is produced on either of two triggers. The calendar trigger produces one five sessions before each approved catalyst, with the catalyst-window VaR and its increase. The threshold trigger uses the own-history percentile p_kt of each of eight statistics (the ten-day VaR, with a larger loss at a higher percentile; VS_k of the named component; and S_1..S_6), and the maximum over them:
-        M_t = max_k p_kt;   threshold page  iff  M_t > q95(M_u, u < t)
-      The maximum's own 95th percentile is crossed on 5% of days, about one day a month, by construction, and the page shows which statistic crossed. Percentiles against random portfolios are context only and cannot trigger a page. If neither trigger fires, a weekly summary is produced. Every page shows each field's change since the last page. Every page has a resolution date: a calendar page resolves at the catalyst, a threshold page at the ten-day horizon. A hit is event_t = 1 (the problem block's definition) after a page; a miss is a page with event_t = 0; a silence is event_t = 1 with no page. The three are counted and printed monthly. A threshold page is justified if hits on page days exceed the 5% base rate, and the register states that rate. Weekly summaries are not scored. In production the page is kept current, pushed to the reader whenever it changes.
+      A page is produced on either of two triggers. The calendar trigger produces one five sessions before each approved catalyst, with the catalyst-window VaR and its increase. The threshold trigger uses the own-history percentile $p_{kt}$ of each of eight statistics (the ten-day VaR, with a larger loss at a higher percentile; $\mathrm{VS}_k$ of the named component; and $S_1, \dots, S_6$), and the maximum over them:
+        $M_t = \max_k p_{kt}$;   threshold page  iff  $M_t > q_{95}(M_u,\ u < t)$
+      The maximum's own 95th percentile is crossed on 5% of days, about one day a month, by construction, and the page shows which statistic crossed. Percentiles against random portfolios are context only and cannot trigger a page. If neither trigger fires, a weekly summary is produced. Every page shows each field's change since the last page. Every page has a resolution date: a calendar page resolves at the catalyst, a threshold page at the ten-day horizon. A hit is $\text{event}_t = 1$ (the problem block's definition) after a page; a miss is a page with $\text{event}_t = 0$; a silence is $\text{event}_t = 1$ with no page. The three are counted and printed monthly. A threshold page is justified if hits on page days exceed the 5% base rate, and the register states that rate. Weekly summaries are not scored. In production the page is kept current, pushed to the reader whenever it changes.
     checks:
       - "the measured false-page rate"
       - "hits, misses and silences, monthly"
@@ -1134,7 +1149,7 @@ nodes:
       - "breach rate and pinball loss per ablation step, against both baselines, per catalyst type"
       - "the catalyst-window increase against the implied move, where history exists"
     rule: |
-      Every formation month from December 2015 yields one unconditional VaR observation against realised ten-day book returns (about 130 observations). Months with catalysts yield one catalyst-window observation on the catalyst window's first day, selecting the nearest catalyst. Both VaR series, the unconditional and the catalyst-window, are scored, so the state-conditional breach rates and the threshold trigger's VaR are tested on the same observations as the catalyst-window VaR. The effective sample size is stated, and the power calculation is registered before the run. Each ablation step is scored on breach rate and pinball loss against the GARCH and calendar baselines, per catalyst type (earnings, macro release, and live unscheduled). A breach is 1[R_{t,t+10} <= VaR_t], with VaR_t a return quantile and so negative. Pinball loss is the scoring rule for a quantile forecast: a breach costs 0.95 times its size, and a non-breach costs 0.05 times the distance, rho(z) = z (0.05 - 1[z < 0]) with z the realised return minus the forecast, averaged over observations. The catalyst-window increase is compared with the component set's implied move where options history exists; otherwise the comparison is marked illustrative. The register row states the margins, proposed here and frozen before the run. At each step the breach rate must pass Kupiec's unconditional-coverage test at the 10% level, with the count and the acceptance range printed in the row (roughly 2% to 9% at 130 observations). The pinball loss must be at least 5% below each baseline's. Step 2b must reduce the pinball loss of step 2a by at least 2% for the language model to be judged to add anything. On months before the model's training cutoff the two text runs differ in extraction and naming only; reranking differences appear on post-cutoff months only, and that month count is printed.
+      Every formation month from December 2015 yields one unconditional VaR observation against realised ten-day book returns (about 130 observations). Months with catalysts yield one catalyst-window observation on the catalyst window's first day, selecting the nearest catalyst. Both VaR series, the unconditional and the catalyst-window, are scored, so the state-conditional breach rates and the threshold trigger's VaR are tested on the same observations as the catalyst-window VaR. The effective sample size is stated, and the power calculation is registered before the run. Each ablation step is scored on breach rate and pinball loss against the GARCH and calendar baselines, per catalyst type (earnings, macro release, and live unscheduled). A breach is $\mathbf{1}[R_{t,t+10} \le \mathrm{VaR}_t]$, with $\mathrm{VaR}_t$ a return quantile and so negative. Pinball loss is the scoring rule for a quantile forecast: a breach costs 0.95 times its size, and a non-breach costs 0.05 times the distance, $\rho(z) = z\,(0.05 - \mathbf{1}[z < 0])$ with $z$ the realised return minus the forecast, averaged over observations. The catalyst-window increase is compared with the component set's implied move where options history exists; otherwise the comparison is marked illustrative. The register row states the margins, proposed here and frozen before the run. At each step the breach rate must pass Kupiec's unconditional-coverage test at the 10% level, with the count and the acceptance range printed in the row (roughly 2% to 9% at 130 observations). The pinball loss must be at least 5% below each baseline's. Step 2b must reduce the pinball loss of step 2a by at least 2% for the language model to be judged to add anything. On months before the model's training cutoff the two text runs differ in extraction and naming only; reranking differences appear on post-cutoff months only, and that month count is printed.
     checks:
       - "register row with margin and power"
     on_failure: n/a

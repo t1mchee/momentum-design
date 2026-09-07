@@ -87,7 +87,8 @@ Live copies: https://t1mchee.github.io/momentum-design/ (index), `/levels.html`,
 
 ## 3a. Notation (draft 10)
 
-Draft 10 added a symbol table (`meta.symbols`) and one-line formulas in twelve nodes, per
+Draft 10 added a symbol table (`meta.symbols`) and one-line formulas in twelve nodes, written in LaTeX
+(`$$...$$` on its own line for a display formula, `$...$` inline; `meta.legend.notation` states the conventions), per
 `notation-for-draft10.md` as amended by `docs/reviews/notation-review-draft-10.md`. The rule for further
 notation is in `eval-rubric.md` section 6 under "Notation". Writing the lines exposed four faults in
 draft 9's rules, corrected in draft 10: the price-correlated rule needed absolute correlations; the
@@ -105,7 +106,8 @@ bridge regresses on series 2 to 6 only, since the market is removed at the first
 | `simple.yaml` | the 22-box map; `absorbs` lists per box; `sends` on edges |
 | `changelog.yaml` | one entry per draft, newest first: summary, changes, reasoning, status |
 | `versions/` | a snapshot per draft; `v1-baseline.yaml` is the first design as populated from the memo |
-| `index.html`, `levels.html`, `simple.html` | the viewers; CDN-loaded dagre and js-yaml; no build step |
+| `index.html`, `levels.html`, `simple.html` | the viewers; CDN-loaded dagre, js-yaml and KaTeX; no build step |
+| `math.js` | typesets the LaTeX formulas in the panels (`$$...$$` display, `$...$` inline); without KaTeX the raw text stands |
 | `eval-rubric.md` | the nine-category rubric with caps, procedure, sheet, calibration anchors and the writing standard |
 | `decisions-for-draft4.md`, `fixes-for-draft5.md`, `fixes-for-draft7.md`, `fixes-for-draft8.md` | the decision and fix lists that produced each draft; draft 8's header says what was and was not applied |
 | `check.py` | the consistency checker: structure fails, writing warns |

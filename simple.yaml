@@ -178,7 +178,7 @@ nodes:
       - "the three components: variance share with percentile, company sets with loadings, ten-day sigma, and which are above noise"
       - "component sets of the random portfolios"
       - "the hedge instrument and its slope"
-      - "which statistic is printed first"
+      - "R-squared per component and its largest series, for the page order"
     rule: |
       A Ledoit-Wolf shrunk covariance of the book's market-residual returns over 126 days is decomposed and its first three components kept. A component's statistic is the share of the residual book's variance it explains, printed with its percentile against the random portfolios; a component is above noise when it beats their 95th percentile, and a component whose company set has changed by a third or more since last month is not named that month. Its company set is the top quartile by absolute loading, and the sign is fixed so that a reversal is a negative component return. Sector returns are left in the covariance so that a theme inside a sector can be found; the placebo in the assignment box is what separates a theme from its sector. A regression of the component on the five non-market reference series gives the R-squared on which the page decides what it prints first: the driving-series exposure when the R-squared is above 0.5, the theme otherwise. Each candidate hedge instrument is residualised on the market the same way as the companies and the component is regressed on it; the instrument with the highest R-squared is the hedge, and its slope, the minimum-variance hedge ratio, sizes the hedge line. Each random portfolio is decomposed the same way.
     check: "the Jaccard overlap of the company set with the previous month's is printed; the condition number is printed"
@@ -289,6 +289,7 @@ nodes:
       - "daily returns, the point-in-time universe and the hedge instruments' returns"
       - "the hedge instrument and its slope"
       - "the calendar state and the standardised quantile per state"
+      - "window catalyst days"
     outputs:
       - "the book's variance share on the named component, with its percentile"
       - "the loss in basis points of book, by leg, if the component returns minus two sigma"
@@ -338,6 +339,7 @@ nodes:
       - "the catalyst-window VaR and its increase"
       - "the four ablation lines"
       - "the calendar state and the standardised quantile per state"
+      - "window catalyst days"
     rule: |
       A window catalyst is an FOMC decision, an earnings day on which the reporting companies hold at least 10% of the book's gross weight, a floor kept in the register, or an approved catalyst; a ten-day start is inside a window when the ten sessions it covers contain one. CPI, payrolls and rebalances appear on the page and do not open windows, since windows around every release would cover nearly every day; the count of starts in each state is printed each year. The tail model is the 5% quantile of the book's past ten-day returns, each divided by the book's volatility at the time, taken over past starts in the same state as today and multiplied by today's volatility; the expected shortfall is the mean of the returns at or below that quantile, scaled the same way, and the probability of the event is the share of those standardised returns at or below the unconditional threshold. There are no fitted parameters, and the page prints the non-overlapping observations behind each quantile. The three baseline lines are the same quantile with neither ingredient, with the state only and with the scaling only, so the ablation is four lines a reader can compute by hand. The bear state is not used; since 2013 it is on at almost no month-end. Text and positioning do not enter the model.
     check: "the four ablation lines; the number of window catalysts and starts in each state, per year"
@@ -401,16 +403,14 @@ nodes:
     absorbs: [eventrule]
     inputs:
       - "window catalyst days"
-      - "earnings dates, FOMC dates and listed releases"
-      - "the two legs and the position weights"
-      - "the book's variance share on the named component, with its percentile"
+      - "the three components: variance share with percentile, company sets with loadings, ten-day sigma, and which are above noise"
       - "per reference series: the exposure in hedgeable units and its own-history percentile"
       - "book returns"
     outputs:
       - "the page type and its fields, with each field's change since the last page"
       - "page dates and their outcomes"
     rule: |
-      A calendar page is produced five sessions before each window catalyst. A threshold page is produced on the day the maximum of seven own-history percentiles, the largest variance share among the components above noise and the six exposures, none of which reads text, crosses its own 95th percentile from below, so a run of days above the level gives one page; the VaR is not in the set, because a page it triggered would be scored against losses it already predicts. Otherwise a weekly summary is produced. The count of pages per year, by trigger, is printed. Every page resolves ten sessions after it is produced. A hit is a loss beyond the unconditional 5% quantile over those ten sessions; a miss is a page without one; a silence is such a loss over a span no page covered. The page dates and outcomes go to the scoring box, where the hit rate on threshold pages, one per crossing, is tested against the 5% base rate.
+      A calendar page is produced five sessions before each window catalyst. A threshold page is produced on the day the maximum of seven own-history percentiles, the largest variance share among the components above noise and the six exposures, crosses its own 95th percentile from below, so a run of days above the level gives one page. None of the seven reads text, so the trigger is clean; the VaR is not in the set, because a page it triggered would be scored against losses it already predicts. Otherwise a weekly summary is produced. The count of pages per year, by trigger, is printed. Every page resolves ten sessions after it is produced. A hit is a loss beyond the unconditional 5% quantile over those ten sessions; a miss is a page without one; a silence is such a loss over a span no page covered. The page dates and outcomes go to the scoring box, where the hit rate on threshold pages, one per crossing, is tested against the 5% base rate.
     check: "the count of pages per year, by type"
 
   - id: page
@@ -436,7 +436,7 @@ nodes:
       - "approved catalysts, with dates and types"
       - "earnings dates, FOMC dates and listed releases"
       - "the driving series and the leg that holds its exposure"
-      - "which statistic is printed first"
+      - "R-squared per component and its largest series, for the page order"
       - "the five nearest past formation dates, what followed over ten days, and whether each is apt"
       - "coverage by leg and by layer"
     outputs:
@@ -462,6 +462,7 @@ nodes:
       - "the probability of the event"
       - "the four ablation lines"
       - "the calendar state and the standardised quantile per state"
+      - "window catalyst days"
       - "book returns"
       - "page dates and their outcomes"
       - "the theme per component: a cluster or none, its excess weight by leg, its runner-up, and one quote per company, on both runs"
@@ -491,7 +492,6 @@ edges:
   - {from: market, to: themescore, sends: "the hedge instruments' returns", when: "daily", mode: "backtest and live"}
   - {from: market, to: tail, sends: "the calendars", when: "daily", mode: "backtest and live"}
   - {from: market, to: analogue, sends: "the reversal record and the bear state", when: "at rebalance", mode: "backtest and live"}
-  - {from: market, to: trigger, sends: "calendar catalyst dates", when: "daily", mode: "backtest and live"}
   - {from: market, to: page, sends: "listed releases and FOMC dates", when: "on event", mode: "backtest and live"}
   - {from: market, to: scoring, sends: "realised returns and the record", when: "monthly", mode: "backtest only"}
   - {from: market, to: crowding, sends: "daily returns", when: "daily", mode: "backtest and live"}
@@ -510,7 +510,7 @@ edges:
   - {from: sort, to: themescore, sends: "position weights and book returns", when: "at rebalance", mode: "backtest and live"}
   - {from: sort, to: crowding, sends: "the two legs and the position weights", when: "at rebalance", mode: "backtest and live"}
   - {from: sort, to: tail, sends: "book returns and weights", when: "daily", mode: "backtest and live"}
-  - {from: sort, to: trigger, sends: "weights, for the earnings floor, and realised returns", when: "daily", mode: "backtest and live"}
+  - {from: sort, to: trigger, sends: "realised returns, for the outcomes", when: "daily", mode: "backtest and live"}
   - {from: sort, to: analogue, sends: "book returns", when: "at rebalance", mode: "backtest and live"}
   - {from: sort, to: scoring, sends: "book returns", when: "monthly", mode: "backtest only"}
   - {from: random, to: decompose, sends: "the random portfolios", when: "at rebalance", mode: "backtest and live"}
@@ -522,7 +522,7 @@ edges:
   - {from: decompose, to: assign, sends: "components, loadings and the random sets", when: "at rebalance", mode: "backtest and live"}
   - {from: decompose, to: themescore, sends: "components, loadings, sigma and the hedge instrument", when: "at rebalance", mode: "backtest and live"}
   - {from: decompose, to: crowding, sends: "the component sets", when: "at rebalance", mode: "backtest and live"}
-  - {from: decompose, to: page, sends: "which statistic is printed first", when: "on event", mode: "backtest and live"}
+  - {from: decompose, to: page, sends: "R-squared per component and its largest series, for the page order", when: "on event", mode: "backtest and live"}
   - {from: worrylist, to: assign, sends: "list entries, as labels for clusters", when: "on change", mode: "live only"}
   - {from: context, to: assign, sends: "clusters, centroids and the assignment distance", when: "weekly", mode: "backtest and live"}
   - {from: context, to: propagate, sends: "the assignment distance and the theme's centroid", when: "weekly", mode: "backtest and live"}
@@ -547,7 +547,7 @@ edges:
   # severity and timing
   - {from: catalysts, to: catapprove, sends: "proposed catalysts, beside the comparator's", when: "daily", mode: "live only"}
   - {from: catapprove, to: tail, sends: "approved catalysts, which open windows", when: "on change", mode: "live only"}
-  - {from: catapprove, to: trigger, sends: "approved catalyst dates", when: "on change", mode: "live only"}
+  - {from: tail, to: trigger, sends: "window catalyst days", when: "daily", mode: "backtest and live"}
   - {from: catapprove, to: page, sends: "approved catalysts", when: "on event", mode: "live only"}
   - {from: tail, to: page, sends: "VaR, expected shortfall, the probability line, catalyst-window VaR", when: "on event", mode: "backtest and live"}
   - {from: tail, to: scoring, sends: "VaR, ES, the probability line, the ablation lines and the state", when: "monthly", mode: "backtest only"}

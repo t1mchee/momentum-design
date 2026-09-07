@@ -133,8 +133,9 @@ three_changes_that_would_raise_the_total_most: [ , , ]
 - A private term used without a definition at first use counts against C7 even if the reader can guess it.
 - An unrun test counts as a plan under C5, not as evidence. A test that has run counts only if its number is
   in the design.
-- A model step without a printed comparator caps C3 at 2. A model step with no look-ahead label caps C3 at 3.
-- A limitation without a direction of bias caps C8 at 2.
+- A model step whose output is printed or enters a claim needs a printed comparator; without one C3 is capped at 2. A live-only step needs a comparator from the day it goes live. A model step with no look-ahead label caps C3 at 3.
+- A limitation is any caveat on a number the page prints, including a labelled look-ahead and a coverage gap. A limitation without a direction of bias caps C8 at 2.
+- A registered pass band that a correctly calibrated model would fail more than 10% of the time counts as no band under C5.
 - If two categories seem to reward the same fact, credit it in the one where the brief names it and note
   the overlap.
 - When torn between two scores, take the lower one and say why in `weakest`.

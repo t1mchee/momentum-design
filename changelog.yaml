@@ -3,10 +3,32 @@
 # summary, changes (what), reasoning (why), status (done | current | planned).
 
 entries:
+  - version: v2-draft-8
+    date: "2026-09-07"
+    file: versions/v2-draft-8.yaml
+    status: current
+    summary: The substantive items of the draft-8 fix list, and nothing else. The design is frozen at this draft; the remaining items of the list are memo sentences.
+    changes:
+      - "One event: a ten-day return of the reconstructed book at or below its own unconditional 5% quantile; the French -432bp is the long-run reference and the pre-2013 record's threshold; the crash-day threshold is retired."
+      - "The text regressors are text-dependent: the theme's excess quote weight by leg and the weight of propagated in-book names, each on its series. The loss share stays on the page and leaves the ablation. The ablation is described as a test of the model's extraction, naming and reranking against a keyword rule in the same embedding space, not of a rule against a model."
+      - "The breach band gives way to Kupiec's coverage test at the 10% level with the acceptance range printed for the observations available; both the unconditional and the catalyst-window VaR are scored on every month from December 2015."
+      - "Treatment and placebo use one instrument: the distilled classifier's records on the component set and on the random sets; the language model's direct reading supplies quotes and naming, and its agreement with the classifier is printed."
+      - "Look-ahead labels inherit from inputs, so the tail model, the theme statistics, the page and its scoring are labelled model rather than clean."
+      - "The news classifier has one head per year, trained on labels dated before the year."
+      - "The random-ranking control sort is dropped; the random portfolios are that control."
+      - "Everything the rules said was printed reaches the page: the overlap, the loss share, the book-effect split, short interest, the top three entries, the bear state, and a hedge line with instrument, notional and premium. The position weights and sector codes that two nodes used without receiving now arrive by edge."
+      - "The catalyst proposer has a comparator: a term-list extractor over the same five sessions, with the PM's approval share for each list. Directions of bias stated for the initial worry list and the text-coverage gaps."
+    reasoning: >
+      The draft-7 reports found three problems that would not survive a PM reading the memo: the registered
+      test could not distinguish its two arms as configured, the breach band was narrower than sampling noise,
+      and the event had three definitions. Those are fixed here with the mechanical items they touch. The
+      rest of the draft-8 list is writing and belongs to the memo, which is what the reader sees; the spec
+      stops here so the hours go to the proof of concept and the example page.
+
   - version: v2-draft-7
     date: "2026-09-06"
     file: versions/v2-draft-7.yaml
-    status: current
+    status: done
     summary: Applies the draft-7 fix list in full. The four joints where a cold reader lost the thread are closed, every consumed quantity has a producer, the proof-of-concept path runs end to end as listed, and the text is rewritten under ten writing rules.
     changes:
       - "One theme per component: the cluster step picks the list entry or residual cluster with the largest excess weight over placebo, and only if that excess beats what random portfolios reach; otherwise the component has no theme above placebo."

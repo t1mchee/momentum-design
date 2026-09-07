@@ -81,7 +81,9 @@ groups:
       keyword extractor for the extraction, a keyword label for the name, and retrieval alone for the ranking.
       The comparators together form a second text series, and every text statistic is computed on both. One
       step of the tail model's ablation replaces the language-model series with the keyword series. The
-      difference in score is the test of whether the language model adds anything a rule would not. Because
+      difference in score is the test of whether the language model's extraction, naming and reranking add
+      anything beyond a keyword rule run through the same embedding space; both series share that space, so
+      the test is not of a rule against a model. Because
       every model in this step was trained after most of the dates it reads, its look-ahead labels are the most
       detailed in the design.
     children:
@@ -166,8 +168,9 @@ groups:
           The tail model is a quantile regression, refitted at each formation date on data up to that date
           only. Every run reports the VaR, the expected shortfall, the VaR conditional on being inside a
           catalyst window, and the ablation sequence: step 0 is prices and the calendar only, step 1 adds the
-          price-based theme statistics, steps 2a and 2b add the loss share on the keyword series and then on
-          the language-model series, and step 3 adds positioning.
+          price-based theme statistics, step 2a adds the theme's excess quote weight and the weight of
+          propagated in-book names on the keyword series, step 2b replaces them with the same on the
+          language-model series, and step 3 adds positioning.
         children: [severity, garch, eventbaseline]
       - id: g_catalysts
         name: Catalysts
@@ -195,7 +198,8 @@ groups:
       A page is produced five sessions before an approved catalyst, or whenever the maximum of the book's
       monitored percentiles crosses the 95th percentile of its own history. The page reports the theme and
       its variance share; the loss in basis points if the theme reverses, and the direction of that loss; the
-      VaR beside the implied move of the sector ETF that would hedge it; the two lists of vulnerable names,
+      VaR beside the hedge line, which names the instrument, its notional and its ten-day premium in basis
+      points of book; the positioning overlap; the two lists of vulnerable names,
       once their event study has run; the catalysts; and what changed since the last page. It states the
       direction of the risk and the hedge and leaves the decision to exit with the reader, and its numbers
       describe the paper 12-1 book, to be scaled by the reader's beta to it. A language model writes the
@@ -214,9 +218,10 @@ groups:
     brief: "Element 5, validation plan and evidence: baselines, ablations, leakage controls, registered tests."
     synthesis: >
       Every test is registered before it runs, with the pass threshold and the sentence that will go in the
-      memo under each outcome written down in advance. The tail model is scored on breach rate and pinball
-      loss against two baselines; one of its ablation steps swaps the language-model text series for the
-      keyword series, and that step is the test of whether the model adds anything. The lists of vulnerable
+      memo under each outcome written down in advance. The tail model is scored on coverage and pinball
+      loss against two baselines, with the pass range printed for the number of observations available;
+      one of its ablation steps swaps the language-model text series for the keyword series, and that step
+      is the test of whether the model's extraction adds anything beyond a keyword rule. The lists of vulnerable
       names are tested in an event study over five recorded unwinds. Extraction error is measured on
       hand-labelled records, split into those dated before and after the model's training cutoff; if the
       model does better on documents it may have seen in training than on documents it cannot have seen, the
